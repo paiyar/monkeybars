@@ -8,13 +8,13 @@ import { runCheck } from "../cli/src/check";
 import { installHooks, uninstallHooks } from "../cli/src/hooks";
 
 function tempRepo(): string {
-  const root = mkdtempSync(join(tmpdir(), "agent-workflow-"));
+  const root = mkdtempSync(join(tmpdir(), "monkeybars-"));
   execFileSync("git", ["init"], { cwd: root, stdio: "ignore" });
   return root;
 }
 
 function tempDir(): string {
-  return mkdtempSync(join(tmpdir(), "agent-workflow-"));
+  return mkdtempSync(join(tmpdir(), "monkeybars-"));
 }
 
 function writeWorkflow(root: string, options: {
@@ -93,7 +93,7 @@ function commitAll(root: string): void {
   execFileSync("git", ["commit", "-m", "test fixture"], { cwd: root, stdio: "ignore" });
 }
 
-describe("agent-workflow check", () => {
+describe("monkeybars check", () => {
   test("passes with matching status and phase files", () => {
     const root = tempRepo();
     writeWorkflow(root);
@@ -181,24 +181,24 @@ describe("agent-workflow check", () => {
   });
 });
 
-describe("agent-workflow hooks", () => {
+describe("monkeybars hooks", () => {
   test("install refuses to overwrite user-owned hook", () => {
     const root = tempRepo();
     const hookPath = join(root, ".git", "hooks", "pre-commit");
     writeFileSync(hookPath, "#!/bin/sh\necho user hook\n");
 
-    expect(() => installHooks({ cwd: root, cliPath: "/tmp/agent-workflow.js" })).toThrow(
+    expect(() => installHooks({ cwd: root, cliPath: "/tmp/monkeybars.js" })).toThrow(
       /Refusing to overwrite/
     );
   });
 
   test("uninstall only removes managed hooks", () => {
     const root = tempRepo();
-    installHooks({ cwd: root, cliPath: "/tmp/agent-workflow.js" });
+    installHooks({ cwd: root, cliPath: "/tmp/monkeybars.js" });
     const preCommit = join(root, ".git", "hooks", "pre-commit");
     const hook = readFileSync(preCommit, "utf8");
-    expect(hook).toContain("agent-workflow managed hook");
-    expect(hook).toContain("exec bun '/tmp/agent-workflow.js' hooks run pre-commit");
+    expect(hook).toContain("monkeybars managed hook");
+    expect(hook).toContain("exec bun '/tmp/monkeybars.js' hooks run pre-commit");
 
     uninstallHooks(root);
     expect(() => readFileSync(preCommit, "utf8")).toThrow();

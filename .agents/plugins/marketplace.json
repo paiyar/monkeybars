@@ -1,14 +1,14 @@
 {
-  "name": "agentic-coding-workflow",
+  "name": "monkeybars",
   "interface": {
-    "displayName": "Agentic Coding Workflow"
+    "displayName": "MonkeyBars"
   },
   "plugins": [
     {
-      "name": "agent-workflow",
+      "name": "monkeybars",
       "source": {
         "source": "local",
-        "path": "./plugins/agent-workflow"
+        "path": "./plugins/monkeybars"
       },
       "policy": {
         "installation": "AVAILABLE",

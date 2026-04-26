@@ -1,14 +1,13 @@
 ---
-name: brainstorm-plan
 description: Turn rough intent, existing repo state, or next-release goals into approved planning docs.
-disable-model-invocation: true
+agent: plan
 ---
 
 ## When to use
 
 Use before creating or materially revising `docs/plan.md`,
 `docs/prd/spec.md`, or `docs/prd/architecture.md`. Also use when
-`initialize-agent-workflow`, `create-phase`, or `start-session` finds missing,
+`initialize-monkeybars`, `create-phase`, or `start-session` finds missing,
 vague, stale, contradictory, completed, or over-broad planning context. During
 initialization, this command may run as guided planning intake when the user is
 not bringing enough existing docs. After a completed release, use it to archive

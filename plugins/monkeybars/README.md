@@ -1,4 +1,4 @@
-# Agent Workflow Plugin
+# MonkeyBars Plugin
 
 Repo-local workflow commands for greenfield builds, brownfield rescue, and
 post-v1 agentic coding sessions, plus an optional CLI for deterministic checks
@@ -7,7 +7,7 @@ and advisory Git hooks.
 ## Commands
 
 - `/start-session`
-- `/initialize-agent-workflow`
+- `/initialize-monkeybars`
 - `/brainstorm-plan`
 - `/project-status`
 - `/create-phase`
@@ -77,7 +77,7 @@ Install this directory as a Codex plugin. The manifest is:
 From this repository root, the same manifest is:
 
 ```text
-plugins/agent-workflow/.codex-plugin/plugin.json
+plugins/monkeybars/.codex-plugin/plugin.json
 ```
 
 If your Codex environment supports repo-local plugin marketplaces, copy both the
@@ -85,22 +85,22 @@ plugin directory and marketplace metadata into the target repo:
 
 ```sh
 # From this repository root:
-cp -R plugins/agent-workflow /path/to/repo/plugins/
+cp -R plugins/monkeybars /path/to/repo/plugins/
 mkdir -p /path/to/repo/.agents/plugins
 cp .agents/plugins/marketplace.json /path/to/repo/.agents/plugins/marketplace.json
 ```
 
 Invoke skills explicitly with the skill mention UI, such as
-`$initialize-agent-workflow` and `$start-session`.
+`$initialize-monkeybars` and `$start-session`.
 
 ## CLI and Hooks
 
 The CLI is for deterministic checks outside an agent session:
 
 ```sh
-agent-workflow check
-agent-workflow hooks install
-agent-workflow hooks uninstall
+monkeybars check
+monkeybars hooks install
+monkeybars hooks uninstall
 ```
 
 Installed hooks run the CLI and print guidance. They do not edit workflow

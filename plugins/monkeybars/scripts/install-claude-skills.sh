@@ -12,4 +12,4 @@ for skill_dir in "$PLUGIN_DIR"/skills/*; do
   cp -R "$skill_dir" "$TARGET_DIR/$skill_name"
 done
 
-printf 'Installed Agent Workflow Claude skills to %s\n' "$TARGET_DIR"
+printf 'Installed MonkeyBars Claude skills to %s\n' "$TARGET_DIR"

@@ -1,6 +1,6 @@
 ---
-name: initialize-agent-workflow
-description: Initialize or adopt repo-local agent workflow files in the current project.
+name: initialize-monkeybars
+description: Initialize or adopt repo-local MonkeyBars files in the current project.
 include_templates: agents, claude, spec, architecture, data-model, api, plan, status, phase
 ---
 

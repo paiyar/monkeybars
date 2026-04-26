@@ -2,16 +2,16 @@
 
 ## Project Structure & Module Organization
 
-This repository packages an agentic coding workflow for OpenCode, Claude Code, and Codex. The root `README.md` is the human-facing overview. Canonical workflow content lives in `workflow-src/`: `commands/` contains command definitions with YAML-style frontmatter, and `templates/` contains project initialization templates. TypeScript implementation code lives in `cli/src/`, including the CLI, advisory hook support, and adapter generator. Bun tests live in `test/`. Generated plugin artifacts live in `plugins/agent-workflow/`, including `skills/`, `commands/`, `templates/`, generated CLI output in `bin/`, helper install scripts, and the Codex manifest at `.codex-plugin/plugin.json`. `.agents/plugins/marketplace.json` contains local plugin marketplace metadata.
+This repository packages MonkeyBars for OpenCode, Claude Code, and Codex. The root `README.md` is the human-facing overview. Canonical workflow content lives in `workflow-src/`: `commands/` contains command definitions with YAML-style frontmatter, and `templates/` contains project initialization templates. TypeScript implementation code lives in `cli/src/`, including the CLI, advisory hook support, and adapter generator. Bun tests live in `test/`. Generated plugin artifacts live in `plugins/monkeybars/`, including `skills/`, `commands/`, `templates/`, generated CLI output in `bin/`, helper install scripts, and the Codex manifest at `.codex-plugin/plugin.json`. `.agents/plugins/marketplace.json` contains local plugin marketplace metadata.
 
 ## Build, Test, and Development Commands
 
 - `bun run build` builds the TypeScript CLI into `dist/`.
 - `bun run test` builds the CLI and runs Bun tests.
-- `bun run generate` builds the CLI and regenerates tool-specific adapters from `workflow-src/` into `plugins/agent-workflow/`.
-- `plugins/agent-workflow/scripts/install-opencode-commands.sh` installs generated OpenCode commands globally.
-- `plugins/agent-workflow/scripts/install-claude-skills.sh` installs generated Claude Code skills globally.
-- `git diff -- workflow-src plugins/agent-workflow` checks that generated files match source edits before review.
+- `bun run generate` builds the CLI and regenerates tool-specific adapters from `workflow-src/` into `plugins/monkeybars/`.
+- `plugins/monkeybars/scripts/install-opencode-commands.sh` installs generated OpenCode commands globally.
+- `plugins/monkeybars/scripts/install-claude-skills.sh` installs generated Claude Code skills globally.
+- `git diff -- workflow-src plugins/monkeybars` checks that generated files match source edits before review.
 
 This repo uses Bun for the TypeScript CLI, generator, and tests.
 
@@ -21,7 +21,7 @@ Use Markdown for workflow content and keep instructions direct, imperative, and 
 
 ## Testing Guidelines
 
-Validate changes by running `bun run test`, regenerating adapters, and reviewing the diff. For command changes, confirm both generated targets are updated: `plugins/agent-workflow/skills/<command>/SKILL.md` and `plugins/agent-workflow/commands/<command>.md`. For template changes, confirm copies under `plugins/agent-workflow/templates/`. For CLI packaging changes, confirm `plugins/agent-workflow/bin/` is updated. If adding CLI, hook, or generator behavior, add small focused Bun tests.
+Validate changes by running `bun run test`, regenerating adapters, and reviewing the diff. For command changes, confirm both generated targets are updated: `plugins/monkeybars/skills/<command>/SKILL.md` and `plugins/monkeybars/commands/<command>.md`. For template changes, confirm copies under `plugins/monkeybars/templates/`. For CLI packaging changes, confirm `plugins/monkeybars/bin/` is updated. If adding CLI, hook, or generator behavior, add small focused Bun tests.
 
 ## Commit & Pull Request Guidelines
 
@@ -29,4 +29,4 @@ Recent history uses short subjects, with Conventional Commit style for features,
 
 ## Agent-Specific Instructions
 
-Edit canonical workflow files in `workflow-src/` first, then regenerate adapters. Edit CLI, hook, and generator behavior in `cli/src/`. Do not hand-edit generated plugin files under `plugins/agent-workflow/commands/`, `skills/`, `templates/`, or `bin/` unless the generator itself is being changed.
+Edit canonical workflow files in `workflow-src/` first, then regenerate adapters. Edit CLI, hook, and generator behavior in `cli/src/`. Do not hand-edit generated plugin files under `plugins/monkeybars/commands/`, `skills/`, `templates/`, or `bin/` unless the generator itself is being changed.

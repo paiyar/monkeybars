@@ -7,4 +7,4 @@ TARGET_DIR="${OPENCODE_COMMANDS_DIR:-$HOME/.config/opencode/commands}"
 mkdir -p "$TARGET_DIR"
 cp "$PLUGIN_DIR"/commands/*.md "$TARGET_DIR"/
 
-printf 'Installed Agent Workflow OpenCode commands to %s\n' "$TARGET_DIR"
+printf 'Installed MonkeyBars OpenCode commands to %s\n' "$TARGET_DIR"

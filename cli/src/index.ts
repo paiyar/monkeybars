@@ -14,14 +14,14 @@ type InstallOptions = {
 function createProgram(): Command {
   const program = new Command();
   program
-    .name("agent-workflow")
+    .name("monkeybars")
     .exitOverride()
     .allowExcessArguments(false)
     .allowUnknownOption(false);
 
   program
     .command("check")
-    .description("Check Agent Workflow status consistency.")
+    .description("Check MonkeyBars status consistency.")
     .option("--json", "emit JSON")
     .allowExcessArguments(false)
     .allowUnknownOption(false)
@@ -37,13 +37,13 @@ function createProgram(): Command {
 
   const hooks = program
     .command("hooks")
-    .description("Manage Agent Workflow git hooks.")
+    .description("Manage MonkeyBars git hooks.")
     .allowExcessArguments(false)
     .allowUnknownOption(false);
 
   hooks
     .command("install")
-    .description("Install Agent Workflow git hooks.")
+    .description("Install MonkeyBars git hooks.")
     .option("--force", "overwrite existing non-managed hooks")
     .allowExcessArguments(false)
     .allowUnknownOption(false)
@@ -54,7 +54,7 @@ function createProgram(): Command {
 
   hooks
     .command("uninstall")
-    .description("Uninstall managed Agent Workflow git hooks.")
+    .description("Uninstall managed MonkeyBars git hooks.")
     .allowExcessArguments(false)
     .allowUnknownOption(false)
     .action(() => {
@@ -64,7 +64,7 @@ function createProgram(): Command {
 
   hooks
     .command("run")
-    .description("Run an Agent Workflow git hook.")
+    .description("Run a MonkeyBars git hook.")
     .addArgument(new Argument("<hook>", "hook name").choices(SUPPORTED_HOOKS))
     .allowExcessArguments(false)
     .allowUnknownOption(false)

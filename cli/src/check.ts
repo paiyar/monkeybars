@@ -200,7 +200,7 @@ export function runCheck(cwd = process.cwd()): CheckResult {
 
 export function printCheckResult(result: CheckResult): void {
   if (result.findings.length === 0) {
-    console.log("Agent Workflow check passed.");
+    console.log("MonkeyBars check passed.");
     return;
   }
 

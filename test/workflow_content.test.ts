@@ -32,7 +32,7 @@ describe("brainstorm-plan workflow content", () => {
   });
 
   test("initialization supports discovered docs and guided intake", () => {
-    const initialize = readWorkflow("workflow-src/commands/initialize-agent-workflow.md");
+    const initialize = readWorkflow("workflow-src/commands/initialize-monkeybars.md");
 
     expect(initialize).toContain("Greenfield path");
     expect(initialize).toContain("Brownfield adoption path");
@@ -43,7 +43,7 @@ describe("brainstorm-plan workflow content", () => {
   });
 
   test("routes unclear planning state back through brainstorm-plan", () => {
-    const initialize = readWorkflow("workflow-src/commands/initialize-agent-workflow.md");
+    const initialize = readWorkflow("workflow-src/commands/initialize-monkeybars.md");
     const createPhase = readWorkflow("workflow-src/commands/create-phase.md");
     const startSession = readWorkflow("workflow-src/commands/start-session.md");
 
@@ -91,21 +91,21 @@ describe("brainstorm-plan workflow content", () => {
 
   test("install docs cover global and per-repo setup for each tool", () => {
     const readme = readWorkflow("README.md");
-    const pluginReadme = readWorkflow("plugins/agent-workflow/README.md");
+    const pluginReadme = readWorkflow("plugins/monkeybars/README.md");
 
     for (const docs of [readme, pluginReadme]) {
       expect(docs).toContain("OPENCODE_COMMANDS_DIR=/path/to/repo/.opencode/commands");
       expect(docs).toContain("CLAUDE_SKILLS_DIR=/path/to/repo/.claude/skills");
-      expect(docs).toContain("plugins/agent-workflow/.codex-plugin/plugin.json");
+      expect(docs).toContain("plugins/monkeybars/.codex-plugin/plugin.json");
       expect(docs).toContain(".agents/plugins/marketplace.json");
-      expect(docs).toContain("$initialize-agent-workflow");
+      expect(docs).toContain("$initialize-monkeybars");
     }
 
     expect(readme).not.toContain("Codex can invoke automatically");
   });
 
   test("Codex plugin metadata reflects full workflow fit", () => {
-    const manifest = readWorkflow("plugins/agent-workflow/.codex-plugin/plugin.json");
+    const manifest = readWorkflow("plugins/monkeybars/.codex-plugin/plugin.json");
 
     expect(manifest).toContain("brownfield rescue");
     expect(manifest).toContain("post-v1 iteration");
@@ -113,7 +113,7 @@ describe("brainstorm-plan workflow content", () => {
   });
 
   test("Claude installer copies complete skill directories", () => {
-    const script = readWorkflow("plugins/agent-workflow/scripts/install-claude-skills.sh");
+    const script = readWorkflow("plugins/monkeybars/scripts/install-claude-skills.sh");
 
     expect(script).toContain('rm -rf "$TARGET_DIR/$skill_name"');
     expect(script).toContain('cp -R "$skill_dir" "$TARGET_DIR/$skill_name"');

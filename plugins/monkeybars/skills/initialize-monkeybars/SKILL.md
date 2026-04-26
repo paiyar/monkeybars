@@ -1,6 +1,6 @@
 ---
-name: initialize-agent-workflow
-description: Initialize or adopt repo-local agent workflow files in the current project.
+name: initialize-monkeybars
+description: Initialize or adopt repo-local MonkeyBars files in the current project.
 disable-model-invocation: true
 ---
 
@@ -144,7 +144,7 @@ Use the project’s native runner; Taskfile is optional.
 
 # Claude
 
-Use the agent workflow commands for session state:
+Use the MonkeyBars commands for session state:
 
 - `/start-session`
 - `/complete-task`

@@ -1,0 +1,37 @@
+{
+  "name": "monkeybars",
+  "version": "0.1.0",
+  "description": "Repo-backed phase/task workflow commands for agentic coding sessions.",
+  "author": {
+    "name": "Pavan Aiyar",
+    "email": "pavan.aiyar@gmail.com",
+    "url": "https://github.com/paiyar"
+  },
+  "homepage": "https://github.com/paiyar/monkeybars",
+  "repository": "https://github.com/paiyar/monkeybars",
+  "license": "MIT",
+  "keywords": [
+    "monkeybars",
+    "coding-agents",
+    "project-memory"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "MonkeyBars",
+    "shortDescription": "Durable phase/task workflow commands for coding agents.",
+    "longDescription": "MonkeyBars helps coding agents handle greenfield builds, brownfield rescue, and post-v1 iteration by turning repo context into plans, phases, tasks, reviewable commits, and handoffs. It is command-first; optional advisory hooks can run deterministic checks but never commit, stash, or mutate workflow state.",
+    "developerName": "Pavan Aiyar",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/paiyar/monkeybars",
+    "defaultPrompt": [
+      "Initialize MonkeyBars in this project.",
+      "Start this MonkeyBars session.",
+      "Check whether this is a context boundary."
+    ],
+    "brandColor": "#2563EB"
+  }
+}

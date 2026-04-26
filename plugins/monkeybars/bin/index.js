@@ -2471,7 +2471,7 @@ function runCheck(cwd = process.cwd()) {
 }
 function printCheckResult(result) {
   if (result.findings.length === 0) {
-    console.log("Agent Workflow check passed.");
+    console.log("MonkeyBars check passed.");
     return;
   }
   for (const finding of result.findings) {
@@ -2482,7 +2482,7 @@ function printCheckResult(result) {
 }
 
 // cli/src/hooks.ts
-var MANAGED_MARKER = "agent-workflow managed hook";
+var MANAGED_MARKER = "monkeybars managed hook";
 var SUPPORTED_HOOKS = ["pre-commit", "post-commit", "pre-push"];
 function shellQuote(value) {
   return `'${value.replaceAll("'", "'\\''")}'`;
@@ -2522,7 +2522,7 @@ function installHooks(options = {}) {
     writeFileSync(path, hookScript(hookName, cliPath), { mode: 493 });
     chmodSync(path, 493);
   }
-  console.log(`Installed Agent Workflow hooks in ${hooksDir}.`);
+  console.log(`Installed MonkeyBars hooks in ${hooksDir}.`);
 }
 function uninstallHooks(cwd = process.cwd()) {
   const hooksDir = hooksDirOrThrow(cwd);
@@ -2537,7 +2537,7 @@ function uninstallHooks(cwd = process.cwd()) {
     rmSync(path);
     removed += 1;
   }
-  console.log(`Removed ${removed} Agent Workflow hook(s).`);
+  console.log(`Removed ${removed} MonkeyBars hook(s).`);
 }
 function printPreflightReminder(cwd) {
   const agentsPath = resolve2(cwd, "AGENTS.md");
@@ -2557,7 +2557,7 @@ function runHook(hookName, cwd = process.cwd()) {
     return 2;
   }
   if (hookName === "post-commit") {
-    console.log("Agent Workflow: commit recorded. Consider running /context-boundary before continuing.");
+    console.log("MonkeyBars: commit recorded. Consider running /context-boundary before continuing.");
     return 0;
   }
   const result = runCheck(cwd);
@@ -2573,8 +2573,8 @@ function runHook(hookName, cwd = process.cwd()) {
 // cli/src/index.ts
 function createProgram() {
   const program2 = new Command;
-  program2.name("agent-workflow").exitOverride().allowExcessArguments(false).allowUnknownOption(false);
-  program2.command("check").description("Check Agent Workflow status consistency.").option("--json", "emit JSON").allowExcessArguments(false).allowUnknownOption(false).action((options) => {
+  program2.name("monkeybars").exitOverride().allowExcessArguments(false).allowUnknownOption(false);
+  program2.command("check").description("Check MonkeyBars status consistency.").option("--json", "emit JSON").allowExcessArguments(false).allowUnknownOption(false).action((options) => {
     const result = runCheck();
     if (options.json) {
       console.log(JSON.stringify(result, null, 2));
@@ -2583,16 +2583,16 @@ function createProgram() {
     }
     process.exitCode = result.ok ? 0 : 1;
   });
-  const hooks = program2.command("hooks").description("Manage Agent Workflow git hooks.").allowExcessArguments(false).allowUnknownOption(false);
-  hooks.command("install").description("Install Agent Workflow git hooks.").option("--force", "overwrite existing non-managed hooks").allowExcessArguments(false).allowUnknownOption(false).action((options) => {
+  const hooks = program2.command("hooks").description("Manage MonkeyBars git hooks.").allowExcessArguments(false).allowUnknownOption(false);
+  hooks.command("install").description("Install MonkeyBars git hooks.").option("--force", "overwrite existing non-managed hooks").allowExcessArguments(false).allowUnknownOption(false).action((options) => {
     installHooks({ force: options.force });
     process.exitCode = 0;
   });
-  hooks.command("uninstall").description("Uninstall managed Agent Workflow git hooks.").allowExcessArguments(false).allowUnknownOption(false).action(() => {
+  hooks.command("uninstall").description("Uninstall managed MonkeyBars git hooks.").allowExcessArguments(false).allowUnknownOption(false).action(() => {
     uninstallHooks();
     process.exitCode = 0;
   });
-  hooks.command("run").description("Run an Agent Workflow git hook.").addArgument(new Argument("<hook>", "hook name").choices(SUPPORTED_HOOKS)).allowExcessArguments(false).allowUnknownOption(false).action((hookName) => {
+  hooks.command("run").description("Run a MonkeyBars git hook.").addArgument(new Argument("<hook>", "hook name").choices(SUPPORTED_HOOKS)).allowExcessArguments(false).allowUnknownOption(false).action((hookName) => {
     process.exitCode = runHook(hookName);
   });
   return program2;

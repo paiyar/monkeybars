@@ -1,11 +1,11 @@
 {
-  "name": "agentic-coding-workflow",
+  "name": "monkeybars",
   "version": "0.1.0",
   "description": "Spec-to-phase workflow commands and advisory hooks for agentic coding.",
   "type": "module",
   "packageManager": "bun@1.3.13",
   "bin": {
-    "agent-workflow": "dist/index.js"
+    "monkeybars": "dist/index.js"
   },
   "scripts": {
     "build": "bun build cli/src/index.ts --target=bun --format=esm --outdir=dist",

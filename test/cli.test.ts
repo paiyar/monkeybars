@@ -7,7 +7,7 @@ import { join, resolve } from "node:path";
 const cliPath = resolve("dist", "index.js");
 
 function tempRepo(): string {
-  const root = mkdtempSync(join(tmpdir(), "agent-workflow-cli-"));
+  const root = mkdtempSync(join(tmpdir(), "monkeybars-cli-"));
   execFileSync("git", ["init"], { cwd: root, stdio: "ignore" });
   return root;
 }
@@ -79,7 +79,7 @@ function runCli(args: string[], cwd = process.cwd()) {
   });
 }
 
-describe("agent-workflow CLI", () => {
+describe("monkeybars CLI", () => {
   test("check --json emits JSON", () => {
     const root = tempRepo();
     writeWorkflow(root);

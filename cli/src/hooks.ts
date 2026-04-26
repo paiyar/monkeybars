@@ -6,7 +6,7 @@ import { extractPreflightCommands } from "./markdown.js";
 import { printCheckResult, runCheck } from "./check.js";
 import type { HookInstallOptions } from "./types.js";
 
-const MANAGED_MARKER = "agent-workflow managed hook";
+const MANAGED_MARKER = "monkeybars managed hook";
 export const SUPPORTED_HOOKS = ["pre-commit", "post-commit", "pre-push"] as const;
 export type SupportedHook = (typeof SUPPORTED_HOOKS)[number];
 
@@ -53,7 +53,7 @@ export function installHooks(options: HookInstallOptions = {}): void {
     chmodSync(path, 0o755);
   }
 
-  console.log(`Installed Agent Workflow hooks in ${hooksDir}.`);
+  console.log(`Installed MonkeyBars hooks in ${hooksDir}.`);
 }
 
 export function uninstallHooks(cwd = process.cwd()): void {
@@ -67,7 +67,7 @@ export function uninstallHooks(cwd = process.cwd()): void {
     rmSync(path);
     removed += 1;
   }
-  console.log(`Removed ${removed} Agent Workflow hook(s).`);
+  console.log(`Removed ${removed} MonkeyBars hook(s).`);
 }
 
 function printPreflightReminder(cwd: string): void {
@@ -90,7 +90,7 @@ export function runHook(hookName: string, cwd = process.cwd()): number {
   }
 
   if (hookName === "post-commit") {
-    console.log("Agent Workflow: commit recorded. Consider running /context-boundary before continuing.");
+    console.log("MonkeyBars: commit recorded. Consider running /context-boundary before continuing.");
     return 0;
   }
 

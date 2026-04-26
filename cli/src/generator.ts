@@ -35,7 +35,7 @@ function paths(rootOption?: string): Paths {
   return {
     root,
     source,
-    plugin: join(root, "plugins", "agent-workflow"),
+    plugin: join(root, "plugins", "monkeybars"),
     commandSource: join(source, "commands"),
     templateSource: join(source, "templates"),
     cliDist: join(root, "dist")
