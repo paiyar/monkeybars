@@ -10,7 +10,8 @@ It works with Codex, Claude Code, and OpenCode.
 
 ## What It Is For
 
-Use this when you are building a new project from documents like:
+Use this when you are building a new project from existing documents or rough
+intent like:
 
 - product requirements
 - architecture notes
@@ -36,30 +37,23 @@ Use this inside a git repository.
 
 Bring whatever specs you have: product notes, architecture sketches, data
 models, design notes, API contracts, or rough implementation plans. They do not
-need to be perfect. They just need to be good enough for an agent to turn them
-into a first build plan.
+need to be complete.
 
-Your project should also define **preflight checks**: the commands that prove a
-task is safe to commit. Different stacks need different checks. Examples:
+Then run:
 
-```sh
-npm run lint && npm run typecheck && npm test
-cargo test
-go test ./...
-uv run pytest
-make test
-just check
-task test
+```text
+/initialize-agent-workflow
 ```
 
-Preflight can include linting, static analysis, typechecking, tests, builds,
-migrations, or smoke checks. `/complete-task` runs the project’s documented
-preflight checks before committing.
+The initializer discovers existing project docs, likely stack conventions, and
+preflight commands such as tests, linting, typechecking, builds, migrations, or
+smoke checks. If the project has no clear command surface, it can suggest a
+small `Taskfile.yml` shim, but Taskfile is optional.
 
-`Taskfile.yml` is a useful default for greenfield projects, but it is not
-required. `/initialize-agent-workflow` should discover existing commands and
-record them in `AGENTS.md`. If the project has no clear command surface, it can
-offer to create a small `Taskfile.yml` shim.
+You can start with your own docs or with a rough idea. When docs already exist,
+the initializer maps them into the workflow. When docs are missing or too rough,
+it moves into guided planning intake to define the needed spec, architecture,
+data, interface, and plan docs before implementation starts.
 
 ## How It Works
 
@@ -92,7 +86,8 @@ The workflow names are the same across tools. In OpenCode they are slash
 commands. In Codex and Claude Code they are skills. This README writes them as
 slash commands for readability.
 
-Install the plugin or skills once, then initialize each project:
+Install the plugin or skills once, then initialize each project. You can start
+from existing docs or from rough project intent:
 
 ```text
 /initialize-agent-workflow
@@ -115,7 +110,8 @@ After that, use the workflow loop:
 
 ## Typical Greenfield Run
 
-1. Put your specs in the repo, usually under `docs/prd/` or `docs/`.
+1. Put any existing specs in the repo, usually under `docs/prd/` or `docs/`, or
+   start with a rough project idea.
 2. Run `/initialize-agent-workflow`.
 3. Review the generated or updated `docs/plan.md`, `docs/status.md`, and
    `docs/work/phase-1.md`.
@@ -137,7 +133,7 @@ The workflow names are the same.
 
 | Order | Skill / command | Use it when | What it does |
 |---:|---|---|---|
-| 1 | `/initialize-agent-workflow` | Once per project, after specs exist | Creates or updates `docs/plan.md`, `docs/status.md`, the first phase file, and agent instructions |
+| 1 | `/initialize-agent-workflow` | Once per project, with existing docs or rough intent | Creates or updates planning docs, `docs/status.md`, the first phase file, and agent instructions |
 | 2 | `/brainstorm-plan` | When specs or plans are rough, missing, stale, or too broad | Turns intent into phase-ready spec, architecture, and plan docs |
 | 3 | `/project-status` | Anytime you want a read-only progress check | Summarizes active phase, current task, blockers, and remaining work |
 | 4 | `/start-session` | At the start of each fresh context | Reads current workflow files, checks state, and reports the next task |

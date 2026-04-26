@@ -8,7 +8,9 @@ agent: plan
 Use before creating or materially revising `docs/plan.md`,
 `docs/prd/spec.md`, or `docs/prd/architecture.md`. Also use when
 `initialize-agent-workflow`, `create-phase`, or `start-session` finds missing,
-vague, stale, contradictory, or over-broad planning context.
+vague, stale, contradictory, or over-broad planning context. During
+initialization, this command may run as guided planning intake when the user is
+not bringing enough existing docs.
 
 ## Steps
 
@@ -17,34 +19,48 @@ vague, stale, contradictory, or over-broad planning context.
    - existing specs, architecture notes, plans, and phase files
    - top-level source layout, dependency manifests, and likely preflight
      commands
-2. Summarize what is known, what is missing, and whether the request is small
+2. Choose the planning mode:
+   - **Existing-doc synthesis:** If useful docs exist, map them into the
+     canonical planning docs and ask only for blocking gaps.
+   - **Guided intake:** If docs are missing or too rough, interview the user to
+     define enough product, architecture, data, interface, and preflight
+     context for the first implementation phase.
+   - Create optional companion docs only when the project needs them, such as
+     `docs/prd/data-model.md` for persistent domain data or `docs/prd/api.md`
+     for public interfaces, commands, events, or service contracts.
+3. Summarize what is known, what is missing, and whether the request is small
    enough for one plan. If it spans independent subsystems, propose a smaller
    first plan instead of refining the whole project at once.
-3. Ask one high-impact clarifying question at a time. Prefer concrete choices
+4. Ask one high-impact clarifying question at a time. Prefer concrete choices
    when they help the user answer quickly. Do not ask questions that the repo
    already answers.
-4. Once intent is clear, present 2-3 viable approaches with tradeoffs and a
+5. Once intent is clear, present 2-3 viable approaches with tradeoffs and a
    recommendation.
-5. Present the proposed design in readable sections and get user approval before
+6. Present the proposed design in readable sections and get user approval before
    writing files. Cover:
    - product behavior and users
    - architecture and components
+   - data model, storage, migrations, and retention if applicable
+   - APIs, commands, events, or other interfaces if applicable
    - data flow and boundaries
    - dependencies and constraints
    - testing and preflight expectations
    - acceptance criteria
-6. Create or update planning docs from the bundled templates:
+7. Create or update planning docs from the bundled templates:
    - `docs/prd/spec.md`
    - `docs/prd/architecture.md`
+   - optional: `docs/prd/data-model.md`
+   - optional: `docs/prd/api.md`
    - `docs/plan.md`
-7. Run a planning self-review:
+8. Run a planning self-review:
    - no placeholders, TODOs, or unresolved contradictions
    - scope is small enough to phase
    - each phase has a clear goal, outcome, deliverables, dependencies,
      acceptance criteria, likely files or modules, and preflight expectations
+   - any needed data or interface contracts are explicit enough for Phase 1
    - open questions are explicit and do not block Phase 1 unless they affect
      architecture or acceptance
-8. Show the files created or updated, list remaining open questions, and hand
+9. Show the files created or updated, list remaining open questions, and hand
    off to `create-phase` when `docs/plan.md` is phase-ready.
 
 This command may edit planning files only after the user approves the proposed
@@ -135,12 +151,81 @@ Use these bundled templates when creating or updating project-local workflow fil
 - [Risk and mitigation]
 ```
 
+### `templates/data-model.md`
+
+```markdown
+# Data Model
+
+> Last updated: YYYY-MM-DD
+
+## Overview
+
+[Short description of the domain data and where it is stored.]
+
+## Entities
+
+- **[Entity]:** [purpose, key fields, owner, lifecycle]
+- **[Entity]:** [purpose, key fields, owner, lifecycle]
+
+## Relationships
+
+- **[Entity] -> [Entity]:** [cardinality, ownership, deletion behavior]
+
+## Storage And Migrations
+
+- **Storage:** [database, files, external system, or in-memory state]
+- **Migrations:** [how schema changes are created, tested, and applied]
+- **Seed/Test data:** [fixtures, factories, or sample data expectations]
+
+## Validation And Constraints
+
+- [Invariant, uniqueness rule, range, permission, retention, or consistency rule]
+
+## Open Questions
+
+- [Question, owner, and whether it blocks Phase 1]
+```
+
+### `templates/api.md`
+
+```markdown
+# Interface And API Contracts
+
+> Last updated: YYYY-MM-DD
+
+## Overview
+
+[Short description of the public interfaces, callers, and compatibility expectations.]
+
+## Interfaces
+
+- **[Interface/API/command/event]:** [caller, responsibility, stability]
+- **[Interface/API/command/event]:** [caller, responsibility, stability]
+
+## Contracts
+
+- **[Operation]:** [input, output, errors, side effects]
+- **[Operation]:** [input, output, errors, side effects]
+
+## Auth And Permissions
+
+- [Authentication, authorization, tenancy, or capability rule]
+
+## Compatibility And Versioning
+
+- [Backward compatibility, migration, deprecation, or rollout expectation]
+
+## Open Questions
+
+- [Question, owner, and whether it blocks Phase 1]
+```
+
 ### `templates/plan.md`
 
 ```markdown
 # Implementation Plan
 
-> Source: `docs/prd/spec.md` and `docs/prd/architecture.md`
+> Source: `docs/prd/spec.md`, `docs/prd/architecture.md`, and any companion docs under `docs/prd/`
 > Last updated: YYYY-MM-DD
 
 ## Phase 1 — [Title]

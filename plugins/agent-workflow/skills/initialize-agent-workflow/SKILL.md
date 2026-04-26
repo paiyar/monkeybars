@@ -16,21 +16,31 @@ the opt-in step that creates or updates project-local workflow files.
    - `README.md`, `AGENTS.md`, `CLAUDE.md`, and `docs/`
    - top-level code structure and likely tech stack
    - existing preflight or verification commands
-3. Determine the project preflight checks: the commands that should pass before
+3. Run a planning intake and choose the initialization path:
+   - **Bring-your-own-docs path:** If existing docs are sufficient, summarize
+     the discovered sources and map them into the canonical workflow docs.
+     Preserve source-specific decisions instead of replacing them with generic
+     template text.
+   - **Guided initialization path:** If planning inputs are missing, vague,
+     contradictory, stale, or too broad to split into phase tasks, run
+     `brainstorm-plan` before creating `docs/plan.md` or
+     `docs/work/phase-1.md`.
+   - Ask only for blocking details the repo does not already answer. Prefer one
+     concrete question at a time.
+4. Determine the project preflight checks: the commands that should pass before
    a completed task is committed. Prefer existing project commands from README,
    AGENTS, package scripts, Makefile, Justfile, Taskfile, Cargo, Go, Python, or
    similar stack conventions. Preflight may include linting, static analysis,
    typechecking, tests, build, migrations, or smoke checks.
-4. If no command surface exists, offer to create a minimal `Taskfile.yml` shim
+5. If no command surface exists, offer to create a minimal `Taskfile.yml` shim
    for the discovered stack. Do not require Taskfile when another runner is
    already present.
-5. If the planning inputs are missing, vague, contradictory, stale, or too broad
-   to split into phase tasks, run `brainstorm-plan` before creating
-   `docs/plan.md` or `docs/work/phase-1.md`.
 6. When planning inputs are sufficient, create missing planning structure from
    the bundled templates:
    - `docs/prd/spec.md`
    - `docs/prd/architecture.md`
+   - optional companion docs under `docs/prd/`, such as `data-model.md` or
+     `api.md`, only when the project needs that detail
    - `docs/plan.md`
 7. Create or update `AGENTS.md` with the workflow rules and documented
    preflight checks. Preserve existing project-specific instructions.
@@ -67,6 +77,9 @@ Use these bundled templates when creating or updating project-local workflow fil
 
 ## Key Docs
 
+- `docs/prd/spec.md` — product behavior, users, requirements, and acceptance
+- `docs/prd/architecture.md` — system shape, components, interfaces, and risks
+- `docs/prd/*.md` — optional focused docs such as data model or API contracts
 - `docs/plan.md` — build phases, task breakdown, and technical decisions
 - `docs/status.md` — active phase and current task
 - `docs/work/phase-N.md` — task checklist, blockers, WIP, and log
@@ -202,12 +215,81 @@ Detailed project conventions belong in `AGENTS.md`.
 - [Risk and mitigation]
 ```
 
+### `templates/data-model.md`
+
+```markdown
+# Data Model
+
+> Last updated: YYYY-MM-DD
+
+## Overview
+
+[Short description of the domain data and where it is stored.]
+
+## Entities
+
+- **[Entity]:** [purpose, key fields, owner, lifecycle]
+- **[Entity]:** [purpose, key fields, owner, lifecycle]
+
+## Relationships
+
+- **[Entity] -> [Entity]:** [cardinality, ownership, deletion behavior]
+
+## Storage And Migrations
+
+- **Storage:** [database, files, external system, or in-memory state]
+- **Migrations:** [how schema changes are created, tested, and applied]
+- **Seed/Test data:** [fixtures, factories, or sample data expectations]
+
+## Validation And Constraints
+
+- [Invariant, uniqueness rule, range, permission, retention, or consistency rule]
+
+## Open Questions
+
+- [Question, owner, and whether it blocks Phase 1]
+```
+
+### `templates/api.md`
+
+```markdown
+# Interface And API Contracts
+
+> Last updated: YYYY-MM-DD
+
+## Overview
+
+[Short description of the public interfaces, callers, and compatibility expectations.]
+
+## Interfaces
+
+- **[Interface/API/command/event]:** [caller, responsibility, stability]
+- **[Interface/API/command/event]:** [caller, responsibility, stability]
+
+## Contracts
+
+- **[Operation]:** [input, output, errors, side effects]
+- **[Operation]:** [input, output, errors, side effects]
+
+## Auth And Permissions
+
+- [Authentication, authorization, tenancy, or capability rule]
+
+## Compatibility And Versioning
+
+- [Backward compatibility, migration, deprecation, or rollout expectation]
+
+## Open Questions
+
+- [Question, owner, and whether it blocks Phase 1]
+```
+
 ### `templates/plan.md`
 
 ```markdown
 # Implementation Plan
 
-> Source: `docs/prd/spec.md` and `docs/prd/architecture.md`
+> Source: `docs/prd/spec.md`, `docs/prd/architecture.md`, and any companion docs under `docs/prd/`
 > Last updated: YYYY-MM-DD
 
 ## Phase 1 — [Title]

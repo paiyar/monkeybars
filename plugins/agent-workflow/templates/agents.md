@@ -8,6 +8,9 @@
 
 ## Key Docs
 
+- `docs/prd/spec.md` — product behavior, users, requirements, and acceptance
+- `docs/prd/architecture.md` — system shape, components, interfaces, and risks
+- `docs/prd/*.md` — optional focused docs such as data model or API contracts
 - `docs/plan.md` — build phases, task breakdown, and technical decisions
 - `docs/status.md` — active phase and current task
 - `docs/work/phase-N.md` — task checklist, blockers, WIP, and log

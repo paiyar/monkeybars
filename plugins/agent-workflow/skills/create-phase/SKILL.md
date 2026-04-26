@@ -44,7 +44,7 @@ Use these bundled templates when creating or updating project-local workflow fil
 ```markdown
 # Implementation Plan
 
-> Source: `docs/prd/spec.md` and `docs/prd/architecture.md`
+> Source: `docs/prd/spec.md`, `docs/prd/architecture.md`, and any companion docs under `docs/prd/`
 > Last updated: YYYY-MM-DD
 
 ## Phase 1 — [Title]

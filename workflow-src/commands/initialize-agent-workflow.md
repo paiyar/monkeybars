@@ -1,7 +1,7 @@
 ---
 name: initialize-agent-workflow
 description: Initialize repo-local agent workflow files in the current project.
-include_templates: agents, claude, spec, architecture, plan, status, phase
+include_templates: agents, claude, spec, architecture, data-model, api, plan, status, phase
 ---
 
 ## When to use
@@ -16,21 +16,31 @@ the opt-in step that creates or updates project-local workflow files.
    - `README.md`, `AGENTS.md`, `CLAUDE.md`, and `docs/`
    - top-level code structure and likely tech stack
    - existing preflight or verification commands
-3. Determine the project preflight checks: the commands that should pass before
+3. Run a planning intake and choose the initialization path:
+   - **Bring-your-own-docs path:** If existing docs are sufficient, summarize
+     the discovered sources and map them into the canonical workflow docs.
+     Preserve source-specific decisions instead of replacing them with generic
+     template text.
+   - **Guided initialization path:** If planning inputs are missing, vague,
+     contradictory, stale, or too broad to split into phase tasks, run
+     `brainstorm-plan` before creating `docs/plan.md` or
+     `docs/work/phase-1.md`.
+   - Ask only for blocking details the repo does not already answer. Prefer one
+     concrete question at a time.
+4. Determine the project preflight checks: the commands that should pass before
    a completed task is committed. Prefer existing project commands from README,
    AGENTS, package scripts, Makefile, Justfile, Taskfile, Cargo, Go, Python, or
    similar stack conventions. Preflight may include linting, static analysis,
    typechecking, tests, build, migrations, or smoke checks.
-4. If no command surface exists, offer to create a minimal `Taskfile.yml` shim
+5. If no command surface exists, offer to create a minimal `Taskfile.yml` shim
    for the discovered stack. Do not require Taskfile when another runner is
    already present.
-5. If the planning inputs are missing, vague, contradictory, stale, or too broad
-   to split into phase tasks, run `brainstorm-plan` before creating
-   `docs/plan.md` or `docs/work/phase-1.md`.
 6. When planning inputs are sufficient, create missing planning structure from
    the bundled templates:
    - `docs/prd/spec.md`
    - `docs/prd/architecture.md`
+   - optional companion docs under `docs/prd/`, such as `data-model.md` or
+     `api.md`, only when the project needs that detail
    - `docs/plan.md`
 7. Create or update `AGENTS.md` with the workflow rules and documented
    preflight checks. Preserve existing project-specific instructions.
