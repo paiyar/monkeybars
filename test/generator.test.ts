@@ -62,4 +62,33 @@ Use for status.
     expect(readFileSync(join(pluginPath, "templates", "status.md"), "utf8")).toBe("# Status Template\n");
     expect(existsSync(join(pluginPath, "bin", "index.js"))).toBe(true);
   });
+
+  test("includes selected templates in generated adapters", () => {
+    const root = tempProject();
+    writeFileSync(join(root, "workflow-src", "commands", "init.md"), `---
+name: init
+description: Initialize workflow.
+include_templates: status, phase.md
+---
+
+## Steps
+
+Create workflow files from bundled templates.
+`);
+    writeFileSync(join(root, "workflow-src", "templates", "status.md"), "# Status Template\n\n```sh\nnpm test\n```\n");
+    writeFileSync(join(root, "workflow-src", "templates", "phase.md"), "# Phase Template\n");
+
+    const pluginPath = generateAdapters({ root });
+    const skill = readFileSync(join(pluginPath, "skills", "init", "SKILL.md"), "utf8");
+    const command = readFileSync(join(pluginPath, "commands", "init.md"), "utf8");
+
+    for (const output of [skill, command]) {
+      expect(output).toContain("## Included Templates");
+      expect(output).toContain("### `templates/status.md`");
+      expect(output).toContain("````markdown");
+      expect(output).toContain("# Status Template");
+      expect(output).toContain("### `templates/phase.md`");
+      expect(output).toContain("# Phase Template");
+    }
+  });
 });

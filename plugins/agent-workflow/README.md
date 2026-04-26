@@ -7,6 +7,7 @@ CLI for deterministic checks and advisory Git hooks.
 
 - `/start-session`
 - `/initialize-agent-workflow`
+- `/brainstorm-plan`
 - `/project-status`
 - `/create-phase`
 - `/complete-task`

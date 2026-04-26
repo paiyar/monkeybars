@@ -1,6 +1,7 @@
 ---
 name: initialize-agent-workflow
 description: Initialize repo-local agent workflow files in the current project.
+include_templates: agents, claude, spec, architecture, plan, status, phase
 ---
 
 ## When to use
@@ -23,22 +24,27 @@ the opt-in step that creates or updates project-local workflow files.
 4. If no command surface exists, offer to create a minimal `Taskfile.yml` shim
    for the discovered stack. Do not require Taskfile when another runner is
    already present.
-5. Create missing planning structure:
+5. If the planning inputs are missing, vague, contradictory, stale, or too broad
+   to split into phase tasks, run `brainstorm-plan` before creating
+   `docs/plan.md` or `docs/work/phase-1.md`.
+6. When planning inputs are sufficient, create missing planning structure from
+   the bundled templates:
    - `docs/prd/spec.md`
    - `docs/prd/architecture.md`
    - `docs/plan.md`
-6. Create or update `AGENTS.md` with the workflow rules and documented
+7. Create or update `AGENTS.md` with the workflow rules and documented
    preflight checks. Preserve existing project-specific instructions.
-7. If the user is using Claude Code, create or update `CLAUDE.md` so it
+8. If the user is using Claude Code, create or update `CLAUDE.md` so it
    references `AGENTS.md`.
-8. Create `docs/status.md` from the status template if missing.
-9. Create `docs/work/phase-1.md` from Phase 1 of `docs/plan.md` if missing.
-10. Install project-local command adapters only if the user asks:
+9. Create `docs/status.md` from the status template if missing.
+10. Create `docs/work/phase-1.md` from Phase 1 of `docs/plan.md` if missing and
+    Phase 1 is phase-ready.
+11. Install project-local command adapters only if the user asks:
    - OpenCode: `.opencode/commands/`
    - Claude Code: `.claude/skills/`
-11. Do not install hooks in v1. If hooks are requested later, install them as a
+12. Do not install hooks in v1. If hooks are requested later, install them as a
     separate project-local advisory hook pack.
-12. Show files created or updated, then run `workflow-check`.
+13. Show files created or updated, then run `workflow-check`.
 
 This command may edit project files because initialization is explicit opt-in.
 It must not overwrite existing docs or agent instructions without preserving

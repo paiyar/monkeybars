@@ -113,6 +113,44 @@ export function renderOpenCodeCommand(meta: Record<string, string>, body: string
   return lines.join("\n");
 }
 
+function includedTemplateNames(meta: Record<string, string>): string[] {
+  const value = meta.include_templates?.trim();
+  if (!value) return [];
+  return value
+    .split(",")
+    .map((name) => name.trim().replace(/\.md$/, ""))
+    .filter(Boolean);
+}
+
+function markdownFenceFor(text: string): string {
+  const longest = text.match(/`+/g)?.reduce((max, match) => Math.max(max, match.length), 0) ?? 0;
+  return "`".repeat(Math.max(3, longest + 1));
+}
+
+function appendIncludedTemplates(body: string, names: string[], allPaths: Paths): string {
+  if (names.length === 0) return body;
+
+  const sections = names.map((name) => {
+    const templatePath = join(allPaths.templateSource, `${name}.md`);
+    if (!existsSync(templatePath)) {
+      throw new Error(`Included template does not exist: ${name}`);
+    }
+    const template = readFileSync(templatePath, "utf8").trimEnd();
+    const fence = markdownFenceFor(template);
+    return [`### \`templates/${name}.md\``, "", `${fence}markdown`, template, fence].join("\n");
+  });
+
+  return [
+    body.trimEnd(),
+    "",
+    "## Included Templates",
+    "",
+    "Use these bundled templates when creating or updating project-local workflow files.",
+    "",
+    sections.join("\n\n")
+  ].join("\n");
+}
+
 function copyTemplates(allPaths: Paths): void {
   const target = join(allPaths.plugin, "templates");
   resetDir(target);
@@ -156,12 +194,13 @@ export function generateAdapters(options: GenerateOptions = {}): string {
   for (const sourceFile of sortedMarkdownFiles(allPaths.commandSource)) {
     const { meta, body } = parseFrontmatter(sourceFile);
     const name = meta.name;
+    const renderedBody = appendIncludedTemplates(body, includedTemplateNames(meta), allPaths);
 
     const skillDir = join(skillsDir, name);
     mkdirSync(skillDir, { recursive: true });
-    writeFileSync(join(skillDir, "SKILL.md"), renderSkill(meta, body));
+    writeFileSync(join(skillDir, "SKILL.md"), renderSkill(meta, renderedBody));
 
-    writeFileSync(join(commandsDir, `${name}.md`), renderOpenCodeCommand(meta, body));
+    writeFileSync(join(commandsDir, `${name}.md`), renderOpenCodeCommand(meta, renderedBody));
   }
 
   copyTemplates(allPaths);

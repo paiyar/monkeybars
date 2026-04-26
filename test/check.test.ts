@@ -13,11 +13,17 @@ function tempRepo(): string {
   return root;
 }
 
+function tempDir(): string {
+  return mkdtempSync(join(tmpdir(), "agent-workflow-"));
+}
+
 function writeWorkflow(root: string, options: {
   current?: string;
   phaseCurrent?: string;
   state?: string;
   phaseState?: string;
+  phase?: string;
+  phaseTitle?: string;
   tasks?: string;
 } = {}): void {
   mkdirSync(join(root, "docs", "work"), { recursive: true });
@@ -25,6 +31,8 @@ function writeWorkflow(root: string, options: {
   const phaseCurrent = options.phaseCurrent ?? current;
   const state = options.state ?? "not_started";
   const phaseState = options.phaseState ?? state;
+  const phase = options.phase ?? "1 — Test";
+  const phaseTitle = options.phaseTitle ?? "Phase 1 — Test";
   const tasks = options.tasks ?? "- [ ] T01 — first task | files\n- [ ] T02 — second task | files";
 
   writeFileSync(join(root, "docs", "status.md"), `# Project Status
@@ -32,7 +40,7 @@ function writeWorkflow(root: string, options: {
 ## Active Work
 
 - **Phase file:** docs/work/phase-1.md
-- **Phase:** 1 — Test
+- **Phase:** ${phase}
 - **State:** ${state}
 - **Current task:** ${current} — first task
 - **Last commit:** none
@@ -44,7 +52,7 @@ function writeWorkflow(root: string, options: {
 | 1 | Test | ${state} |
 `);
 
-  writeFileSync(join(root, "docs", "work", "phase-1.md"), `# Phase 1 — Test
+  writeFileSync(join(root, "docs", "work", "phase-1.md"), `# ${phaseTitle}
 
 ## Status
 
@@ -85,6 +93,32 @@ describe("agent-workflow check", () => {
     const result = runCheck(root);
     expect(result.ok).toBe(false);
     expect(result.findings[0]?.code).toBe("missing-status");
+  });
+
+  test("fails outside a git repository", () => {
+    const root = tempDir();
+    writeWorkflow(root);
+    const result = runCheck(root);
+    expect(result.ok).toBe(false);
+    expect(result.findings[0]?.code).toBe("not-git-repository");
+  });
+
+  test("fails when status phase metadata does not match active phase file", () => {
+    const root = tempRepo();
+    writeWorkflow(root, { phase: "2 — Other" });
+    commitAll(root);
+    const result = runCheck(root);
+    expect(result.ok).toBe(false);
+    expect(result.findings.some((finding) => finding.code === "phase-metadata-mismatch")).toBe(true);
+  });
+
+  test("fails when phase metadata is invalid", () => {
+    const root = tempRepo();
+    writeWorkflow(root, { phaseTitle: "Phase One" });
+    commitAll(root);
+    const result = runCheck(root);
+    expect(result.ok).toBe(false);
+    expect(result.findings.some((finding) => finding.code === "invalid-phase-label")).toBe(true);
   });
 
   test("fails when current task is not first unchecked task", () => {

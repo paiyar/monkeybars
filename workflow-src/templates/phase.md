@@ -6,6 +6,11 @@
 
 [One sentence from the implementation plan]
 
+## Acceptance
+
+- [Observable completion signal from docs/plan.md]
+- [Preflight command or verification expected for this phase]
+
 ## Status
 
 - **State:** not_started
@@ -17,8 +22,10 @@
 
 ## Tasks
 
-- [ ] T01 — [description] | [key files]
-- [ ] T02 — [description] | [key files]
+- [ ] T01 — [description] | files: [key files] | verify: [command]
+  - Acceptance: [observable task completion signal]
+- [ ] T02 — [description] | files: [key files] | verify: [command]
+  - Acceptance: [observable task completion signal]
 
 ## Log
 

@@ -30,6 +30,9 @@ function recentCommits(cwd = process.cwd()) {
     return [];
   return output.split(/\r?\n/).filter(Boolean);
 }
+function isGitRepository(cwd = process.cwd()) {
+  return git(["rev-parse", "--is-inside-work-tree"], cwd) === "true";
+}
 function gitHooksDir(cwd = process.cwd()) {
   return git(["rev-parse", "--git-path", "hooks"], cwd);
 }
@@ -110,6 +113,18 @@ function normalizeTaskId(value) {
     return "complete";
   return trimmed.match(/^([A-Za-z]+\d+)/)?.[1] ?? trimmed;
 }
+function parsePhaseLabel(value) {
+  const trimmed = value?.trim() ?? "";
+  if (!trimmed)
+    return;
+  const match = trimmed.match(/^(?:Phase\s+)?(\d+)\s+[—-]\s+(.+)$/i);
+  if (!match)
+    return;
+  return {
+    number: match[1],
+    title: match[2].trim()
+  };
+}
 function displayPath(path) {
   return path.split(/[\\/]/).slice(-3).join("/") || basename(path);
 }
@@ -161,6 +176,14 @@ function wipDocumented(wipValue, logText, dirty) {
 function runCheck(cwd = process.cwd()) {
   const findings = [];
   const statusPath = join(cwd, "docs", "status.md");
+  if (!isGitRepository(cwd)) {
+    add(findings, {
+      severity: "error",
+      code: "not-git-repository",
+      message: "Current directory is not inside a git repository."
+    });
+    return { ok: false, findings };
+  }
   if (!existsSync(statusPath)) {
     add(findings, {
       severity: "error",
@@ -192,6 +215,41 @@ function runCheck(cwd = process.cwd()) {
     return { ok: false, findings, status };
   }
   const phase = readPhaseFile(phasePath);
+  const statusPhaseValue = status.active.phase;
+  if (!statusPhaseValue) {
+    add(findings, {
+      severity: "error",
+      code: "missing-phase-label",
+      message: "docs/status.md does not define Active Work phase.",
+      file: "docs/status.md"
+    });
+  }
+  const statusPhase = parsePhaseLabel(statusPhaseValue);
+  if (statusPhaseValue && !statusPhase) {
+    add(findings, {
+      severity: "error",
+      code: "invalid-phase-label",
+      message: `docs/status.md phase must look like "1 — Title": ${statusPhaseValue}.`,
+      file: "docs/status.md"
+    });
+  }
+  const phaseLabel = parsePhaseLabel(phase.title);
+  if (!phase.title || !phaseLabel) {
+    add(findings, {
+      severity: "error",
+      code: "invalid-phase-label",
+      message: `Active phase file title must look like "# Phase 1 — Title".`,
+      file: phaseFile
+    });
+  }
+  if (statusPhase && phaseLabel && (statusPhase.number !== phaseLabel.number || statusPhase.title !== phaseLabel.title)) {
+    add(findings, {
+      severity: "error",
+      code: "phase-metadata-mismatch",
+      message: `Phase mismatch: docs/status.md says ${statusPhase.number} — ${statusPhase.title}, ${displayPath(phase.path)} says ${phaseLabel.number} — ${phaseLabel.title}.`,
+      file: phaseFile
+    });
+  }
   const statusState = status.active.state;
   const phaseState = phase.status.state;
   if (statusState && phaseState && statusState !== phaseState) {

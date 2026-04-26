@@ -21,7 +21,11 @@ continue work on the project.
    `docs/status.md`.
 4. Read the Status section of the phase file to confirm the current task.
 5. Surface blockers before proceeding.
-6. Read the relevant phase section of `docs/plan.md`.
+6. Read the relevant phase section of `docs/plan.md`. If the plan context is
+   unclear, stale, contradictory, or missing a phase goal, deliverables,
+   dependencies, acceptance criteria, likely files or modules, or preflight
+   expectations, surface that and recommend `brainstorm-plan` before changing
+   implementation files.
 7. Run `git status --short --branch` for dirty work and cheap local branch
    status. Do not run `git fetch` during normal solo development unless the
    user asks, you are about to push, release, deploy, or resume from another

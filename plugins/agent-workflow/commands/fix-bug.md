@@ -11,8 +11,11 @@ phase work. The bug description is `$ARGUMENTS`.
 
 1. Read the active phase file to note current state.
 2. Check for uncommitted changes with `git status --short`.
-3. If there are uncommitted changes, stash them with a descriptive message
-   before changing workflow files.
+3. If there are uncommitted changes, stop and ask how to preserve them before
+   starting the bug fix. Recommend one of:
+   - Run `handoff-session` for incomplete phase work.
+   - Run `complete-task` first if the current phase task is actually complete.
+   - Stash with a descriptive message only after the user explicitly approves.
 4. Investigate and fix the bug described by `$ARGUMENTS`.
 5. Commit the fix separately without the phase task prefix.
 6. Do not mix unrelated phase/status updates into the bug commit.

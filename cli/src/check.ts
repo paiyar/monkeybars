@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { gitStatus, recentCommits } from "./git.js";
-import { displayPath, normalizeTaskId, readPhaseFile, readStatusFile } from "./markdown.js";
+import { gitStatus, isGitRepository, recentCommits } from "./git.js";
+import { displayPath, normalizeTaskId, parsePhaseLabel, readPhaseFile, readStatusFile } from "./markdown.js";
 import type { CheckResult, Finding } from "./types.js";
 
 function add(findings: Finding[], finding: Finding): void {
@@ -27,6 +27,15 @@ function wipDocumented(wipValue: string | undefined, logText: string, dirty: str
 export function runCheck(cwd = process.cwd()): CheckResult {
   const findings: Finding[] = [];
   const statusPath = join(cwd, "docs", "status.md");
+
+  if (!isGitRepository(cwd)) {
+    add(findings, {
+      severity: "error",
+      code: "not-git-repository",
+      message: "Current directory is not inside a git repository."
+    });
+    return { ok: false, findings };
+  }
 
   if (!existsSync(statusPath)) {
     add(findings, {
@@ -62,6 +71,49 @@ export function runCheck(cwd = process.cwd()): CheckResult {
   }
 
   const phase = readPhaseFile(phasePath);
+  const statusPhaseValue = status.active.phase;
+  if (!statusPhaseValue) {
+    add(findings, {
+      severity: "error",
+      code: "missing-phase-label",
+      message: "docs/status.md does not define Active Work phase.",
+      file: "docs/status.md"
+    });
+  }
+
+  const statusPhase = parsePhaseLabel(statusPhaseValue);
+  if (statusPhaseValue && !statusPhase) {
+    add(findings, {
+      severity: "error",
+      code: "invalid-phase-label",
+      message: `docs/status.md phase must look like "1 — Title": ${statusPhaseValue}.`,
+      file: "docs/status.md"
+    });
+  }
+
+  const phaseLabel = parsePhaseLabel(phase.title);
+  if (!phase.title || !phaseLabel) {
+    add(findings, {
+      severity: "error",
+      code: "invalid-phase-label",
+      message: `Active phase file title must look like "# Phase 1 — Title".`,
+      file: phaseFile
+    });
+  }
+
+  if (
+    statusPhase &&
+    phaseLabel &&
+    (statusPhase.number !== phaseLabel.number || statusPhase.title !== phaseLabel.title)
+  ) {
+    add(findings, {
+      severity: "error",
+      code: "phase-metadata-mismatch",
+      message: `Phase mismatch: docs/status.md says ${statusPhase.number} — ${statusPhase.title}, ${displayPath(phase.path)} says ${phaseLabel.number} — ${phaseLabel.title}.`,
+      file: phaseFile
+    });
+  }
+
   const statusState = status.active.state;
   const phaseState = phase.status.state;
   if (statusState && phaseState && statusState !== phaseState) {

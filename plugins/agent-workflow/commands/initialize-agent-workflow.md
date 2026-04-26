@@ -22,23 +22,276 @@ the opt-in step that creates or updates project-local workflow files.
 4. If no command surface exists, offer to create a minimal `Taskfile.yml` shim
    for the discovered stack. Do not require Taskfile when another runner is
    already present.
-5. Create missing planning structure:
+5. If the planning inputs are missing, vague, contradictory, stale, or too broad
+   to split into phase tasks, run `brainstorm-plan` before creating
+   `docs/plan.md` or `docs/work/phase-1.md`.
+6. When planning inputs are sufficient, create missing planning structure from
+   the bundled templates:
    - `docs/prd/spec.md`
    - `docs/prd/architecture.md`
    - `docs/plan.md`
-6. Create or update `AGENTS.md` with the workflow rules and documented
+7. Create or update `AGENTS.md` with the workflow rules and documented
    preflight checks. Preserve existing project-specific instructions.
-7. If the user is using Claude Code, create or update `CLAUDE.md` so it
+8. If the user is using Claude Code, create or update `CLAUDE.md` so it
    references `AGENTS.md`.
-8. Create `docs/status.md` from the status template if missing.
-9. Create `docs/work/phase-1.md` from Phase 1 of `docs/plan.md` if missing.
-10. Install project-local command adapters only if the user asks:
+9. Create `docs/status.md` from the status template if missing.
+10. Create `docs/work/phase-1.md` from Phase 1 of `docs/plan.md` if missing and
+    Phase 1 is phase-ready.
+11. Install project-local command adapters only if the user asks:
    - OpenCode: `.opencode/commands/`
    - Claude Code: `.claude/skills/`
-11. Do not install hooks in v1. If hooks are requested later, install them as a
+12. Do not install hooks in v1. If hooks are requested later, install them as a
     separate project-local advisory hook pack.
-12. Show files created or updated, then run `workflow-check`.
+13. Show files created or updated, then run `workflow-check`.
 
 This command may edit project files because initialization is explicit opt-in.
 It must not overwrite existing docs or agent instructions without preserving
 their project-specific content.
+
+## Included Templates
+
+Use these bundled templates when creating or updating project-local workflow files.
+
+### `templates/agents.md`
+
+````markdown
+# [Project Name] — Agent Instructions
+
+## Project Overview
+
+[Describe what the project does, who uses it, and the problem it solves.]
+
+**Status:** See `docs/status.md` and the active `docs/work/phase-N.md`.
+
+## Key Docs
+
+- `docs/plan.md` — build phases, task breakdown, and technical decisions
+- `docs/status.md` — active phase and current task
+- `docs/work/phase-N.md` — task checklist, blockers, WIP, and log
+
+## Workflow
+
+- Start sessions with `/start-session`.
+- Use `/brainstorm-plan` before creating or materially changing planning docs
+  when requirements are vague, missing, contradictory, or too broad.
+- Finish completed tasks with `/complete-task`.
+- Save incomplete work with `/handoff-session`.
+- Use `/context-boundary` after a coherent chunk to decide whether to continue
+  or start a fresh context.
+- One task = one logical change = one commit.
+
+## Preflight Checks
+
+Document the commands that must pass before `/complete-task` commits work.
+Use the project’s native runner; Taskfile is optional.
+
+```sh
+[fill in project-specific checks, for example: npm test, cargo test, go test ./..., make test]
+```
+
+## Always
+
+- Run preflight checks before committing.
+- Keep workflow tracking files current.
+- Record dirty WIP files before ending a session.
+
+## Never
+
+- Do not check off incomplete tasks.
+- Do not auto-commit or auto-stash without user intent.
+- Do not store secrets in source files.
+````
+
+### `templates/claude.md`
+
+```markdown
+@AGENTS.md
+
+# Claude
+
+Use the agent workflow commands for session state:
+
+- `/start-session`
+- `/complete-task`
+- `/handoff-session`
+- `/workflow-check`
+- `/context-boundary`
+
+Detailed project conventions belong in `AGENTS.md`.
+```
+
+### `templates/spec.md`
+
+```markdown
+# Product Spec
+
+> Last updated: YYYY-MM-DD
+
+## Problem
+
+[What problem this project or feature solves, and for whom.]
+
+## Goals
+
+- [Primary user-visible outcome]
+- [Secondary outcome]
+
+## Non-Goals
+
+- [Explicitly out of scope]
+
+## Users And Workflows
+
+- **User:** [role]
+- **Workflow:** [what they do from start to finish]
+
+## Requirements
+
+- [Functional requirement with acceptance signal]
+- [Functional requirement with acceptance signal]
+
+## Acceptance Criteria
+
+- [Observable behavior that proves the work is complete]
+- [Observable behavior that proves the work is complete]
+
+## Open Questions
+
+- [Question, owner, and whether it blocks Phase 1]
+```
+
+### `templates/architecture.md`
+
+```markdown
+# Architecture
+
+> Last updated: YYYY-MM-DD
+
+## Overview
+
+[Short description of the system shape and primary runtime boundaries.]
+
+## Components
+
+- **[Component]:** [responsibility, inputs, outputs]
+- **[Component]:** [responsibility, inputs, outputs]
+
+## Data Flow
+
+1. [Input or event]
+2. [Processing step]
+3. [Output or persisted state]
+
+## Interfaces
+
+- **[Interface/API/file/schema]:** [contract and caller]
+
+## Constraints
+
+- [Technical, product, deployment, compatibility, or operational constraint]
+
+## Testing Strategy
+
+- [Unit/integration/smoke approach]
+- [Project preflight command or expected check]
+
+## Risks
+
+- [Risk and mitigation]
+```
+
+### `templates/plan.md`
+
+```markdown
+# Implementation Plan
+
+> Source: `docs/prd/spec.md` and `docs/prd/architecture.md`
+> Last updated: YYYY-MM-DD
+
+## Phase 1 — [Title]
+
+- **Goal:** [One sentence describing the phase outcome]
+- **User-visible outcome:** [What works after this phase]
+- **Deliverables:**
+  - [Deliverable]
+  - [Deliverable]
+- **Likely files/modules:** [Paths or areas expected to change]
+- **Dependencies:** [Prior work, decisions, or external dependencies]
+- **Acceptance criteria:**
+  - [Observable completion signal]
+  - [Observable completion signal]
+- **Preflight:** [Commands expected before commit]
+- **Open questions:** [none, or question and whether it blocks this phase]
+
+## Phase 2 — [Title]
+
+- **Goal:** [One sentence describing the phase outcome]
+- **User-visible outcome:** [What works after this phase]
+- **Deliverables:**
+  - [Deliverable]
+- **Likely files/modules:** [Paths or areas expected to change]
+- **Dependencies:** [Prior phase or decision]
+- **Acceptance criteria:**
+  - [Observable completion signal]
+- **Preflight:** [Commands expected before commit]
+- **Open questions:** [none, or question and whether it blocks this phase]
+```
+
+### `templates/status.md`
+
+```markdown
+# Project Status
+
+> Last updated: YYYY-MM-DD
+
+## Active Work
+
+- **Phase file:** docs/work/phase-1.md
+- **Phase:** 1 — [Title]
+- **State:** not_started
+- **Current task:** T01 — [description]
+- **Last commit:** none
+
+## Phase Summary
+
+| Phase | Title | State |
+|---|---|---|
+| 1 | [Title] | not_started |
+```
+
+### `templates/phase.md`
+
+```markdown
+# Phase N — [Title]
+
+> Source: docs/plan.md, Phase N
+
+## Goal
+
+[One sentence from the implementation plan]
+
+## Acceptance
+
+- [Observable completion signal from docs/plan.md]
+- [Preflight command or verification expected for this phase]
+
+## Status
+
+- **State:** not_started
+- **Current task:** T01 — [first task description]
+- **Last commit:** none
+- **Preflight:** n/a
+- **Blockers:** none
+- **WIP files:** none
+
+## Tasks
+
+- [ ] T01 — [description] | files: [key files] | verify: [command]
+  - Acceptance: [observable task completion signal]
+- [ ] T02 — [description] | files: [key files] | verify: [command]
+  - Acceptance: [observable task completion signal]
+
+## Log
+
+(Append dated entries as work progresses)
+```

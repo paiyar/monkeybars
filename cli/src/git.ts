@@ -24,6 +24,10 @@ export function recentCommits(cwd = process.cwd()): string[] {
   return output.split(/\r?\n/).filter(Boolean);
 }
 
+export function isGitRepository(cwd = process.cwd()): boolean {
+  return git(["rev-parse", "--is-inside-work-tree"], cwd) === "true";
+}
+
 export function gitHooksDir(cwd = process.cwd()): string | undefined {
   return git(["rev-parse", "--git-path", "hooks"], cwd);
 }

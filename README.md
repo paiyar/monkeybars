@@ -76,11 +76,12 @@ work, open questions, WIP files, and handoff notes outside the chat window.
 That lets you use shorter, cleaner sessions:
 
 1. Start from specs.
-2. Generate or review the implementation plan.
-3. Create a phase file for the next chunk.
-4. Start a fresh agent context for that chunk.
-5. Complete one task, or hand off unfinished work.
-6. Start fresh again when the context is getting bulky.
+2. Brainstorm missing or rough requirements into phase-ready planning docs.
+3. Generate or review the implementation plan.
+4. Create a phase file for the next chunk.
+5. Start a fresh agent context for that chunk.
+6. Complete one task, or hand off unfinished work.
+7. Start fresh again when the context is getting bulky.
 
 The workflow treats context bloat as a normal failure mode. It gives you a
 repeatable way to stop, write down the state, and resume in a new session.
@@ -95,6 +96,12 @@ Install the plugin or skills once, then initialize each project:
 
 ```text
 /initialize-agent-workflow
+```
+
+If the specs or plan are rough, refine them before phase creation:
+
+```text
+/brainstorm-plan      # turn rough intent into phase-ready docs
 ```
 
 After that, use the workflow loop:
@@ -112,14 +119,15 @@ After that, use the workflow loop:
 2. Run `/initialize-agent-workflow`.
 3. Review the generated or updated `docs/plan.md`, `docs/status.md`, and
    `docs/work/phase-1.md`.
-4. Start a fresh agent context and run `/start-session`.
-5. Work on the current task from the active phase file.
-6. When the task is done, run `/complete-task`.
-7. Follow `/context-boundary` after the commit. If the next chunk is different
+4. If the planning docs are vague or incomplete, run `/brainstorm-plan`.
+5. Start a fresh agent context and run `/start-session`.
+6. Work on the current task from the active phase file.
+7. When the task is done, run `/complete-task`.
+8. Follow `/context-boundary` after the commit. If the next chunk is different
    or the context is getting large, start a fresh context.
-8. If you stop mid-task, run `/handoff-session` instead of relying on chat
+9. If you stop mid-task, run `/handoff-session` instead of relying on chat
    history.
-9. When a phase is complete, run `/create-phase` to create the next reviewable
+10. When a phase is complete, run `/create-phase` to create the next reviewable
    phase file from `docs/plan.md`.
 
 ## Skills In Workflow Order
@@ -130,12 +138,13 @@ The workflow names are the same.
 | Order | Skill / command | Use it when | What it does |
 |---:|---|---|---|
 | 1 | `/initialize-agent-workflow` | Once per project, after specs exist | Creates or updates `docs/plan.md`, `docs/status.md`, the first phase file, and agent instructions |
-| 2 | `/project-status` | Anytime you want a read-only progress check | Summarizes active phase, current task, blockers, and remaining work |
-| 3 | `/start-session` | At the start of each fresh context | Reads current workflow files, checks state, and reports the next task |
-| 4 | `/create-phase` | When the next phase has no phase file yet | Creates the next reviewable `docs/work/phase-N.md` from `docs/plan.md` |
-| 5 | `/complete-task` | After one task is implemented | Runs preflight, updates tracking files, commits once, and recommends whether to continue |
-| 6 | `/context-boundary` | After a commit or when context is getting bulky | Advises whether to continue, hand off, or start a fresh context |
-| 7 | `/handoff-session` | When stopping with unfinished work | Records WIP files, blockers, preflight status, decisions, and next steps |
+| 2 | `/brainstorm-plan` | When specs or plans are rough, missing, stale, or too broad | Turns intent into phase-ready spec, architecture, and plan docs |
+| 3 | `/project-status` | Anytime you want a read-only progress check | Summarizes active phase, current task, blockers, and remaining work |
+| 4 | `/start-session` | At the start of each fresh context | Reads current workflow files, checks state, and reports the next task |
+| 5 | `/create-phase` | When the next phase has no phase file yet | Creates the next reviewable `docs/work/phase-N.md` from `docs/plan.md` |
+| 6 | `/complete-task` | After one task is implemented | Runs preflight, updates tracking files, commits once, and recommends whether to continue |
+| 7 | `/context-boundary` | After a commit or when context is getting bulky | Advises whether to continue, hand off, or start a fresh context |
+| 8 | `/handoff-session` | When stopping with unfinished work | Records WIP files, blockers, preflight status, decisions, and next steps |
 | As needed | `/workflow-check` | When tracking state may be inconsistent | Verifies status, phase files, and repo state agree |
 | As needed | `/fix-bug` | When urgent bug work interrupts phase work | Keeps bug work separate from planned phase work and preserves the handoff trail |
 

@@ -15,6 +15,8 @@
 ## Workflow
 
 - Start sessions with `/start-session`.
+- Use `/brainstorm-plan` before creating or materially changing planning docs
+  when requirements are vague, missing, contradictory, or too broad.
 - Finish completed tasks with `/complete-task`.
 - Save incomplete work with `/handoff-session`.
 - Use `/context-boundary` after a coherent chunk to decide whether to continue

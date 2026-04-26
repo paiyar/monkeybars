@@ -2,6 +2,11 @@ import { readFileSync } from "node:fs";
 import { basename } from "node:path";
 import type { PhaseFile, PhaseTask, StatusFile } from "./types.js";
 
+export interface PhaseLabel {
+  number: string;
+  title: string;
+}
+
 function parseBulletFields(lines: string[], startHeading: string): Record<string, string> {
   const fields: Record<string, string> = {};
   const start = lines.findIndex((line) => line.trim() === startHeading);
@@ -76,6 +81,19 @@ export function normalizeTaskId(value: string | undefined): string {
   if (!trimmed) return "";
   if (trimmed.toLowerCase() === "complete") return "complete";
   return trimmed.match(/^([A-Za-z]+\d+)/)?.[1] ?? trimmed;
+}
+
+export function parsePhaseLabel(value: string | undefined): PhaseLabel | undefined {
+  const trimmed = value?.trim() ?? "";
+  if (!trimmed) return undefined;
+
+  const match = trimmed.match(/^(?:Phase\s+)?(\d+)\s+[—-]\s+(.+)$/i);
+  if (!match) return undefined;
+
+  return {
+    number: match[1],
+    title: match[2].trim()
+  };
 }
 
 export function displayPath(path: string): string {
