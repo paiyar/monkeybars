@@ -7,8 +7,8 @@ import { printCheckResult, runCheck } from "./check.js";
 import type { HookInstallOptions } from "./types.js";
 
 const MANAGED_MARKER = "agent-workflow managed hook";
-const SUPPORTED_HOOKS = ["pre-commit", "post-commit", "pre-push"] as const;
-type SupportedHook = (typeof SUPPORTED_HOOKS)[number];
+export const SUPPORTED_HOOKS = ["pre-commit", "post-commit", "pre-push"] as const;
+export type SupportedHook = (typeof SUPPORTED_HOOKS)[number];
 
 function shellQuote(value: string): string {
   return `'${value.replaceAll("'", "'\\''")}'`;

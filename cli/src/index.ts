@@ -1,54 +1,98 @@
 #!/usr/bin/env bun
-import { installHooks, runHook, uninstallHooks } from "./hooks.js";
+import { Argument, Command, CommanderError } from "commander";
+import { installHooks, runHook, SUPPORTED_HOOKS, uninstallHooks } from "./hooks.js";
 import { printCheckResult, runCheck } from "./check.js";
 
-function printHelp(): void {
-  console.log(`agent-workflow
+type CheckOptions = {
+  json?: boolean;
+};
 
-Usage:
-  agent-workflow check [--json]
-  agent-workflow hooks install [--force]
-  agent-workflow hooks uninstall
-  agent-workflow hooks run <pre-commit|post-commit|pre-push>
-`);
+type InstallOptions = {
+  force?: boolean;
+};
+
+function createProgram(): Command {
+  const program = new Command();
+  program
+    .name("agent-workflow")
+    .exitOverride()
+    .allowExcessArguments(false)
+    .allowUnknownOption(false);
+
+  program
+    .command("check")
+    .description("Check Agent Workflow status consistency.")
+    .option("--json", "emit JSON")
+    .allowExcessArguments(false)
+    .allowUnknownOption(false)
+    .action((options: CheckOptions) => {
+      const result = runCheck();
+      if (options.json) {
+        console.log(JSON.stringify(result, null, 2));
+      } else {
+        printCheckResult(result);
+      }
+      process.exitCode = result.ok ? 0 : 1;
+    });
+
+  const hooks = program
+    .command("hooks")
+    .description("Manage Agent Workflow git hooks.")
+    .allowExcessArguments(false)
+    .allowUnknownOption(false);
+
+  hooks
+    .command("install")
+    .description("Install Agent Workflow git hooks.")
+    .option("--force", "overwrite existing non-managed hooks")
+    .allowExcessArguments(false)
+    .allowUnknownOption(false)
+    .action((options: InstallOptions) => {
+      installHooks({ force: options.force });
+      process.exitCode = 0;
+    });
+
+  hooks
+    .command("uninstall")
+    .description("Uninstall managed Agent Workflow git hooks.")
+    .allowExcessArguments(false)
+    .allowUnknownOption(false)
+    .action(() => {
+      uninstallHooks();
+      process.exitCode = 0;
+    });
+
+  hooks
+    .command("run")
+    .description("Run an Agent Workflow git hook.")
+    .addArgument(new Argument("<hook>", "hook name").choices(SUPPORTED_HOOKS))
+    .allowExcessArguments(false)
+    .allowUnknownOption(false)
+    .action((hookName: string) => {
+      process.exitCode = runHook(hookName);
+    });
+
+  return program;
 }
 
-function main(argv: string[]): number {
-  const [command, ...args] = argv;
+export function main(argv: string[]): number {
+  const program = createProgram();
+  process.exitCode = 0;
 
-  if (!command || command === "-h" || command === "--help") {
-    printHelp();
+  if (argv.length === 0) {
+    program.outputHelp();
     return 0;
   }
 
-  if (command === "check") {
-    const result = runCheck();
-    if (args.includes("--json")) {
-      console.log(JSON.stringify(result, null, 2));
-    } else {
-      printCheckResult(result);
+  try {
+    program.parse(argv, { from: "user" });
+    return process.exitCode && process.exitCode !== 0 ? Number(process.exitCode) : 0;
+  } catch (error) {
+    if (error instanceof CommanderError) {
+      return error.code === "commander.helpDisplayed" ? 0 : 2;
     }
-    return result.ok ? 0 : 1;
+    throw error;
   }
-
-  if (command === "hooks") {
-    const [subcommand, ...hookArgs] = args;
-    if (subcommand === "install") {
-      installHooks({ force: hookArgs.includes("--force") });
-      return 0;
-    }
-    if (subcommand === "uninstall") {
-      uninstallHooks();
-      return 0;
-    }
-    if (subcommand === "run") {
-      const [hookName] = hookArgs;
-      return runHook(hookName ?? "");
-    }
-  }
-
-  printHelp();
-  return 2;
 }
 
 try {
