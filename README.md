@@ -1,11 +1,24 @@
 # MonkeyBars
 
-MonkeyBars is a repo-local workflow for agent-built projects:
-greenfield builds, brownfield rescue, and v2/v3 iteration.
+Guardrails for vibe monkeys.
 
-It helps you start from real specs, break the work into reviewable chunks, and
-move through those chunks with coding agents without letting one huge chat
-become the project.
+Monkey thinks up spec. Monkey chunks up spec. Monkey makes iterative progress.
+
+MonkeyBars is a repo-local workflow for agent-built projects:
+greenfield builds, brownfield rescue, and v2/v3 iteration. It helps coding
+agents turn rough ideas, specs, and half-built code into plans, phases, small
+tasks, and reviewable commits.
+
+It is also a defense against context rot. Claude's
+[context-window docs](https://platform.claude.com/docs/en/build-with-claude/context-windows)
+put the problem plainly: "more context isn't automatically better. As token
+count grows, accuracy and recall degrade." MonkeyBars keeps the important state
+in the repo instead of trapping it in one fat chat that eventually needs
+compaction.
+
+The goal is not to keep one giant agent conversation alive forever. The goal is
+to make each work chunk clear enough that a fresh context can pick it up, finish
+it, and hand off cleanly.
 
 It works with Codex, Claude Code, and OpenCode.
 
@@ -29,10 +42,6 @@ The workflow turns those inputs into:
 2. phase files
 3. small tasks
 4. reviewable commits
-
-The point is not to keep one agent conversation alive forever. The point is to
-make each work chunk clear enough that a fresh context can pick it up, finish
-it, and hand off cleanly.
 
 ## Before You Start
 
