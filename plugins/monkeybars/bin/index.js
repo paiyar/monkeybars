@@ -2580,7 +2580,7 @@ import {
   rmSync as rmSync2,
   statSync
 } from "fs";
-import { join as join2, resolve as resolve3 } from "path";
+import { isAbsolute, join as join2, relative, resolve as resolve3 } from "path";
 var SUPPORTED_INSTALL_TARGETS = ["opencode", "claude", "codex"];
 function packageRoot() {
   const oneUp = resolve3(import.meta.dir, "..");
@@ -2589,8 +2589,8 @@ function packageRoot() {
   }
   return resolve3(import.meta.dir, "..", "..");
 }
-function sourcePaths() {
-  const root = packageRoot();
+function sourcePaths(rootOption) {
+  const root = resolve3(rootOption ?? packageRoot());
   return {
     plugin: join2(root, "plugins", "monkeybars"),
     marketplace: join2(root, ".agents", "plugins", "marketplace.json")
@@ -2607,25 +2607,40 @@ function projectRootOrThrow(projectPath) {
   }
   return project;
 }
+function samePath(left, right) {
+  return resolve3(left) === resolve3(right);
+}
+function isInsidePath(parent, child) {
+  const relativePath = relative(resolve3(parent), resolve3(child));
+  return relativePath !== "" && !relativePath.startsWith("..") && !isAbsolute(relativePath);
+}
 function replaceDirectory(source, target) {
-  const sourceStat = statSync(source);
-  if (!sourceStat.isDirectory()) {
-    throw new Error(`Source is not a directory: ${source}`);
+  const sourcePath = resolve3(source);
+  const targetPath = resolve3(target);
+  if (samePath(sourcePath, targetPath)) {
+    throw new Error(`Refusing to copy directory onto itself: ${sourcePath}`);
   }
-  rmSync2(target, { recursive: true, force: true });
-  mkdirSync2(target, { recursive: true });
-  for (const entry of readdirSync(source)) {
-    const sourcePath = join2(source, entry);
-    const targetPath = join2(target, entry);
-    const entryStat = statSync(sourcePath);
+  if (isInsidePath(sourcePath, targetPath)) {
+    throw new Error(`Refusing to copy directory into itself: ${sourcePath} -> ${targetPath}`);
+  }
+  const sourceStat = statSync(sourcePath);
+  if (!sourceStat.isDirectory()) {
+    throw new Error(`Source is not a directory: ${sourcePath}`);
+  }
+  rmSync2(targetPath, { recursive: true, force: true });
+  mkdirSync2(targetPath, { recursive: true });
+  for (const entry of readdirSync(sourcePath)) {
+    const sourceEntry = join2(sourcePath, entry);
+    const targetEntry = join2(targetPath, entry);
+    const entryStat = statSync(sourceEntry);
     if (entryStat.isDirectory()) {
-      replaceDirectory(sourcePath, targetPath);
+      replaceDirectory(sourceEntry, targetEntry);
       continue;
     }
     if (entryStat.isFile()) {
-      mkdirSync2(join2(targetPath, ".."), { recursive: true });
-      copyFileSync(sourcePath, targetPath);
-      chmodSync2(targetPath, entryStat.mode);
+      mkdirSync2(join2(targetEntry, ".."), { recursive: true });
+      copyFileSync(sourceEntry, targetEntry);
+      chmodSync2(targetEntry, entryStat.mode);
     }
   }
 }
@@ -2645,9 +2660,13 @@ function installCodex(project, source) {
   if (!existsSync3(source.marketplace)) {
     throw new Error(`Missing marketplace metadata: ${source.marketplace}`);
   }
-  replaceDirectory(source.plugin, pluginTarget);
+  if (!samePath(source.plugin, pluginTarget)) {
+    replaceDirectory(source.plugin, pluginTarget);
+  }
   mkdirSync2(join2(marketplaceTarget, ".."), { recursive: true });
-  copyFileSync(source.marketplace, marketplaceTarget);
+  if (!samePath(source.marketplace, marketplaceTarget)) {
+    copyFileSync(source.marketplace, marketplaceTarget);
+  }
   return { plugin: pluginTarget, marketplace: marketplaceTarget };
 }
 function runInstallTarget(target, source, project) {
@@ -2674,7 +2693,7 @@ function normalizeInstallTargets(targets) {
   return [...new Set(selected)];
 }
 function installPackageTargets(targets = [], options = {}) {
-  const source = sourcePaths();
+  const source = sourcePaths(options.packageRoot);
   const project = projectRootOrThrow(options.project);
   if (!existsSync3(source.plugin)) {
     throw new Error(`Missing plugin source directory: ${source.plugin}`);

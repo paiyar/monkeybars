@@ -7,13 +7,14 @@ import {
   rmSync,
   statSync
 } from "node:fs";
-import { join, resolve } from "node:path";
+import { isAbsolute, join, relative, resolve } from "node:path";
 
 export const SUPPORTED_INSTALL_TARGETS = ["opencode", "claude", "codex"] as const;
 export type InstallTarget = (typeof SUPPORTED_INSTALL_TARGETS)[number];
 
 export interface InstallOptions {
   project?: string;
+  packageRoot?: string;
 }
 
 interface SourcePaths {
@@ -30,8 +31,8 @@ function packageRoot(): string {
   return resolve(import.meta.dir, "..", "..");
 }
 
-function sourcePaths(): SourcePaths {
-  const root = packageRoot();
+function sourcePaths(rootOption?: string): SourcePaths {
+  const root = resolve(rootOption ?? packageRoot());
   return {
     plugin: join(root, "plugins", "monkeybars"),
     marketplace: join(root, ".agents", "plugins", "marketplace.json")
@@ -52,29 +53,49 @@ function projectRootOrThrow(projectPath?: string): string {
   return project;
 }
 
+function samePath(left: string, right: string): boolean {
+  return resolve(left) === resolve(right);
+}
+
+function isInsidePath(parent: string, child: string): boolean {
+  const relativePath = relative(resolve(parent), resolve(child));
+  return relativePath !== "" && !relativePath.startsWith("..") && !isAbsolute(relativePath);
+}
+
 function replaceDirectory(source: string, target: string): void {
-  const sourceStat = statSync(source);
-  if (!sourceStat.isDirectory()) {
-    throw new Error(`Source is not a directory: ${source}`);
+  const sourcePath = resolve(source);
+  const targetPath = resolve(target);
+
+  if (samePath(sourcePath, targetPath)) {
+    throw new Error(`Refusing to copy directory onto itself: ${sourcePath}`);
   }
 
-  rmSync(target, { recursive: true, force: true });
-  mkdirSync(target, { recursive: true });
+  if (isInsidePath(sourcePath, targetPath)) {
+    throw new Error(`Refusing to copy directory into itself: ${sourcePath} -> ${targetPath}`);
+  }
 
-  for (const entry of readdirSync(source)) {
-    const sourcePath = join(source, entry);
-    const targetPath = join(target, entry);
-    const entryStat = statSync(sourcePath);
+  const sourceStat = statSync(sourcePath);
+  if (!sourceStat.isDirectory()) {
+    throw new Error(`Source is not a directory: ${sourcePath}`);
+  }
+
+  rmSync(targetPath, { recursive: true, force: true });
+  mkdirSync(targetPath, { recursive: true });
+
+  for (const entry of readdirSync(sourcePath)) {
+    const sourceEntry = join(sourcePath, entry);
+    const targetEntry = join(targetPath, entry);
+    const entryStat = statSync(sourceEntry);
 
     if (entryStat.isDirectory()) {
-      replaceDirectory(sourcePath, targetPath);
+      replaceDirectory(sourceEntry, targetEntry);
       continue;
     }
 
     if (entryStat.isFile()) {
-      mkdirSync(join(targetPath, ".."), { recursive: true });
-      copyFileSync(sourcePath, targetPath);
-      chmodSync(targetPath, entryStat.mode);
+      mkdirSync(join(targetEntry, ".."), { recursive: true });
+      copyFileSync(sourceEntry, targetEntry);
+      chmodSync(targetEntry, entryStat.mode);
     }
   }
 }
@@ -99,10 +120,14 @@ function installCodex(project: string, source: SourcePaths): { plugin: string; m
     throw new Error(`Missing marketplace metadata: ${source.marketplace}`);
   }
 
-  replaceDirectory(source.plugin, pluginTarget);
+  if (!samePath(source.plugin, pluginTarget)) {
+    replaceDirectory(source.plugin, pluginTarget);
+  }
 
   mkdirSync(join(marketplaceTarget, ".."), { recursive: true });
-  copyFileSync(source.marketplace, marketplaceTarget);
+  if (!samePath(source.marketplace, marketplaceTarget)) {
+    copyFileSync(source.marketplace, marketplaceTarget);
+  }
 
   return { plugin: pluginTarget, marketplace: marketplaceTarget };
 }
@@ -135,7 +160,7 @@ export function normalizeInstallTargets(targets: readonly InstallTarget[] | unde
 }
 
 export function installPackageTargets(targets: readonly InstallTarget[] = [], options: InstallOptions = {}): void {
-  const source = sourcePaths();
+  const source = sourcePaths(options.packageRoot);
   const project = projectRootOrThrow(options.project);
 
   if (!existsSync(source.plugin)) {

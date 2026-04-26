@@ -4,6 +4,8 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
+import { installPackageTargets } from "../cli/src/install";
+
 const cliPath = resolve("dist", "index.js");
 const repoRoot = resolve(import.meta.dir, "..");
 
@@ -23,6 +25,29 @@ function sourceText(relativePath: string): string {
 }
 
 describe("monkeybars install", () => {
+  test("codex self-install preserves the source plugin directory", () => {
+    const root = tempProject();
+    const manifest = join(root, "plugins", "monkeybars", ".codex-plugin", "plugin.json");
+    const command = join(root, "plugins", "monkeybars", "commands", "start-session.md");
+    const skill = join(root, "plugins", "monkeybars", "skills", "start-session", "SKILL.md");
+    const marketplace = join(root, ".agents", "plugins", "marketplace.json");
+    mkdirSync(join(manifest, ".."), { recursive: true });
+    mkdirSync(join(command, ".."), { recursive: true });
+    mkdirSync(join(skill, ".."), { recursive: true });
+    mkdirSync(join(marketplace, ".."), { recursive: true });
+    writeFileSync(manifest, "plugin manifest\n");
+    writeFileSync(command, "opencode command\n");
+    writeFileSync(skill, "skill body\n");
+    writeFileSync(marketplace, "marketplace metadata\n");
+
+    installPackageTargets(["codex"], { project: root, packageRoot: root });
+
+    expect(readFileSync(manifest, "utf8")).toBe("plugin manifest\n");
+    expect(readFileSync(command, "utf8")).toBe("opencode command\n");
+    expect(readFileSync(skill, "utf8")).toBe("skill body\n");
+    expect(readFileSync(marketplace, "utf8")).toBe("marketplace metadata\n");
+  });
+
   test("installs all supported targets by default", () => {
     const project = tempProject();
 
