@@ -20,11 +20,24 @@ and advisory Git hooks.
 ## Install Shape
 
 This package is command-first. Hooks are optional, project-local, and advisory.
+The supported install flow is the package CLI:
 
-- Codex uses `.codex-plugin/plugin.json` and `skills/`.
-- Claude Code can use the same `skills/` directories.
-- OpenCode uses the generated markdown files in `commands/`.
-- The CLI build output, when packaged, lives in `bin/`.
+```sh
+monkeybars install --project /path/to/repo
+monkeybars install opencode codex --project /path/to/repo
+```
+
+Omitting targets installs all supported agents: OpenCode, Claude Code, and
+Codex. Pass one or more targets only when you want a subset.
+
+The generated assets land in the tool-specific project-local directories:
+
+- OpenCode: `.opencode/commands/`
+- Claude Code: `.claude/skills/`
+- Codex: `plugins/monkeybars/` plus `.agents/plugins/marketplace.json`
+
+The shell scripts in `scripts/` remain for checkout-based compatibility, but
+the CLI is the primary install path.
 
 ## OpenCode
 
@@ -33,38 +46,10 @@ OpenCode reads markdown command files from either:
 - project-local `.opencode/commands/`
 - global `~/.config/opencode/commands/`
 
-Global install:
-
-```sh
-scripts/install-opencode-commands.sh
-```
-
-Per-repo install:
-
-```sh
-OPENCODE_COMMANDS_DIR=/path/to/repo/.opencode/commands \
-  scripts/install-opencode-commands.sh
-```
-
 ## Claude Code
 
-Use the skill directories under `skills/` as plugin skills, or copy them to:
-
-- project-local `.claude/skills/`
-- global `~/.claude/skills/`
-
-Global install:
-
-```sh
-scripts/install-claude-skills.sh
-```
-
-Per-repo install:
-
-```sh
-CLAUDE_SKILLS_DIR=/path/to/repo/.claude/skills \
-  scripts/install-claude-skills.sh
-```
+Claude Code uses the skill directories under `skills/`, which the CLI installs
+into project-local `.claude/skills/`.
 
 ## Codex
 
@@ -80,15 +65,11 @@ From this repository root, the same manifest is:
 plugins/monkeybars/.codex-plugin/plugin.json
 ```
 
-If your Codex environment supports repo-local plugin marketplaces, copy both the
-plugin directory and marketplace metadata into the target repo:
+The CLI copies both the plugin directory and marketplace metadata into the
+target repo.
 
-```sh
-# From this repository root:
-cp -R plugins/monkeybars /path/to/repo/plugins/
-mkdir -p /path/to/repo/.agents/plugins
-cp .agents/plugins/marketplace.json /path/to/repo/.agents/plugins/marketplace.json
-```
+Use `monkeybars install codex --project /path/to/repo` if you only want the
+Codex plugin bundle.
 
 Invoke skills explicitly with the skill mention UI, such as
 `$initialize-monkeybars` and `$start-session`.

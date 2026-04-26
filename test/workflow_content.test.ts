@@ -93,13 +93,19 @@ describe("brainstorm-plan workflow content", () => {
     const readme = readWorkflow("README.md");
     const pluginReadme = readWorkflow("plugins/monkeybars/README.md");
 
-    for (const docs of [readme, pluginReadme]) {
-      expect(docs).toContain("OPENCODE_COMMANDS_DIR=/path/to/repo/.opencode/commands");
-      expect(docs).toContain("CLAUDE_SKILLS_DIR=/path/to/repo/.claude/skills");
-      expect(docs).toContain("plugins/monkeybars/.codex-plugin/plugin.json");
-      expect(docs).toContain(".agents/plugins/marketplace.json");
-      expect(docs).toContain("$initialize-monkeybars");
-    }
+    expect(readme).toContain("monkeybars install --project /path/to/repo");
+    expect(readme).toContain("monkeybars install opencode codex --project /path/to/repo");
+    expect(readme).toContain("monkeybars install codex --project /path/to/repo");
+    expect(readme).toContain("bun dist/index.js install --project /path/to/repo");
+    expect(readme).toContain("plugins/monkeybars/.codex-plugin/plugin.json");
+    expect(readme).toContain(".agents/plugins/marketplace.json");
+    expect(readme).toContain("$initialize-monkeybars");
+
+    expect(pluginReadme).toContain("monkeybars install --project /path/to/repo");
+    expect(pluginReadme).toContain("monkeybars install opencode codex --project /path/to/repo");
+    expect(pluginReadme).toContain("plugins/monkeybars/.codex-plugin/plugin.json");
+    expect(pluginReadme).toContain(".agents/plugins/marketplace.json");
+    expect(pluginReadme).toContain("$initialize-monkeybars");
 
     expect(readme).not.toContain("Codex can invoke automatically");
   });

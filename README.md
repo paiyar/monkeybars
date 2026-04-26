@@ -212,26 +212,40 @@ system and only need agents to execute tickets.
 
 ## Install
 
-Install globally when you want the workflow available across projects. Install
-per repo when you want the workflow checked into or isolated to one project.
+Install with the package-style CLI:
+
+```sh
+monkeybars install --project /path/to/repo
+monkeybars install opencode codex --project /path/to/repo
+```
+
+Omitting targets installs all supported agents: OpenCode, Claude Code, and
+Codex. Pass one or more targets only when you want a subset.
+
+That is the supported install surface. The checkout in this repository is just
+the current development transport until a published package is available.
+From this repository root, use:
+
+```sh
+bun dist/index.js install --project /path/to/repo
+```
+
+The legacy shell scripts under `plugins/monkeybars/scripts/` remain available
+for direct checkout use, but they are no longer the primary install path.
 
 ### OpenCode
 
 OpenCode reads markdown command files from global
 `~/.config/opencode/commands/` or project-local `.opencode/commands/`.
 
-Global install:
+The CLI installs the generated commands into the project-local directory:
 
 ```sh
-plugins/monkeybars/scripts/install-opencode-commands.sh
+monkeybars install --project /path/to/repo
 ```
 
-Per-repo install:
-
-```sh
-OPENCODE_COMMANDS_DIR=/path/to/repo/.opencode/commands \
-  plugins/monkeybars/scripts/install-opencode-commands.sh
-```
+Use `monkeybars install opencode --project /path/to/repo` if you only want the
+OpenCode commands.
 
 After install, run commands such as `/initialize-monkeybars` and
 `/start-session`.
@@ -241,18 +255,14 @@ After install, run commands such as `/initialize-monkeybars` and
 Claude Code reads skills from global `~/.claude/skills/` or project-local
 `.claude/skills/`.
 
-Global install:
+The CLI installs the generated skills into the project-local directory:
 
 ```sh
-plugins/monkeybars/scripts/install-claude-skills.sh
+monkeybars install --project /path/to/repo
 ```
 
-Per-repo install:
-
-```sh
-CLAUDE_SKILLS_DIR=/path/to/repo/.claude/skills \
-  plugins/monkeybars/scripts/install-claude-skills.sh
-```
+Use `monkeybars install claude --project /path/to/repo` if you only want the
+Claude skills.
 
 After install, invoke skills as slash commands such as
 `/initialize-monkeybars` and `/start-session`.
@@ -265,14 +275,15 @@ Install or point Codex at the plugin directory. The manifest is:
 plugins/monkeybars/.codex-plugin/plugin.json
 ```
 
-If your Codex environment supports repo-local plugin marketplaces, copy both the
-plugin directory and marketplace metadata into the target repo:
+The CLI copies both the plugin directory and `.agents/plugins/marketplace.json`
+into the target repo:
 
 ```sh
-cp -R plugins/monkeybars /path/to/repo/plugins/
-mkdir -p /path/to/repo/.agents/plugins
-cp .agents/plugins/marketplace.json /path/to/repo/.agents/plugins/marketplace.json
+monkeybars install codex --project /path/to/repo
 ```
+
+Use `monkeybars install codex --project /path/to/repo` if you only want the
+Codex plugin bundle.
 
 After install, invoke skills explicitly with the skill mention UI, such as
 `$initialize-monkeybars` and `$start-session`.

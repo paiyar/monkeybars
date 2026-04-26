@@ -2570,6 +2570,120 @@ function runHook(hookName, cwd = process.cwd()) {
   return 0;
 }
 
+// cli/src/install.ts
+import {
+  chmodSync as chmodSync2,
+  copyFileSync,
+  existsSync as existsSync3,
+  mkdirSync as mkdirSync2,
+  readdirSync,
+  rmSync as rmSync2,
+  statSync
+} from "fs";
+import { join as join2, resolve as resolve3 } from "path";
+var SUPPORTED_INSTALL_TARGETS = ["opencode", "claude", "codex"];
+function packageRoot() {
+  const oneUp = resolve3(import.meta.dir, "..");
+  if (existsSync3(join2(oneUp, "plugins", "monkeybars"))) {
+    return oneUp;
+  }
+  return resolve3(import.meta.dir, "..", "..");
+}
+function sourcePaths() {
+  const root = packageRoot();
+  return {
+    plugin: join2(root, "plugins", "monkeybars"),
+    marketplace: join2(root, ".agents", "plugins", "marketplace.json")
+  };
+}
+function projectRootOrThrow(projectPath) {
+  const project = resolve3(projectPath ?? process.cwd());
+  if (!existsSync3(project)) {
+    throw new Error(`Project path does not exist: ${project}`);
+  }
+  const projectStat = statSync(project);
+  if (!projectStat.isDirectory()) {
+    throw new Error(`Project path is not a directory: ${project}`);
+  }
+  return project;
+}
+function replaceDirectory(source, target) {
+  const sourceStat = statSync(source);
+  if (!sourceStat.isDirectory()) {
+    throw new Error(`Source is not a directory: ${source}`);
+  }
+  rmSync2(target, { recursive: true, force: true });
+  mkdirSync2(target, { recursive: true });
+  for (const entry of readdirSync(source)) {
+    const sourcePath = join2(source, entry);
+    const targetPath = join2(target, entry);
+    const entryStat = statSync(sourcePath);
+    if (entryStat.isDirectory()) {
+      replaceDirectory(sourcePath, targetPath);
+      continue;
+    }
+    if (entryStat.isFile()) {
+      mkdirSync2(join2(targetPath, ".."), { recursive: true });
+      copyFileSync(sourcePath, targetPath);
+      chmodSync2(targetPath, entryStat.mode);
+    }
+  }
+}
+function installOpenCode(project, source) {
+  const target = join2(project, ".opencode", "commands");
+  replaceDirectory(join2(source.plugin, "commands"), target);
+  return target;
+}
+function installClaude(project, source) {
+  const target = join2(project, ".claude", "skills");
+  replaceDirectory(join2(source.plugin, "skills"), target);
+  return target;
+}
+function installCodex(project, source) {
+  const pluginTarget = join2(project, "plugins", "monkeybars");
+  const marketplaceTarget = join2(project, ".agents", "plugins", "marketplace.json");
+  if (!existsSync3(source.marketplace)) {
+    throw new Error(`Missing marketplace metadata: ${source.marketplace}`);
+  }
+  replaceDirectory(source.plugin, pluginTarget);
+  mkdirSync2(join2(marketplaceTarget, ".."), { recursive: true });
+  copyFileSync(source.marketplace, marketplaceTarget);
+  return { plugin: pluginTarget, marketplace: marketplaceTarget };
+}
+function runInstallTarget(target, source, project) {
+  switch (target) {
+    case "opencode": {
+      const targetPath = installOpenCode(project, source);
+      console.log(`Installed MonkeyBars OpenCode commands to ${targetPath}.`);
+      return;
+    }
+    case "claude": {
+      const targetPath = installClaude(project, source);
+      console.log(`Installed MonkeyBars Claude skills to ${targetPath}.`);
+      return;
+    }
+    case "codex": {
+      const targetPaths = installCodex(project, source);
+      console.log(`Installed MonkeyBars Codex plugin to ${targetPaths.plugin} and marketplace metadata to ${targetPaths.marketplace}.`);
+      return;
+    }
+  }
+}
+function normalizeInstallTargets(targets) {
+  const selected = targets?.length ? targets : SUPPORTED_INSTALL_TARGETS;
+  return [...new Set(selected)];
+}
+function installPackageTargets(targets = [], options = {}) {
+  const source = sourcePaths();
+  const project = projectRootOrThrow(options.project);
+  if (!existsSync3(source.plugin)) {
+    throw new Error(`Missing plugin source directory: ${source.plugin}`);
+  }
+  for (const target of normalizeInstallTargets(targets)) {
+    runInstallTarget(target, source, project);
+  }
+}
+
 // cli/src/index.ts
 function createProgram() {
   const program2 = new Command;
@@ -2582,6 +2696,12 @@ function createProgram() {
       printCheckResult(result);
     }
     process.exitCode = result.ok ? 0 : 1;
+  });
+  program2.command("install").description("Install MonkeyBars workflow assets into a project.").addArgument(new Argument("[targets...]", "install targets").choices(SUPPORTED_INSTALL_TARGETS)).option("--project <path>", "target project directory").allowExcessArguments(false).allowUnknownOption(false).action((targets = [], options) => {
+    installPackageTargets(targets, {
+      project: options.project
+    });
+    process.exitCode = 0;
   });
   const hooks = program2.command("hooks").description("Manage MonkeyBars git hooks.").allowExcessArguments(false).allowUnknownOption(false);
   hooks.command("install").description("Install MonkeyBars git hooks.").option("--force", "overwrite existing non-managed hooks").allowExcessArguments(false).allowUnknownOption(false).action((options) => {

@@ -2,12 +2,17 @@
 import { Argument, Command, CommanderError } from "commander";
 import { installHooks, runHook, SUPPORTED_HOOKS, uninstallHooks } from "./hooks.js";
 import { printCheckResult, runCheck } from "./check.js";
+import { installPackageTargets, SUPPORTED_INSTALL_TARGETS } from "./install.js";
 
 type CheckOptions = {
   json?: boolean;
 };
 
-type InstallOptions = {
+type PackageInstallOptions = {
+  project?: string;
+};
+
+type HookInstallOptions = {
   force?: boolean;
 };
 
@@ -35,6 +40,20 @@ function createProgram(): Command {
       process.exitCode = result.ok ? 0 : 1;
     });
 
+  program
+    .command("install")
+    .description("Install MonkeyBars workflow assets into a project.")
+    .addArgument(new Argument("[targets...]", "install targets").choices(SUPPORTED_INSTALL_TARGETS))
+    .option("--project <path>", "target project directory")
+    .allowExcessArguments(false)
+    .allowUnknownOption(false)
+    .action((targets: string[] = [], options: PackageInstallOptions) => {
+      installPackageTargets(targets as (typeof SUPPORTED_INSTALL_TARGETS)[number][], {
+        project: options.project
+      });
+      process.exitCode = 0;
+    });
+
   const hooks = program
     .command("hooks")
     .description("Manage MonkeyBars git hooks.")
@@ -47,7 +66,7 @@ function createProgram(): Command {
     .option("--force", "overwrite existing non-managed hooks")
     .allowExcessArguments(false)
     .allowUnknownOption(false)
-    .action((options: InstallOptions) => {
+    .action((options: HookInstallOptions) => {
       installHooks({ force: options.force });
       process.exitCode = 0;
     });

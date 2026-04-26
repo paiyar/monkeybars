@@ -7,10 +7,22 @@
   "bin": {
     "monkeybars": "dist/index.js"
   },
+  "files": [
+    "dist",
+    ".agents/plugins/marketplace.json",
+    "plugins/monkeybars/README.md",
+    "plugins/monkeybars/bin",
+    "plugins/monkeybars/commands",
+    "plugins/monkeybars/scripts",
+    "plugins/monkeybars/skills",
+    "plugins/monkeybars/templates",
+    "plugins/monkeybars/.codex-plugin/plugin.json"
+  ],
   "scripts": {
     "build": "bun build cli/src/index.ts --target=bun --format=esm --outdir=dist",
     "test": "bun run build && bun test",
-    "generate": "bun run build && bun cli/src/generate.ts"
+    "generate": "bun run build && bun cli/src/generate.ts",
+    "prepack": "bun run generate"
   },
   "engines": {
     "bun": ">=1.3.13"
