@@ -19,7 +19,7 @@
   "interface": {
     "displayName": "Agent Workflow",
     "shortDescription": "Durable phase/task workflow commands for coding agents.",
-    "longDescription": "Agent Workflow gives coding agents repo-backed memory through status files, phase task lists, handoffs, and context-boundary prompts. It is command-first and avoids automatic commits, stashes, hooks, or status mutation unless explicitly invoked.",
+    "longDescription": "Agent Workflow helps coding agents build greenfield projects from specs by turning plans into phases, tasks, reviewable commits, and handoffs. It is command-first; optional advisory hooks can run deterministic checks but never commit, stash, or mutate workflow state.",
     "developerName": "Pavan Aiyar",
     "category": "Productivity",
     "capabilities": [

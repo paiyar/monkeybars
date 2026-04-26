@@ -1,6 +1,7 @@
 # Agent Workflow Plugin
 
-Repo-backed workflow commands for agentic coding sessions.
+Spec-to-phase workflow commands for agentic coding sessions, plus an optional
+CLI for deterministic checks and advisory Git hooks.
 
 ## Commands
 
@@ -16,11 +17,12 @@ Repo-backed workflow commands for agentic coding sessions.
 
 ## Install Shape
 
-This package is command-first and does not install hooks in v1.
+This package is command-first. Hooks are optional, project-local, and advisory.
 
 - Codex uses `.codex-plugin/plugin.json` and `skills/`.
 - Claude Code can use the same `skills/` directories.
 - OpenCode uses the generated markdown files in `commands/`.
+- The CLI build output, when packaged, lives in `bin/`.
 
 ## OpenCode
 
@@ -44,11 +46,24 @@ Install this directory as a Codex plugin. The manifest is:
 .codex-plugin/plugin.json
 ```
 
-## Source of Truth
+## CLI and Hooks
 
-Do not edit generated files in this plugin directly. Edit
-`../../workflow-src/commands/` and run:
+The CLI is for deterministic checks outside an agent session:
 
 ```sh
-python3 ../../scripts/generate_adapters.py
+agent-workflow check
+agent-workflow hooks install
+agent-workflow hooks uninstall
+```
+
+Installed hooks run the CLI and print guidance. They do not edit workflow
+files, commit, stash, or check off tasks.
+
+## Source of Truth
+
+Do not edit generated files in this plugin directly. From the repository root,
+edit `workflow-src/commands/` and run:
+
+```sh
+bun run generate
 ```

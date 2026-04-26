@@ -21,17 +21,18 @@
   or start a fresh context.
 - One task = one logical change = one commit.
 
-## Commands
+## Preflight Checks
+
+Document the commands that must pass before `/complete-task` commits work.
+Use the project’s native runner; Taskfile is optional.
 
 ```sh
-task lint
-task typecheck
-task test
+[fill in project-specific checks, for example: npm test, cargo test, go test ./..., make test]
 ```
 
 ## Always
 
-- Run checks before committing.
+- Run preflight checks before committing.
 - Keep workflow tracking files current.
 - Record dirty WIP files before ending a session.
 

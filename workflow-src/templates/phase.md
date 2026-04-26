@@ -11,7 +11,7 @@
 - **State:** not_started
 - **Current task:** T01 — [first task description]
 - **Last commit:** none
-- **Tests:** n/a
+- **Preflight:** n/a
 - **Blockers:** none
 - **WIP files:** none
 

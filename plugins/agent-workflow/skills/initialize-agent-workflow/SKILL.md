@@ -15,26 +15,31 @@ the opt-in step that creates or updates project-local workflow files.
 2. Inspect existing project context:
    - `README.md`, `AGENTS.md`, `CLAUDE.md`, and `docs/`
    - top-level code structure and likely tech stack
-   - existing task runner commands
-3. If no task runner exists, create a minimal `Taskfile.yml` shim with
-   `lint`, `typecheck`, and `test` targets mapped to the project stack, or
-   placeholder commands if the project has no tests yet.
-4. Create missing planning structure:
+   - existing preflight or verification commands
+3. Determine the project preflight checks: the commands that should pass before
+   a completed task is committed. Prefer existing project commands from README,
+   AGENTS, package scripts, Makefile, Justfile, Taskfile, Cargo, Go, Python, or
+   similar stack conventions. Preflight may include linting, static analysis,
+   typechecking, tests, build, migrations, or smoke checks.
+4. If no command surface exists, offer to create a minimal `Taskfile.yml` shim
+   for the discovered stack. Do not require Taskfile when another runner is
+   already present.
+5. Create missing planning structure:
    - `docs/prd/spec.md`
    - `docs/prd/architecture.md`
    - `docs/plan.md`
-5. Create or update `AGENTS.md` with the workflow rules and project command
-   surface. Preserve existing project-specific instructions.
-6. If the user is using Claude Code, create or update `CLAUDE.md` so it
+6. Create or update `AGENTS.md` with the workflow rules and documented
+   preflight checks. Preserve existing project-specific instructions.
+7. If the user is using Claude Code, create or update `CLAUDE.md` so it
    references `AGENTS.md`.
-7. Create `docs/status.md` from the status template if missing.
-8. Create `docs/work/phase-1.md` from Phase 1 of `docs/plan.md` if missing.
-9. Install project-local command adapters only if the user asks:
+8. Create `docs/status.md` from the status template if missing.
+9. Create `docs/work/phase-1.md` from Phase 1 of `docs/plan.md` if missing.
+10. Install project-local command adapters only if the user asks:
    - OpenCode: `.opencode/commands/`
    - Claude Code: `.claude/skills/`
-10. Do not install hooks in v1. If hooks are requested later, install them as a
+11. Do not install hooks in v1. If hooks are requested later, install them as a
     separate project-local advisory hook pack.
-11. Show files created or updated, then run `workflow-check`.
+12. Show files created or updated, then run `workflow-check`.
 
 This command may edit project files because initialization is explicit opt-in.
 It must not overwrite existing docs or agent instructions without preserving

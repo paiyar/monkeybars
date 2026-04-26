@@ -15,7 +15,8 @@ user asks to save progress for next time.
 4. Update the phase Status section:
    - Current task, including where work stopped.
    - Last commit from `git log -1 --oneline`.
-   - Test results, running `task test` if not recently run.
+   - Preflight status, running relevant checks if not recently run or recording
+     why checks were skipped.
    - Blockers or open questions.
    - WIP files from `git status --short`, or `none`.
 5. Do not check off the current task unless a completed task commit already
