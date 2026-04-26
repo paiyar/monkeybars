@@ -82,9 +82,13 @@ repeatable way to stop, write down the state, and resume in a new session.
 
 ## Basic Loop
 
-The workflow names are the same across tools. In OpenCode they are slash
-commands. In Codex and Claude Code they are skills. This README writes them as
-slash commands for readability.
+The workflow names are shared across tools, but each tool exposes them
+slightly differently. OpenCode uses generated slash commands. Claude Code
+exposes the generated skills as slash commands. Codex packages them as plugin
+skills that Codex can invoke automatically, or that you can invoke explicitly
+with the skill mention UI, such as `$start-session`.
+
+This README writes the workflow names as slash commands for readability.
 
 Install the plugin or skills once, then initialize each project. You can start
 from existing docs or from rough project intent:
@@ -128,8 +132,9 @@ After that, use the workflow loop:
 
 ## Skills In Workflow Order
 
-These names are slash commands in OpenCode and skills in Codex and Claude Code.
-The workflow names are the same.
+The workflow names are shared across tools. OpenCode exposes them as slash
+commands, Claude Code exposes the generated skills as slash commands, and
+Codex exposes them as plugin skills.
 
 | Order | Skill / command | Use it when | What it does |
 |---:|---|---|---|
