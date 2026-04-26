@@ -14,6 +14,21 @@ function tempRepo(): string {
 
 function writeWorkflow(root: string): void {
   mkdirSync(join(root, "docs", "work"), { recursive: true });
+  writeFileSync(join(root, "docs", "plan.md"), `# Implementation Plan
+
+## Phase 1 — Test
+
+- **Goal:** Test workflow fixture
+- **User-visible outcome:** Test
+- **Deliverables:**
+  - Test task
+- **Likely files/modules:** test
+- **Dependencies:** none
+- **Acceptance criteria:**
+  - Test passes
+- **Preflight:** bun test
+- **Open questions:** none
+`);
   writeFileSync(join(root, "docs", "status.md"), `# Project Status
 
 ## Active Work

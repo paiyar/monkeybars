@@ -1,6 +1,7 @@
 # Agentic Coding Workflow
 
-Agentic Coding Workflow is a workflow for greenfield vibe-coded projects.
+Agentic Coding Workflow is a repo-local workflow for agent-built projects:
+greenfield builds, brownfield rescue, and v2/v3 iteration.
 
 It helps you start from real specs, break the work into reviewable chunks, and
 move through those chunks with coding agents without letting one huge chat
@@ -10,8 +11,8 @@ It works with Codex, Claude Code, and OpenCode.
 
 ## What It Is For
 
-Use this when you are building a new project from existing documents or rough
-intent like:
+Use this when you are building a new project, adopting an existing repo, or
+planning the next release from inputs like:
 
 - product requirements
 - architecture notes
@@ -19,6 +20,8 @@ intent like:
 - design notes
 - API contracts
 - implementation plans
+- partially implemented or vibe-coded code
+- issue lists, bug reports, or refactor notes
 
 The workflow turns those inputs into:
 
@@ -35,9 +38,9 @@ it, and hand off cleanly.
 
 Use this inside a git repository.
 
-Bring whatever specs you have: product notes, architecture sketches, data
-models, design notes, API contracts, or rough implementation plans. They do not
-need to be complete.
+Bring whatever context you have: product notes, architecture sketches, data
+models, design notes, API contracts, rough implementation plans, existing code,
+or notes about what feels broken. It does not need to be complete.
 
 Then run:
 
@@ -50,16 +53,18 @@ preflight commands such as tests, linting, typechecking, builds, migrations, or
 smoke checks. If the project has no clear command surface, it can suggest a
 small `Taskfile.yml` shim, but Taskfile is optional.
 
-You can start with your own docs or with a rough idea. When docs already exist,
-the initializer maps them into the workflow. When docs are missing or too rough,
-it moves into guided planning intake to define the needed spec, architecture,
-data, interface, and plan docs before implementation starts.
+You can start with your own docs, a rough idea, or a messy existing repo. When
+docs already exist, the initializer maps them into the workflow. When docs are
+missing, stale, contradictory, or too rough, it moves into guided planning
+intake to define the needed spec, architecture, data, interface, and active
+plan docs before implementation starts.
 
 ## How It Works
 
-Your project gets a small set of tracking files:
+Your project gets a small set of planning and tracking files:
 
-- `docs/plan.md` — the build plan
+- `docs/prd/*.md` — living product, architecture, data, and interface truth
+- `docs/plan.md` — the active implementation plan for the current work slice
 - `docs/work/phase-N.md` — a reviewable chunk of the plan, split into tasks
 - `docs/status.md` — the current phase, task, and handoff pointer
 - `AGENTS.md` — project rules every coding agent should follow
@@ -80,18 +85,24 @@ That lets you use shorter, cleaner sessions:
 The workflow treats context bloat as a normal failure mode. It gives you a
 repeatable way to stop, write down the state, and resume in a new session.
 
+`docs/plan.md` is intentionally the active plan, not a permanent backlog. When a
+release or work slice is complete, archive the completed plan under
+`docs/archive/plans/YYYY-MM-DD-<scope>.md`, then write a fresh active
+`docs/plan.md` for the next release. Keep old `docs/work/phase-N.md` files as
+execution history, and keep phase numbers increasing instead of reusing Phase 1.
+
 ## Basic Loop
 
 The workflow names are shared across tools, but each tool exposes them
 slightly differently. OpenCode uses generated slash commands. Claude Code
 exposes the generated skills as slash commands. Codex packages them as plugin
-skills that Codex can invoke automatically, or that you can invoke explicitly
-with the skill mention UI, such as `$start-session`.
+skills that you invoke explicitly with the skill mention UI, such as
+`$start-session`.
 
 This README writes the workflow names as slash commands for readability.
 
 Install the plugin or skills once, then initialize each project. You can start
-from existing docs or from rough project intent:
+from existing docs, existing code, or rough project intent:
 
 ```text
 /initialize-agent-workflow
@@ -112,7 +123,9 @@ After that, use the workflow loop:
 /handoff-session     # save unfinished context before stopping
 ```
 
-## Typical Greenfield Run
+## Common Runs
+
+### Greenfield
 
 1. Put any existing specs in the repo, usually under `docs/prd/` or `docs/`, or
    start with a rough project idea.
@@ -130,6 +143,37 @@ After that, use the workflow loop:
 10. When a phase is complete, run `/create-phase` to create the next reviewable
    phase file from `docs/plan.md`.
 
+### Brownfield Rescue
+
+Use this when an existing repo has useful code but poor planning context, one
+oversized chat history, unreliable tests, or unclear architecture.
+
+1. Run `/initialize-agent-workflow` in the repo.
+2. Let the initializer inspect the current docs, code structure, dependency
+   manifests, and available preflight commands.
+3. Capture current behavior honestly in `docs/prd/` before inventing a target
+   architecture.
+4. Use `/brainstorm-plan` to define the first active plan. The first phase is
+   often inventory, stabilization, test coverage, or preflight setup before
+   larger feature work.
+5. Create phase files from the active plan and proceed one reviewable task and
+   commit at a time.
+
+### Post-v1 Or Next Release
+
+Use this when the current active plan is complete and you need v2, v3, or a new
+work slice.
+
+1. Confirm the current phase and plan are complete with `/project-status` and
+   `/workflow-check`.
+2. Archive the completed `docs/plan.md` to
+   `docs/archive/plans/YYYY-MM-DD-<scope>.md`.
+3. Update the living docs under `docs/prd/` to reflect what is true after the
+   completed release.
+4. Run `/brainstorm-plan` to define the next active plan in `docs/plan.md`.
+5. Run `/create-phase`. Use the next available `docs/work/phase-N.md` number
+   instead of resetting to Phase 1.
+
 ## Skills In Workflow Order
 
 The workflow names are shared across tools. OpenCode exposes them as slash
@@ -138,8 +182,8 @@ Codex exposes them as plugin skills.
 
 | Order | Skill / command | Use it when | What it does |
 |---:|---|---|---|
-| 1 | `/initialize-agent-workflow` | Once per project, with existing docs or rough intent | Creates or updates planning docs, `docs/status.md`, the first phase file, and agent instructions |
-| 2 | `/brainstorm-plan` | When specs or plans are rough, missing, stale, or too broad | Turns intent into phase-ready spec, architecture, and plan docs |
+| 1 | `/initialize-agent-workflow` | Once per project, with existing docs, existing code, or rough intent | Creates or updates planning docs, `docs/status.md`, the first phase file, and agent instructions |
+| 2 | `/brainstorm-plan` | When specs or plans are rough, missing, stale, complete, or too broad | Turns intent, repo state, or next-release goals into phase-ready docs |
 | 3 | `/project-status` | Anytime you want a read-only progress check | Summarizes active phase, current task, blockers, and remaining work |
 | 4 | `/start-session` | At the start of each fresh context | Reads current workflow files, checks state, and reports the next task |
 | 5 | `/create-phase` | When the next phase has no phase file yet | Creates the next reviewable `docs/work/phase-N.md` from `docs/plan.md` |
@@ -151,8 +195,8 @@ Codex exposes them as plugin skills.
 
 ## Intended Fit
 
-This is myopically built for greenfield projects where you are using agents to
-vibe-code from a spec.
+This is built for projects where agents need repo-tracked context, small
+reviewable changes, and safe handoffs between fresh sessions.
 
 It is especially useful when you want:
 
@@ -162,30 +206,78 @@ It is especially useful when you want:
 - explicit handoffs before compaction or context loss
 - the same workflow across Codex, Claude Code, and OpenCode
 
-It can help with maintenance work too, but that is not the main design center.
+It is a poor fit for one-off edits where the cost of planning is higher than
+the code change, or for teams that already have a stronger external planning
+system and only need agents to execute tickets.
 
 ## Install
 
-Codex: install or point Codex at the plugin directory. The manifest is:
+Install globally when you want the workflow available across projects. Install
+per repo when you want the workflow checked into or isolated to one project.
 
-```text
-plugins/agent-workflow/.codex-plugin/plugin.json
-```
+### OpenCode
 
-OpenCode: install the generated slash commands globally:
+OpenCode reads markdown command files from global
+`~/.config/opencode/commands/` or project-local `.opencode/commands/`.
+
+Global install:
 
 ```sh
 plugins/agent-workflow/scripts/install-opencode-commands.sh
 ```
 
-Claude Code: install the generated skills globally:
+Per-repo install:
+
+```sh
+OPENCODE_COMMANDS_DIR=/path/to/repo/.opencode/commands \
+  plugins/agent-workflow/scripts/install-opencode-commands.sh
+```
+
+After install, run commands such as `/initialize-agent-workflow` and
+`/start-session`.
+
+### Claude Code
+
+Claude Code reads skills from global `~/.claude/skills/` or project-local
+`.claude/skills/`.
+
+Global install:
 
 ```sh
 plugins/agent-workflow/scripts/install-claude-skills.sh
 ```
 
-After install, use the workflow names above in your agent tool. The plugin is
-command-first. It does not install hooks in v1.
+Per-repo install:
+
+```sh
+CLAUDE_SKILLS_DIR=/path/to/repo/.claude/skills \
+  plugins/agent-workflow/scripts/install-claude-skills.sh
+```
+
+After install, invoke skills as slash commands such as
+`/initialize-agent-workflow` and `/start-session`.
+
+### Codex
+
+Install or point Codex at the plugin directory. The manifest is:
+
+```text
+plugins/agent-workflow/.codex-plugin/plugin.json
+```
+
+If your Codex environment supports repo-local plugin marketplaces, copy both the
+plugin directory and marketplace metadata into the target repo:
+
+```sh
+cp -R plugins/agent-workflow /path/to/repo/plugins/
+mkdir -p /path/to/repo/.agents/plugins
+cp .agents/plugins/marketplace.json /path/to/repo/.agents/plugins/marketplace.json
+```
+
+After install, invoke skills explicitly with the skill mention UI, such as
+`$initialize-agent-workflow` and `$start-session`.
+
+The plugin is command-first. It does not install hooks in v1.
 
 ## CLI And Advisory Hooks
 

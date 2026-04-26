@@ -8,8 +8,8 @@ mkdir -p "$TARGET_DIR"
 for skill_dir in "$PLUGIN_DIR"/skills/*; do
   [ -d "$skill_dir" ] || continue
   skill_name=$(basename "$skill_dir")
-  mkdir -p "$TARGET_DIR/$skill_name"
-  cp "$skill_dir"/SKILL.md "$TARGET_DIR/$skill_name"/SKILL.md
+  rm -rf "$TARGET_DIR/$skill_name"
+  cp -R "$skill_dir" "$TARGET_DIR/$skill_name"
 done
 
 printf 'Installed Agent Workflow Claude skills to %s\n' "$TARGET_DIR"

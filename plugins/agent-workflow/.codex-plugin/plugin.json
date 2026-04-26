@@ -19,7 +19,7 @@
   "interface": {
     "displayName": "Agent Workflow",
     "shortDescription": "Durable phase/task workflow commands for coding agents.",
-    "longDescription": "Agent Workflow helps coding agents build greenfield projects from specs by turning plans into phases, tasks, reviewable commits, and handoffs. It is command-first; optional advisory hooks can run deterministic checks but never commit, stash, or mutate workflow state.",
+    "longDescription": "Agent Workflow helps coding agents handle greenfield builds, brownfield rescue, and post-v1 iteration by turning repo context into plans, phases, tasks, reviewable commits, and handoffs. It is command-first; optional advisory hooks can run deterministic checks but never commit, stash, or mutate workflow state.",
     "developerName": "Pavan Aiyar",
     "category": "Productivity",
     "capabilities": [

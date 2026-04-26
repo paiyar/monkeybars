@@ -1,6 +1,6 @@
 # Phase N — [Title]
 
-> Source: docs/plan.md, Phase N
+> Source: active docs/plan.md, Phase N
 
 ## Goal
 

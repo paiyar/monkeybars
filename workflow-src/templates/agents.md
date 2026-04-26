@@ -11,15 +11,21 @@
 - `docs/prd/spec.md` — product behavior, users, requirements, and acceptance
 - `docs/prd/architecture.md` — system shape, components, interfaces, and risks
 - `docs/prd/*.md` — optional focused docs such as data model or API contracts
-- `docs/plan.md` — build phases, task breakdown, and technical decisions
+- `docs/plan.md` — active implementation plan for the current work slice
 - `docs/status.md` — active phase and current task
 - `docs/work/phase-N.md` — task checklist, blockers, WIP, and log
+- `docs/archive/plans/` — completed or superseded active plans
 
 ## Workflow
 
 - Start sessions with `/start-session`.
 - Use `/brainstorm-plan` before creating or materially changing planning docs
   when requirements are vague, missing, contradictory, or too broad.
+- For brownfield work, document current behavior and constraints before target
+  changes.
+- When the active plan is complete, archive `docs/plan.md` under
+  `docs/archive/plans/`, write a fresh active plan, and keep phase numbers
+  increasing.
 - Finish completed tasks with `/complete-task`.
 - Save incomplete work with `/handoff-session`.
 - Use `/context-boundary` after a coherent chunk to decide whether to continue

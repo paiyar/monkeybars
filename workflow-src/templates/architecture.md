@@ -2,7 +2,12 @@
 
 > Last updated: YYYY-MM-DD
 
-## Overview
+## Current Architecture
+
+[For brownfield work, summarize the current system shape, runtime boundaries,
+important constraints, and known weak spots. Use `n/a` for greenfield work.]
+
+## Target Architecture
 
 [Short description of the system shape and primary runtime boundaries.]
 

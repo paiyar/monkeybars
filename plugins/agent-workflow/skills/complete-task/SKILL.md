@@ -28,6 +28,9 @@ Use after finishing implementation of a task from the active phase file.
 8. Run `workflow-check`.
 9. Run `context-boundary` and report whether to continue, hand off, or start a
     fresh context.
+10. If this completes the last phase in the active `docs/plan.md`, report that
+    the active plan is exhausted and the next planning step is `brainstorm-plan`
+    to archive it and create the next active plan.
 
 Do not try to write the final commit hash into the same commit; a commit cannot
 contain its own final hash.

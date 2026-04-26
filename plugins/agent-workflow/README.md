@@ -1,7 +1,8 @@
 # Agent Workflow Plugin
 
-Spec-to-phase workflow commands for agentic coding sessions, plus an optional
-CLI for deterministic checks and advisory Git hooks.
+Repo-local workflow commands for greenfield builds, brownfield rescue, and
+post-v1 agentic coding sessions, plus an optional CLI for deterministic checks
+and advisory Git hooks.
 
 ## Commands
 
@@ -27,10 +28,23 @@ This package is command-first. Hooks are optional, project-local, and advisory.
 
 ## OpenCode
 
-Copy `commands/*.md` to either:
+OpenCode reads markdown command files from either:
 
 - project-local `.opencode/commands/`
 - global `~/.config/opencode/commands/`
+
+Global install:
+
+```sh
+scripts/install-opencode-commands.sh
+```
+
+Per-repo install:
+
+```sh
+OPENCODE_COMMANDS_DIR=/path/to/repo/.opencode/commands \
+  scripts/install-opencode-commands.sh
+```
 
 ## Claude Code
 
@@ -39,6 +53,19 @@ Use the skill directories under `skills/` as plugin skills, or copy them to:
 - project-local `.claude/skills/`
 - global `~/.claude/skills/`
 
+Global install:
+
+```sh
+scripts/install-claude-skills.sh
+```
+
+Per-repo install:
+
+```sh
+CLAUDE_SKILLS_DIR=/path/to/repo/.claude/skills \
+  scripts/install-claude-skills.sh
+```
+
 ## Codex
 
 Install this directory as a Codex plugin. The manifest is:
@@ -46,6 +73,25 @@ Install this directory as a Codex plugin. The manifest is:
 ```text
 .codex-plugin/plugin.json
 ```
+
+From this repository root, the same manifest is:
+
+```text
+plugins/agent-workflow/.codex-plugin/plugin.json
+```
+
+If your Codex environment supports repo-local plugin marketplaces, copy both the
+plugin directory and marketplace metadata into the target repo:
+
+```sh
+# From this repository root:
+cp -R plugins/agent-workflow /path/to/repo/plugins/
+mkdir -p /path/to/repo/.agents/plugins
+cp .agents/plugins/marketplace.json /path/to/repo/.agents/plugins/marketplace.json
+```
+
+Invoke skills explicitly with the skill mention UI, such as
+`$initialize-agent-workflow` and `$start-session`.
 
 ## CLI and Hooks
 

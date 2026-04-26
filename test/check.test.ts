@@ -27,6 +27,21 @@ function writeWorkflow(root: string, options: {
   tasks?: string;
 } = {}): void {
   mkdirSync(join(root, "docs", "work"), { recursive: true });
+  writeFileSync(join(root, "docs", "plan.md"), `# Implementation Plan
+
+## Phase 1 — Test
+
+- **Goal:** Test workflow fixture
+- **User-visible outcome:** Test
+- **Deliverables:**
+  - Test task
+- **Likely files/modules:** test
+- **Dependencies:** none
+- **Acceptance criteria:**
+  - Test passes
+- **Preflight:** bun test
+- **Open questions:** none
+`);
   const current = options.current ?? "T01";
   const phaseCurrent = options.phaseCurrent ?? current;
   const state = options.state ?? "not_started";
@@ -93,6 +108,42 @@ describe("agent-workflow check", () => {
     const result = runCheck(root);
     expect(result.ok).toBe(false);
     expect(result.findings[0]?.code).toBe("missing-status");
+  });
+
+  test("fails when docs/plan.md is missing", () => {
+    const root = tempRepo();
+    mkdirSync(join(root, "docs", "work"), { recursive: true });
+    writeFileSync(join(root, "docs", "status.md"), `# Project Status
+
+## Active Work
+
+- **Phase file:** docs/work/phase-1.md
+- **Phase:** 1 — Test
+- **State:** not_started
+- **Current task:** T01 — first task
+- **Last commit:** none
+`);
+    writeFileSync(join(root, "docs", "work", "phase-1.md"), `# Phase 1 — Test
+
+## Status
+
+- **State:** not_started
+- **Current task:** T01 — first task
+- **Last commit:** none
+- **Preflight:** n/a
+- **Blockers:** none
+- **WIP files:** none
+
+## Tasks
+
+- [ ] T01 — first task | files
+
+## Log
+`);
+
+    const result = runCheck(root);
+    expect(result.ok).toBe(false);
+    expect(result.findings.some((finding) => finding.code === "missing-plan")).toBe(true);
   });
 
   test("fails outside a git repository", () => {

@@ -6,6 +6,15 @@
 
 [What problem this project or feature solves, and for whom.]
 
+## Current State
+
+[For brownfield work, summarize what exists today, what must keep working, and
+what is known to be unreliable. Use `n/a` for greenfield work.]
+
+## Target Outcome
+
+[What should be true after this active plan or release is complete.]
+
 ## Goals
 
 - [Primary user-visible outcome]

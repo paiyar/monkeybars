@@ -12,7 +12,7 @@ continue work on the project.
 ## Steps
 
 1. Read `docs/status.md`.
-   - If present: note the phase file path, current task, and state.
+   - If present: note the plan scope, phase file path, current task, and state.
    - If missing: list `docs/work/` and read each phase file to reconstruct
      state; create `docs/status.md` from the findings before continuing.
 2. Read only the single phase file pointed to by `docs/status.md`.
@@ -26,10 +26,14 @@ continue work on the project.
    dependencies, acceptance criteria, likely files or modules, or preflight
    expectations, surface that and recommend `brainstorm-plan` before changing
    implementation files.
+   If all phases in the active plan are complete, surface that the active plan
+   is exhausted and recommend `brainstorm-plan` to archive it and create the
+   next active plan.
 7. Run `git status --short --branch` for dirty work and cheap local branch
    status. Do not run `git fetch` during normal solo development unless the
    user asks, you are about to push, release, deploy, or resume from another
    machine.
 8. Run `workflow-check` and surface inconsistencies.
-9. Report phase, current task, last completed work, uncommitted work, blockers,
-   and next steps. Wait for user confirmation before changing files.
+9. Report plan scope, phase, current task, last completed work, uncommitted
+   work, blockers, and next steps. Wait for user confirmation before changing
+   files.

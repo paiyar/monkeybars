@@ -2318,6 +2318,7 @@ function wipDocumented(wipValue, logText, dirty) {
 function runCheck(cwd = process.cwd()) {
   const findings = [];
   const statusPath = join(cwd, "docs", "status.md");
+  const planPath = join(cwd, "docs", "plan.md");
   if (!isGitRepository(cwd)) {
     add(findings, {
       severity: "error",
@@ -2334,6 +2335,14 @@ function runCheck(cwd = process.cwd()) {
       file: "docs/status.md"
     });
     return { ok: false, findings };
+  }
+  if (!existsSync(planPath)) {
+    add(findings, {
+      severity: "error",
+      code: "missing-plan",
+      message: "Missing active docs/plan.md.",
+      file: "docs/plan.md"
+    });
   }
   const status = readStatusFile(statusPath);
   const phaseFile = status.active["phase file"];

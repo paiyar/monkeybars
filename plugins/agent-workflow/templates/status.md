@@ -4,6 +4,7 @@
 
 ## Active Work
 
+- **Plan scope:** [active plan, release, stabilization, or adoption scope]
 - **Phase file:** docs/work/phase-1.md
 - **Phase:** 1 — [Title]
 - **State:** not_started

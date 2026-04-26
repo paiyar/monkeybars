@@ -1,11 +1,13 @@
 ---
-description: Initialize repo-local agent workflow files in the current project.
+description: Initialize or adopt repo-local agent workflow files in the current project.
 ---
 
 ## When to use
 
 Use inside a target project after installing the global plugin. This command is
-the opt-in step that creates or updates project-local workflow files.
+the opt-in step that creates or updates project-local workflow files for a new
+project, an existing repo, or an existing workflow that needs a next active
+plan.
 
 ## Steps
 
@@ -15,10 +17,20 @@ the opt-in step that creates or updates project-local workflow files.
    - top-level code structure and likely tech stack
    - existing preflight or verification commands
 3. Run a planning intake and choose the initialization path:
+   - **Greenfield path:** If the repo is new or mostly empty, map available
+     intent into the canonical planning docs and create the first active plan.
+   - **Brownfield adoption path:** If useful code already exists, document the
+     current behavior, current architecture, stack conventions, and known
+     risks before proposing target changes. Preserve working behavior and
+     project-specific constraints instead of replacing them with generic
+     template text.
    - **Bring-your-own-docs path:** If existing docs are sufficient, summarize
      the discovered sources and map them into the canonical workflow docs.
      Preserve source-specific decisions instead of replacing them with generic
      template text.
+   - **Next-release path:** If workflow files already exist and the active plan
+     is complete or stale, summarize current status and run `brainstorm-plan`
+     to archive the completed plan and define the next active `docs/plan.md`.
    - **Guided initialization path:** If planning inputs are missing, vague,
      contradictory, stale, or too broad to split into phase tasks, run
      `brainstorm-plan` before creating `docs/plan.md` or
@@ -44,9 +56,11 @@ the opt-in step that creates or updates project-local workflow files.
    preflight checks. Preserve existing project-specific instructions.
 8. If the user is using Claude Code, create or update `CLAUDE.md` so it
    references `AGENTS.md`.
-9. Create `docs/status.md` from the status template if missing.
-10. Create `docs/work/phase-1.md` from Phase 1 of `docs/plan.md` if missing and
-    Phase 1 is phase-ready.
+9. Create `docs/status.md` from the status template if missing. Set `Plan
+   scope` to the active project, adoption, stabilization, or release scope.
+10. Create the first missing `docs/work/phase-N.md` from `docs/plan.md` only
+    when the phase is phase-ready. Use the next available global phase number;
+    do not reuse old phase numbers from completed work.
 11. Install project-local command adapters only if the user asks:
    - OpenCode: `.opencode/commands/`
    - Claude Code: `.claude/skills/`
@@ -78,15 +92,21 @@ Use these bundled templates when creating or updating project-local workflow fil
 - `docs/prd/spec.md` — product behavior, users, requirements, and acceptance
 - `docs/prd/architecture.md` — system shape, components, interfaces, and risks
 - `docs/prd/*.md` — optional focused docs such as data model or API contracts
-- `docs/plan.md` — build phases, task breakdown, and technical decisions
+- `docs/plan.md` — active implementation plan for the current work slice
 - `docs/status.md` — active phase and current task
 - `docs/work/phase-N.md` — task checklist, blockers, WIP, and log
+- `docs/archive/plans/` — completed or superseded active plans
 
 ## Workflow
 
 - Start sessions with `/start-session`.
 - Use `/brainstorm-plan` before creating or materially changing planning docs
   when requirements are vague, missing, contradictory, or too broad.
+- For brownfield work, document current behavior and constraints before target
+  changes.
+- When the active plan is complete, archive `docs/plan.md` under
+  `docs/archive/plans/`, write a fresh active plan, and keep phase numbers
+  increasing.
 - Finish completed tasks with `/complete-task`.
 - Save incomplete work with `/handoff-session`.
 - Use `/context-boundary` after a coherent chunk to decide whether to continue
@@ -144,6 +164,15 @@ Detailed project conventions belong in `AGENTS.md`.
 
 [What problem this project or feature solves, and for whom.]
 
+## Current State
+
+[For brownfield work, summarize what exists today, what must keep working, and
+what is known to be unreliable. Use `n/a` for greenfield work.]
+
+## Target Outcome
+
+[What should be true after this active plan or release is complete.]
+
 ## Goals
 
 - [Primary user-visible outcome]
@@ -180,7 +209,12 @@ Detailed project conventions belong in `AGENTS.md`.
 
 > Last updated: YYYY-MM-DD
 
-## Overview
+## Current Architecture
+
+[For brownfield work, summarize the current system shape, runtime boundaries,
+important constraints, and known weak spots. Use `n/a` for greenfield work.]
+
+## Target Architecture
 
 [Short description of the system shape and primary runtime boundaries.]
 
@@ -290,6 +324,17 @@ Detailed project conventions belong in `AGENTS.md`.
 > Source: `docs/prd/spec.md`, `docs/prd/architecture.md`, and any companion docs under `docs/prd/`
 > Last updated: YYYY-MM-DD
 
+## Plan Scope
+
+[Active work slice, release, stabilization effort, or adoption scope.]
+
+## Plan Lifecycle
+
+This is the active implementation plan. When it is complete, archive it to
+`docs/archive/plans/YYYY-MM-DD-<scope>.md`, then write a fresh `docs/plan.md`
+for the next active scope. Do not archive or renumber `docs/work/phase-N.md`
+files. New phases must use the next available global phase number.
+
 ## Phase 1 — [Title]
 
 - **Goal:** [One sentence describing the phase outcome]
@@ -328,6 +373,7 @@ Detailed project conventions belong in `AGENTS.md`.
 
 ## Active Work
 
+- **Plan scope:** [active plan, release, stabilization, or adoption scope]
 - **Phase file:** docs/work/phase-1.md
 - **Phase:** 1 — [Title]
 - **State:** not_started
@@ -346,7 +392,7 @@ Detailed project conventions belong in `AGENTS.md`.
 ```markdown
 # Phase N — [Title]
 
-> Source: docs/plan.md, Phase N
+> Source: active docs/plan.md, Phase N
 
 ## Goal
 
