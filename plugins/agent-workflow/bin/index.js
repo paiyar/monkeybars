@@ -1,12 +1,13 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
+// @bun
 
 // cli/src/hooks.ts
-import { chmodSync, existsSync as existsSync2, mkdirSync, readFileSync as readFileSync2, rmSync, writeFileSync } from "node:fs";
-import { resolve as resolve2 } from "node:path";
-import { fileURLToPath } from "node:url";
+import { chmodSync, existsSync as existsSync2, mkdirSync, readFileSync as readFileSync2, rmSync, writeFileSync } from "fs";
+import { resolve as resolve2 } from "path";
+import { fileURLToPath } from "url";
 
 // cli/src/git.ts
-import { execFileSync } from "node:child_process";
+import { execFileSync } from "child_process";
 function git(args, cwd = process.cwd()) {
   try {
     return execFileSync("git", args, {
@@ -38,8 +39,8 @@ function gitHooksDir(cwd = process.cwd()) {
 }
 
 // cli/src/markdown.ts
-import { readFileSync } from "node:fs";
-import { basename } from "node:path";
+import { readFileSync } from "fs";
+import { basename } from "path";
 function parseBulletFields(lines, startHeading) {
   const fields = {};
   const start = lines.findIndex((line) => line.trim() === startHeading);
@@ -60,7 +61,7 @@ function parseTasks(lines) {
   const tasks = [];
   for (let index = 0;index < lines.length; index += 1) {
     const line = lines[index];
-    const match = line.match(/^- \[([ xX])\]\s+([A-Za-z]+\d+)\s+[—-]\s+(.+)$/);
+    const match = line.match(/^- \[([ xX])\]\s+([A-Za-z]+\d+)\s+[\u2014-]\s+(.+)$/);
     if (!match)
       continue;
     tasks.push({
@@ -117,7 +118,7 @@ function parsePhaseLabel(value) {
   const trimmed = value?.trim() ?? "";
   if (!trimmed)
     return;
-  const match = trimmed.match(/^(?:Phase\s+)?(\d+)\s+[—-]\s+(.+)$/i);
+  const match = trimmed.match(/^(?:Phase\s+)?(\d+)\s+[\u2014-]\s+(.+)$/i);
   if (!match)
     return;
   return {
@@ -151,8 +152,8 @@ function extractPreflightCommands(agentsText) {
 }
 
 // cli/src/check.ts
-import { existsSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { existsSync } from "fs";
+import { join, resolve } from "path";
 function add(findings, finding) {
   findings.push(finding);
 }
@@ -229,7 +230,7 @@ function runCheck(cwd = process.cwd()) {
     add(findings, {
       severity: "error",
       code: "invalid-phase-label",
-      message: `docs/status.md phase must look like "1 — Title": ${statusPhaseValue}.`,
+      message: `docs/status.md phase must look like "1 \u2014 Title": ${statusPhaseValue}.`,
       file: "docs/status.md"
     });
   }
@@ -238,7 +239,7 @@ function runCheck(cwd = process.cwd()) {
     add(findings, {
       severity: "error",
       code: "invalid-phase-label",
-      message: `Active phase file title must look like "# Phase 1 — Title".`,
+      message: `Active phase file title must look like "# Phase 1 \u2014 Title".`,
       file: phaseFile
     });
   }
@@ -246,7 +247,7 @@ function runCheck(cwd = process.cwd()) {
     add(findings, {
       severity: "error",
       code: "phase-metadata-mismatch",
-      message: `Phase mismatch: docs/status.md says ${statusPhase.number} — ${statusPhase.title}, ${displayPath(phase.path)} says ${phaseLabel.number} — ${phaseLabel.title}.`,
+      message: `Phase mismatch: docs/status.md says ${statusPhase.number} \u2014 ${statusPhase.title}, ${displayPath(phase.path)} says ${phaseLabel.number} \u2014 ${phaseLabel.title}.`,
       file: phaseFile
     });
   }
@@ -343,7 +344,7 @@ function hookScript(hookName, cliPath) {
   return [
     "#!/bin/sh",
     `# ${MANAGED_MARKER}`,
-    `exec node ${shellQuote(cliPath)} hooks run ${hookName} "$@"`,
+    `exec bun ${shellQuote(cliPath)} hooks run ${hookName} "$@"`,
     ""
   ].join(`
 `);

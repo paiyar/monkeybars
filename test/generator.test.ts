@@ -46,7 +46,7 @@ Use for status.
 `);
     writeFileSync(join(root, "workflow-src", "templates", "status.md"), "# Status Template\n");
     const cliPath = join(root, "dist", "index.js");
-    writeFileSync(cliPath, "#!/usr/bin/env node\nconsole.log('ok');\n");
+    writeFileSync(cliPath, "#!/usr/bin/env bun\nconsole.log('ok');\n");
     chmodSync(cliPath, 0o755);
 
     const pluginPath = generateAdapters({ root });

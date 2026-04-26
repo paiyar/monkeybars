@@ -145,7 +145,9 @@ describe("agent-workflow hooks", () => {
     const root = tempRepo();
     installHooks({ cwd: root, cliPath: "/tmp/agent-workflow.js" });
     const preCommit = join(root, ".git", "hooks", "pre-commit");
-    expect(readFileSync(preCommit, "utf8")).toContain("agent-workflow managed hook");
+    const hook = readFileSync(preCommit, "utf8");
+    expect(hook).toContain("agent-workflow managed hook");
+    expect(hook).toContain("exec bun '/tmp/agent-workflow.js' hooks run pre-commit");
 
     uninstallHooks(root);
     expect(() => readFileSync(preCommit, "utf8")).toThrow();

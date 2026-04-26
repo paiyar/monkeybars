@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 import { installHooks, runHook, uninstallHooks } from "./hooks.js";
 import { printCheckResult, runCheck } from "./check.js";
 

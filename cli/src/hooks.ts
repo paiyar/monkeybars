@@ -22,7 +22,7 @@ function hookScript(hookName: SupportedHook, cliPath: string): string {
   return [
     "#!/bin/sh",
     `# ${MANAGED_MARKER}`,
-    `exec node ${shellQuote(cliPath)} hooks run ${hookName} "$@"`,
+    `exec bun ${shellQuote(cliPath)} hooks run ${hookName} "$@"`,
     ""
   ].join("\n");
 }

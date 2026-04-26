@@ -189,13 +189,13 @@ command-first. It does not install hooks in v1.
 ## CLI And Advisory Hooks
 
 The skills and commands are the main workflow. The TypeScript CLI exists for
-deterministic checks and optional Git hooks:
+deterministic checks and optional Git hooks. Bun is the only required runtime:
 
 ```sh
 bun install
 bun run build
-node dist/index.js check
-node dist/index.js hooks install
+bun dist/index.js check
+bun dist/index.js hooks install
 ```
 
 Installed hooks are project-local and advisory:
