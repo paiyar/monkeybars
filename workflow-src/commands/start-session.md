@@ -1,0 +1,31 @@
+---
+name: start-session
+description: Resume work from repo-tracked workflow state at the beginning of a session.
+opencode_agent: plan
+---
+
+## When to use
+
+Use at the beginning of any implementation session, or when the user asks to
+continue work on the project.
+
+## Steps
+
+1. Read `docs/status.md`.
+   - If present: note the phase file path, current task, and state.
+   - If missing: list `docs/work/` and read each phase file to reconstruct
+     state; create `docs/status.md` from the findings before continuing.
+2. Read only the single phase file pointed to by `docs/status.md`.
+3. Cross-check: if the phase file state differs from `docs/status.md`, scan
+   `docs/work/` forward to find the real active phase and correct
+   `docs/status.md`.
+4. Read the Status section of the phase file to confirm the current task.
+5. Surface blockers before proceeding.
+6. Read the relevant phase section of `docs/plan.md`.
+7. Run `git status --short --branch` for dirty work and cheap local branch
+   status. Do not run `git fetch` during normal solo development unless the
+   user asks, you are about to push, release, deploy, or resume from another
+   machine.
+8. Run `workflow-check` and surface inconsistencies.
+9. Report phase, current task, last completed work, uncommitted work, blockers,
+   and next steps. Wait for user confirmation before changing files.

@@ -1,0 +1,27 @@
+---
+name: context-boundary
+description: Decide whether to continue, hand off, or start a fresh context.
+opencode_agent: plan
+---
+
+## When to use
+
+Use after `complete-task`, before stopping work, or whenever the user asks
+whether to continue in the current context.
+
+## Steps
+
+1. Run `workflow-check`.
+2. Run `git status --short`.
+3. Read `docs/status.md` and the active phase file.
+4. If the worktree has undocumented dirty files, recommend `handoff-session`
+   before starting a fresh context.
+5. If the current task is `complete`, recommend starting a fresh context unless
+   the next task is directly adjacent, small, and uses the same files.
+6. If the current task is incomplete but WIP files and next steps are recorded,
+   recommend ending the session and resuming later with `start-session`.
+7. If the current session is still focused, the next task is adjacent, and the
+   worktree is clean, say it is reasonable to continue.
+
+This command is advisory. It must not commit, stash, check off tasks, or edit
+workflow files unless the user explicitly asks for that follow-up command.
