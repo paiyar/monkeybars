@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { rmSync } from "node:fs";
 import { join } from "node:path";
 
 import { runCheck } from "../cli/src/check";
@@ -24,36 +24,11 @@ describe("monkeybars check", () => {
 
   test("fails when docs/plan.md is missing", () => {
     const root = tempRepo();
-    mkdirSync(join(root, "docs", "work"), { recursive: true });
-    writeFileSync(join(root, "docs", "status.md"), `# Project Status
-
-## Active Work
-
-- **Phase file:** docs/work/phase-1.md
-- **Phase:** 1 — Test
-- **State:** not_started
-- **Current task:** T01 — first task
-- **Last commit:** none
-`);
-    writeFileSync(join(root, "docs", "work", "phase-1.md"), `# Phase 1 — Test
-
-## Status
-
-- **State:** not_started
-- **Current task:** T01 — first task
-- **Last commit:** none
-- **Preflight:** n/a
-- **Blockers:** none
-- **WIP files:** none
-
-## Tasks
-
-- [ ] T01 — first task | files
-
-## Log
-`);
+    writeWorkflow(root);
+    rmSync(join(root, "docs", "plan.md"));
 
     const result = runCheck(root);
+
     expect(result.ok).toBe(false);
     expect(result.findings.some((finding) => finding.code === "missing-plan")).toBe(true);
   });

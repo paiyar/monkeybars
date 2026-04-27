@@ -4,38 +4,16 @@ import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node
 import { join } from "node:path";
 
 import { installPackageTargets } from "../cli/src/install";
-import { readJson, repoRoot, runCli, sourceText, tempDir } from "./helpers";
+import { readJson, repoRoot, runCli, sourceText, tempDir, writeWorkflow } from "./helpers";
 
 function hookCommandCount(settings: any): number {
-  return Object.values(settings.hooks ?? {}).flatMap((groups: any) =>
+  const hooks = Object.values(settings.hooks ?? {}).flatMap((groups: any) =>
     Array.isArray(groups) ? groups.flatMap((group) => group.hooks ?? []) : []
-  ).filter((hook: any) => typeof hook.command === "string" && hook.command.includes("monkeybars-workflow-context.js")).length;
-}
+  );
 
-function writeInstallWorkflow(root: string): void {
-  mkdirSync(join(root, "docs", "work"), { recursive: true });
-  writeFileSync(join(root, "docs", "plan.md"), "# Implementation Plan\n");
-  writeFileSync(join(root, "docs", "status.md"), `# Project Status
-
-## Active Work
-
-- **Phase file:** docs/work/phase-1.md
-- **Phase:** 1 — Test
-- **State:** in_progress
-- **Current task:** T01 — first task
-- **Last commit:** none
-`);
-  writeFileSync(join(root, "docs", "work", "phase-1.md"), `# Phase 1 — Test
-
-## Status
-
-- **State:** in_progress
-- **Current task:** T01 — first task
-- **Last commit:** none
-- **Preflight:** n/a
-- **Blockers:** none
-- **WIP files:** src/example.ts
-`);
+  return hooks.filter(
+    (hook: any) => typeof hook.command === "string" && hook.command.includes("monkeybars-workflow-context.js")
+  ).length;
 }
 
 describe("monkeybars install", () => {
@@ -76,18 +54,18 @@ describe("monkeybars install", () => {
     expect(existsSync(join(project, ".opencode", "plugins", "monkeybars-workflow.js"))).toBe(true);
     expect(existsSync(join(project, ".claude", "skills", "start-session", "SKILL.md"))).toBe(true);
     expect(existsSync(join(project, ".claude", "hooks", "monkeybars-workflow-context.js"))).toBe(true);
-    expect(hookCommandCount(readJson(join(project, ".claude", "settings.json")))).toBe(2);
-    expect(readJson(join(project, ".claude", "settings.json")).hooks.Stop).toBeUndefined();
-    expect(existsSync(join(project, ".codex", "plugins", "monkeybars", ".codex-plugin", "plugin.json"))).toBe(
-      true
-    );
+    const claudeSettings = readJson(join(project, ".claude", "settings.json"));
+    expect(hookCommandCount(claudeSettings)).toBe(2);
+    expect(claudeSettings.hooks.Stop).toBeUndefined();
+    expect(existsSync(join(project, ".codex", "plugins", "monkeybars", ".codex-plugin", "plugin.json"))).toBe(true);
     expect(existsSync(join(project, ".agents", "plugins", "marketplace.json"))).toBe(true);
     expect(readFileSync(join(project, ".agents", "plugins", "marketplace.json"), "utf8")).toContain(
       "./.codex/plugins/monkeybars"
     );
     expect(existsSync(join(project, ".codex", "hooks", "monkeybars-workflow-context.js"))).toBe(true);
-    expect(hookCommandCount(readJson(join(project, ".codex", "hooks.json")))).toBe(2);
-    expect(readJson(join(project, ".codex", "hooks.json")).hooks.Stop).toBeUndefined();
+    const codexHooks = readJson(join(project, ".codex", "hooks.json"));
+    expect(hookCommandCount(codexHooks)).toBe(2);
+    expect(codexHooks.hooks.Stop).toBeUndefined();
     expect(readFileSync(join(project, ".codex", "config.toml"), "utf8")).toContain("codex_hooks = true");
   });
 
@@ -103,9 +81,7 @@ describe("monkeybars install", () => {
     expect(existsSync(join(project, ".opencode", "commands", "start-session.md"))).toBe(true);
     expect(existsSync(join(project, ".opencode", "plugins", "monkeybars-workflow.js"))).toBe(true);
     expect(existsSync(join(project, ".claude", "skills"))).toBe(false);
-    expect(existsSync(join(project, ".codex", "plugins", "monkeybars", ".codex-plugin", "plugin.json"))).toBe(
-      true
-    );
+    expect(existsSync(join(project, ".codex", "plugins", "monkeybars", ".codex-plugin", "plugin.json"))).toBe(true);
     expect(existsSync(join(project, ".codex", "hooks.json"))).toBe(true);
   });
 
@@ -233,11 +209,11 @@ describe("monkeybars install", () => {
 
   test("workflow hook context emits valid lifecycle JSON", () => {
     const project = tempDir("monkeybars-install-");
-    writeInstallWorkflow(project);
+    writeWorkflow(project, { state: "in_progress", wipFiles: "src/example.ts" });
 
     const result = spawnSync(
       "node",
-      [join(repoRoot, "workflow-src", "hooks", "shared", "monkeybars-workflow-context.js"), "codex"],
+      [join(repoRoot, "plugins", "monkeybars", "hooks", "shared", "monkeybars-workflow-context.js"), "codex"],
       {
         cwd: project,
         input: JSON.stringify({ hook_event_name: "UserPromptSubmit", cwd: project, prompt: "continue" }),

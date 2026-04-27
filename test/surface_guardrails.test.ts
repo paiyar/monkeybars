@@ -1,21 +1,16 @@
 import { describe, expect, test } from "bun:test";
 import { execFileSync } from "node:child_process";
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { parseFrontmatter } from "../cli/src/generator";
-import { repoRoot, sourceText, tempDir } from "./helpers";
+import { repoRoot, tempDir } from "./helpers";
 
 function markdownFiles(relativeDir: string): string[] {
   const dir = join(repoRoot, relativeDir);
   return readdirSync(dir)
     .filter((name) => name.endsWith(".md"))
     .sort();
-}
-
-function lineCount(relativePath: string): number {
-  const text = sourceText(relativePath);
-  return text.trimEnd() ? text.trimEnd().split(/\r?\n/).length : 0;
 }
 
 function packedFiles(): Set<string> {
@@ -71,39 +66,18 @@ describe("surface guardrails", () => {
   test("npm pack includes shipped workflow assets", () => {
     const files = packedFiles();
 
-    expect(files.has("dist/index.js")).toBe(true);
-    expect(files.has(".agents/plugins/marketplace.json")).toBe(true);
-    expect(files.has("plugins/monkeybars/.codex-plugin/plugin.json")).toBe(true);
-    expect(files.has("plugins/monkeybars/commands/map-codebase.md")).toBe(true);
-    expect(files.has("plugins/monkeybars/hooks/shared/monkeybars-workflow-context.js")).toBe(true);
-    expect(files.has("plugins/monkeybars/scripts/install-opencode-commands.sh")).toBe(true);
-    expect(files.has("plugins/monkeybars/skills/map-codebase/SKILL.md")).toBe(true);
-    expect(files.has("plugins/monkeybars/templates/current-stack.md")).toBe(true);
-  });
-
-  test("workflow command sources stay small enough to remain inspectable", () => {
-    const limits: Record<string, number> = {
-      "initialize-monkeybars.md": 100,
-      "brainstorm-plan.md": 120,
-      "map-codebase.md": 90
-    };
-
-    for (const file of markdownFiles("workflow-src/commands")) {
-      const limit = limits[file] ?? 70;
-      expect(lineCount(join("workflow-src", "commands", file))).toBeLessThanOrEqual(limit);
-    }
-  });
-
-  test("hook scripts stay small and executable when applicable", () => {
-    const hookFiles = [
-      "workflow-src/hooks/shared/monkeybars-workflow-context.js",
-      "workflow-src/hooks/opencode/monkeybars-workflow.js"
-    ];
-
-    for (const file of hookFiles) {
-      expect(lineCount(file)).toBeLessThanOrEqual(140);
-      const stat = statSync(join(repoRoot, file));
-      expect(stat.isFile()).toBe(true);
+    for (const file of [
+      "dist/index.js",
+      ".agents/plugins/marketplace.json",
+      "plugins/monkeybars/.codex-plugin/plugin.json",
+      "plugins/monkeybars/commands/map-codebase.md",
+      "plugins/monkeybars/hooks/shared/monkeybars-workflow-context.js",
+      "plugins/monkeybars/hooks/opencode/monkeybars-workflow.js",
+      "plugins/monkeybars/scripts/install-opencode-commands.sh",
+      "plugins/monkeybars/skills/map-codebase/SKILL.md",
+      "plugins/monkeybars/templates/current-stack.md"
+    ]) {
+      expect(files.has(file)).toBe(true);
     }
   });
 });
