@@ -1,6 +1,6 @@
 {
   "name": "monkeybars",
-  "version": "0.1.0",
+  "version": "0.3.1",
   "description": "Repo-backed phase/task workflow commands for agentic coding sessions.",
   "author": {
     "name": "Pavan Aiyar",

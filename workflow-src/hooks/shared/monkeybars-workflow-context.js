@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 
@@ -123,14 +123,6 @@ function eventName(input) {
 
 function outputFor(agent, input, context) {
   const hookEventName = eventName(input);
-
-  if (hookEventName === "Stop") {
-    return {
-      continue: true,
-      systemMessage:
-        "MonkeyBars: if work is incomplete, record a handoff; if a task is complete, run the completion/context-boundary workflow."
-    };
-  }
 
   return {
     hookSpecificOutput: {

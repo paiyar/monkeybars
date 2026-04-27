@@ -73,7 +73,7 @@ function commitAll(root: string): void {
 }
 
 function runCli(args: string[], cwd = process.cwd()) {
-  return spawnSync("bun", [cliPath, ...args], {
+  return spawnSync("node", [cliPath, ...args], {
     cwd,
     encoding: "utf8"
   });
@@ -89,6 +89,40 @@ describe("monkeybars CLI", () => {
 
     expect(result.status).toBe(0);
     expect(JSON.parse(result.stdout).ok).toBe(true);
+  });
+
+  test("status --json emits workflow summary", () => {
+    const root = tempRepo();
+    writeWorkflow(root);
+    commitAll(root);
+
+    const result = runCli(["status", "--json"], root);
+
+    expect(result.status).toBe(0);
+    const summary = JSON.parse(result.stdout);
+    expect(summary.initialized).toBe(true);
+    expect(summary.currentTask).toContain("T01");
+    expect(summary.remainingTasks).toBe(1);
+  });
+
+  test("preflight --dry-run prints AGENTS commands", () => {
+    const root = tempRepo();
+    writeWorkflow(root);
+    writeFileSync(join(root, "AGENTS.md"), `# Agents
+
+## Preflight Checks
+
+\`\`\`sh
+bun test
+npm run lint
+\`\`\`
+`);
+
+    const result = runCli(["preflight", "--dry-run"], root);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("bun test");
+    expect(result.stdout).toContain("npm run lint");
   });
 
   test("check --bad-option fails as a usage error", () => {

@@ -51,10 +51,8 @@ npm exec --package github:paiyar/monkeybars#<tag-or-commit> -- monkeybars instal
 Omit `#<tag-or-commit>` only when you intentionally want npm to install the
 current default branch. Prefer a tag or commit SHA for repeatable installs.
 
-Bun must be installed and available on `PATH` for the v1 package because the
-CLI entrypoint runs with `#!/usr/bin/env bun`. GitHub installs also need Bun
-during package installation because npm runs the package `prepack` script,
-which generates the bundled CLI and plugin assets.
+The published CLI runs on Node.js 20 or newer. Bun is still used for
+development, tests, and generating packaged adapter artifacts from a checkout.
 
 Omitting targets installs all supported agents: OpenCode, Claude Code, and
 Codex. Pass one or more targets only when you want a subset, or
@@ -70,7 +68,7 @@ The generated assets land in the tool-specific project-local directories:
 
 - OpenCode: `.opencode/commands/` plus `.opencode/plugins/`
 - Claude Code: `.claude/skills/`, `.claude/hooks/`, and `.claude/settings.json`
-- Codex: `plugins/monkeybars/`, `.agents/plugins/marketplace.json`, and `.codex/`
+- Codex: `.codex/plugins/monkeybars/`, `.agents/plugins/marketplace.json`, and `.codex/hooks.json`
 
 The shell scripts in `scripts/` remain for checkout-based compatibility, but
 the CLI is the primary install path.
@@ -101,8 +99,15 @@ From this repository root, the same manifest is:
 plugins/monkeybars/.codex-plugin/plugin.json
 ```
 
-The CLI copies both the plugin directory and marketplace metadata into the
-target repo.
+After CLI install, the target repo manifest is:
+
+```text
+.codex/plugins/monkeybars/.codex-plugin/plugin.json
+```
+
+The CLI copies the plugin payload and marketplace metadata into the target
+repo. The marketplace file stays at `.agents/plugins/marketplace.json` and
+points to `./.codex/plugins/monkeybars`.
 
 Use `monkeybars install codex --project /path/to/repo` if you only want the
 Codex plugin bundle.
@@ -112,10 +117,15 @@ Invoke skills explicitly with the skill mention UI, such as
 
 ## CLI and Hooks
 
-The CLI is for deterministic checks outside an agent session:
+The CLI is for deterministic checks and state updates outside an agent session:
 
 ```sh
+monkeybars status
 monkeybars check
+monkeybars preflight --dry-run
+monkeybars advance --task T01 --commit "feat(T01): finish task"
+monkeybars migrate-status
+monkeybars doctor
 ```
 
 Installed agent-native hooks inject or preserve MonkeyBars workflow context.

@@ -1,5 +1,5 @@
-#!/usr/bin/env bun
-// @bun
+#!/usr/bin/env node
+import { createRequire } from "node:module";
 var __create = Object.create;
 var __getProtoOf = Object.getPrototypeOf;
 var __defProp = Object.defineProperty;
@@ -31,7 +31,7 @@ var __toESM = (mod, isNodeMode, target) => {
   return to;
 };
 var __commonJS = (cb, mod) => () => (mod || cb((mod = { exports: {} }).exports, mod), mod.exports);
-var __require = import.meta.require;
+var __require = /* @__PURE__ */ createRequire(import.meta.url);
 
 // node_modules/commander/lib/error.js
 var require_error = __commonJS((exports) => {
@@ -753,11 +753,11 @@ var require_suggestSimilar = __commonJS((exports) => {
 
 // node_modules/commander/lib/command.js
 var require_command = __commonJS((exports) => {
-  var EventEmitter = __require("events").EventEmitter;
-  var childProcess = __require("child_process");
-  var path = __require("path");
-  var fs = __require("fs");
-  var process2 = __require("process");
+  var EventEmitter = __require("node:events").EventEmitter;
+  var childProcess = __require("node:child_process");
+  var path = __require("node:path");
+  var fs = __require("node:fs");
+  var process2 = __require("node:process");
   var { Argument, humanReadableArgName } = require_argument();
   var { CommanderError } = require_error();
   var { Help, stripColor } = require_help();
@@ -2143,11 +2143,11 @@ var {
 } = import__.default;
 
 // cli/src/check.ts
-import { existsSync } from "fs";
-import { join, resolve } from "path";
+import { existsSync } from "node:fs";
+import { join, resolve } from "node:path";
 
 // cli/src/git.ts
-import { execFileSync } from "child_process";
+import { execFileSync } from "node:child_process";
 function git(args, cwd = process.cwd()) {
   try {
     return execFileSync("git", args, {
@@ -2171,13 +2171,19 @@ function recentCommits(cwd = process.cwd()) {
     return [];
   return output.split(/\r?\n/).filter(Boolean);
 }
+function recentCommitSubjects(cwd = process.cwd()) {
+  const output = git(["log", "--format=%s", "-n", "100"], cwd);
+  if (!output)
+    return [];
+  return output.split(/\r?\n/).filter(Boolean);
+}
 function isGitRepository(cwd = process.cwd()) {
   return git(["rev-parse", "--is-inside-work-tree"], cwd) === "true";
 }
 
 // cli/src/markdown.ts
-import { readFileSync } from "fs";
-import { basename } from "path";
+import { readFileSync } from "node:fs";
+import { basename } from "node:path";
 function parseBulletFields(lines, startHeading) {
   const fields = {};
   const start = lines.findIndex((line) => line.trim() === startHeading);
@@ -2194,11 +2200,94 @@ function parseBulletFields(lines, startHeading) {
   }
   return fields;
 }
+var STRUCTURED_STATUS_START = "<!-- monkeybars:status";
+var STRUCTURED_STATUS_END = "-->";
+var structuredStatusKeys = {
+  plan_scope: "plan scope",
+  phase_file: "phase file",
+  phase: "phase",
+  state: "state",
+  current_task: "current task",
+  last_commit: "last commit",
+  last_updated: "last updated"
+};
+function structuredKeyForField(field) {
+  return field.trim().toLowerCase().replace(/\s+/g, "_");
+}
+function parseStructuredStatusFields(text) {
+  const start = text.indexOf(STRUCTURED_STATUS_START);
+  if (start === -1)
+    return {};
+  const contentStart = text.indexOf(`
+`, start);
+  if (contentStart === -1)
+    return {};
+  const end = text.indexOf(STRUCTURED_STATUS_END, contentStart);
+  if (end === -1)
+    return {};
+  const fields = {};
+  const block = text.slice(contentStart + 1, end);
+  for (const rawLine of block.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line)
+      continue;
+    const separator = line.indexOf(":");
+    if (separator === -1)
+      continue;
+    const rawKey = line.slice(0, separator).trim();
+    const value = line.slice(separator + 1).trim();
+    const key = structuredStatusKeys[rawKey] ?? rawKey.replace(/_/g, " ");
+    fields[key] = value;
+  }
+  return fields;
+}
+function formatStructuredStatusFields(fields) {
+  const orderedFields = [
+    "plan scope",
+    "phase file",
+    "phase",
+    "state",
+    "current task",
+    "last commit",
+    "last updated"
+  ];
+  const keys = [
+    ...orderedFields.filter((key) => fields[key] !== undefined),
+    ...Object.keys(fields).filter((key) => !orderedFields.includes(key)).sort()
+  ];
+  return [
+    STRUCTURED_STATUS_START,
+    ...keys.map((key) => `${structuredKeyForField(key)}: ${fields[key]}`),
+    STRUCTURED_STATUS_END
+  ].join(`
+`);
+}
+function upsertStructuredStatusFields(text, fields) {
+  const block = formatStructuredStatusFields(fields);
+  const start = text.indexOf(STRUCTURED_STATUS_START);
+  if (start !== -1) {
+    const end = text.indexOf(STRUCTURED_STATUS_END, start);
+    if (end !== -1) {
+      return `${text.slice(0, start)}${block}${text.slice(end + STRUCTURED_STATUS_END.length)}`;
+    }
+  }
+  const lines = text.split(/\r?\n/);
+  const insertAt = lines.findIndex((line, index) => index > 0 && line.startsWith("## "));
+  if (insertAt === -1) {
+    return `${text.trimEnd()}
+
+${block}
+`;
+  }
+  lines.splice(insertAt, 0, block, "");
+  return lines.join(`
+`);
+}
 function parseTasks(lines) {
   const tasks = [];
   for (let index = 0;index < lines.length; index += 1) {
     const line = lines[index];
-    const match = line.match(/^- \[([ xX])\]\s+([A-Za-z]+\d+)\s+[\u2014-]\s+(.+)$/);
+    const match = line.match(/^- \[([ xX])\]\s+([A-Za-z]+\d+)\s+[—-]\s+(.+)$/);
     if (!match)
       continue;
     tasks.push({
@@ -2227,9 +2316,13 @@ function sectionText(lines, startHeading) {
 function readStatusFile(path) {
   const text = readFileSync(path, "utf8");
   const lines = text.split(/\r?\n/);
+  const legacy = parseBulletFields(lines, "## Active Work");
+  const structured = parseStructuredStatusFields(text);
   return {
     path,
-    active: parseBulletFields(lines, "## Active Work")
+    active: { ...legacy, ...structured },
+    structured,
+    text
   };
 }
 function readPhaseFile(path) {
@@ -2255,7 +2348,7 @@ function parsePhaseLabel(value) {
   const trimmed = value?.trim() ?? "";
   if (!trimmed)
     return;
-  const match = trimmed.match(/^(?:Phase\s+)?(\d+)\s+[\u2014-]\s+(.+)$/i);
+  const match = trimmed.match(/^(?:Phase\s+)?(\d+)\s+[—-]\s+(.+)$/i);
   if (!match)
     return;
   return {
@@ -2266,6 +2359,43 @@ function parsePhaseLabel(value) {
 function displayPath(path) {
   return path.split(/[\\/]/).slice(-3).join("/") || basename(path);
 }
+function readPlanPhases(path) {
+  const text = readFileSync(path, "utf8");
+  const phases = [];
+  const lines = text.split(/\r?\n/);
+  for (let index = 0;index < lines.length; index += 1) {
+    const match = lines[index].match(/^##\s+Phase\s+(\d+)\s+[—-]\s+(.+)$/i);
+    if (!match)
+      continue;
+    phases.push({
+      number: match[1],
+      title: match[2].trim(),
+      line: index + 1
+    });
+  }
+  return phases;
+}
+function extractPreflightCommands(agentsText) {
+  const lines = agentsText.split(/\r?\n/);
+  const headingIndex = lines.findIndex((line) => /^##\s+Preflight Checks\s*$/i.test(line.trim()));
+  if (headingIndex === -1)
+    return [];
+  const commands = [];
+  let inFence = false;
+  for (let index = headingIndex + 1;index < lines.length; index += 1) {
+    const line = lines[index];
+    if (line.startsWith("## "))
+      break;
+    if (line.startsWith("```")) {
+      inFence = !inFence;
+      continue;
+    }
+    if (inFence && line.trim() && !line.includes("[fill in")) {
+      commands.push(line.trim());
+    }
+  }
+  return commands;
+}
 
 // cli/src/check.ts
 function add(findings, finding) {
@@ -2273,6 +2403,9 @@ function add(findings, finding) {
 }
 function isLastCommitValid(value, cwd) {
   if (!value || value === "none")
+    return true;
+  const subjects = recentCommitSubjects(cwd);
+  if (subjects.some((subject) => subject.trim() === value.trim()))
     return true;
   const commits = recentCommits(cwd);
   return commits.some((commit) => commit.includes(value) || value.includes(commit));
@@ -2317,6 +2450,7 @@ function runCheck(cwd = process.cwd()) {
       file: "docs/plan.md"
     });
   }
+  const planPhases = existsSync(planPath) ? readPlanPhases(planPath) : [];
   const status = readStatusFile(statusPath);
   const phaseFile = status.active["phase file"];
   if (!phaseFile) {
@@ -2353,7 +2487,7 @@ function runCheck(cwd = process.cwd()) {
     add(findings, {
       severity: "error",
       code: "invalid-phase-label",
-      message: `docs/status.md phase must look like "1 \u2014 Title": ${statusPhaseValue}.`,
+      message: `docs/status.md phase must look like "1 — Title": ${statusPhaseValue}.`,
       file: "docs/status.md"
     });
   }
@@ -2362,7 +2496,7 @@ function runCheck(cwd = process.cwd()) {
     add(findings, {
       severity: "error",
       code: "invalid-phase-label",
-      message: `Active phase file title must look like "# Phase 1 \u2014 Title".`,
+      message: `Active phase file title must look like "# Phase 1 — Title".`,
       file: phaseFile
     });
   }
@@ -2370,9 +2504,27 @@ function runCheck(cwd = process.cwd()) {
     add(findings, {
       severity: "error",
       code: "phase-metadata-mismatch",
-      message: `Phase mismatch: docs/status.md says ${statusPhase.number} \u2014 ${statusPhase.title}, ${displayPath(phase.path)} says ${phaseLabel.number} \u2014 ${phaseLabel.title}.`,
+      message: `Phase mismatch: docs/status.md says ${statusPhase.number} — ${statusPhase.title}, ${displayPath(phase.path)} says ${phaseLabel.number} — ${phaseLabel.title}.`,
       file: phaseFile
     });
+  }
+  if (statusPhase && planPhases.length > 0) {
+    const planPhase = planPhases.find((candidate) => candidate.number === statusPhase.number);
+    if (!planPhase) {
+      add(findings, {
+        severity: "error",
+        code: "active-phase-not-in-plan",
+        message: `Active phase ${statusPhase.number} is not present in docs/plan.md.`,
+        file: "docs/plan.md"
+      });
+    } else if (planPhase.title !== statusPhase.title) {
+      add(findings, {
+        severity: "error",
+        code: "plan-phase-title-mismatch",
+        message: `docs/plan.md says Phase ${planPhase.number} is ${planPhase.title}, docs/status.md says ${statusPhase.title}.`,
+        file: "docs/plan.md"
+      });
+    }
   }
   const statusState = status.active.state;
   const phaseState = phase.status.state;
@@ -2454,125 +2606,549 @@ function printCheckResult(result) {
   }
 }
 
-// cli/src/install.ts
+// cli/src/generator.ts
 import {
   chmodSync,
   copyFileSync,
   existsSync as existsSync2,
   mkdirSync,
-  readFileSync as readFileSync2,
+  mkdtempSync,
   readdirSync,
   rmSync,
   statSync,
-  writeFileSync
-} from "fs";
-import { isAbsolute, join as join2, relative, resolve as resolve2 } from "path";
-var SUPPORTED_INSTALL_TARGETS = ["opencode", "claude", "codex"];
-function packageRoot() {
-  const oneUp = resolve2(import.meta.dir, "..");
-  if (existsSync2(join2(oneUp, "plugins", "monkeybars"))) {
-    return oneUp;
+  writeFileSync,
+  readFileSync as readFileSync2
+} from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join as join2, relative, resolve as resolve2 } from "node:path";
+import { fileURLToPath } from "node:url";
+var GENERATED_MARKER = ".monkeybars-generated.json";
+function moduleDirectory() {
+  return dirname(fileURLToPath(import.meta.url));
+}
+function defaultRoot() {
+  const fromModule = moduleDirectory();
+  const candidates = [resolve2(fromModule, "..", ".."), resolve2(fromModule, ".."), process.cwd()];
+  for (const candidate of candidates) {
+    if (existsSync2(join2(candidate, "workflow-src")) && existsSync2(join2(candidate, "plugins", "monkeybars"))) {
+      return candidate;
+    }
   }
-  return resolve2(import.meta.dir, "..", "..");
+  return resolve2(fromModule, "..", "..");
+}
+function paths(rootOption) {
+  const root = resolve2(rootOption ?? defaultRoot());
+  const source = join2(root, "workflow-src");
+  return {
+    root,
+    source,
+    plugin: join2(root, "plugins", "monkeybars"),
+    commandSource: join2(source, "commands"),
+    templateSource: join2(source, "templates"),
+    hookSource: join2(source, "hooks"),
+    cliDist: join2(root, "dist")
+  };
+}
+function pathsWithOutput(options) {
+  const allPaths = paths(options.root);
+  return options.pluginOutput ? { ...allPaths, plugin: resolve2(options.pluginOutput) } : allPaths;
+}
+function sortedMarkdownFiles(directory) {
+  return readdirSync(directory).filter((name) => name.endsWith(".md")).sort().map((name) => join2(directory, name));
+}
+function resetDir(path) {
+  if (existsSync2(path)) {
+    rmSync(path, { recursive: true, force: true });
+  }
+  mkdirSync(path, { recursive: true });
+}
+function parseFrontmatter(path) {
+  const text = readFileSync2(path, "utf8");
+  if (!text.startsWith(`---
+`)) {
+    throw new Error(`${path} is missing YAML-style frontmatter`);
+  }
+  const end = text.indexOf(`---
+`, 4);
+  if (end === -1) {
+    throw new Error(`${path} is missing closing frontmatter delimiter`);
+  }
+  const rawMeta = text.slice(4, end);
+  const body = text.slice(end + 4).replace(/^\s+/, "");
+  const meta = {};
+  for (const line of rawMeta.split(/\r?\n/)) {
+    if (!line.trim())
+      continue;
+    const match = line.match(/^([A-Za-z][A-Za-z0-9_-]*)\s*:\s*(.*)$/);
+    if (!match) {
+      throw new Error(`Invalid frontmatter line in ${path}: ${line}`);
+    }
+    const key = match[1].trim();
+    if (Object.hasOwn(meta, key)) {
+      throw new Error(`Duplicate frontmatter key in ${path}: ${key}`);
+    }
+    meta[key] = parseFrontmatterValue(match[2].trim(), path, line);
+  }
+  if (!meta.name || !meta.description) {
+    throw new Error(`${path} must define name and description`);
+  }
+  return { meta, body };
+}
+function parseFrontmatterValue(value, path, line) {
+  if (!value)
+    return "";
+  if (value.startsWith('"')) {
+    try {
+      const parsed = JSON.parse(value);
+      if (typeof parsed !== "string") {
+        throw new Error("frontmatter value is not a string");
+      }
+      return parsed;
+    } catch (error) {
+      throw new Error(`Invalid quoted frontmatter value in ${path}: ${line} (${error instanceof Error ? error.message : String(error)})`);
+    }
+  }
+  if (value.startsWith("'")) {
+    if (!value.endsWith("'") || value.length === 1) {
+      throw new Error(`Invalid quoted frontmatter value in ${path}: ${line}`);
+    }
+    return value.slice(1, -1).replace(/''/g, "'");
+  }
+  return value;
+}
+function renderFrontmatterValue(value) {
+  if (/^(?!true$|false$|null$)[A-Za-z0-9][A-Za-z0-9 ./_-]*$/i.test(value)) {
+    return value;
+  }
+  return JSON.stringify(value);
+}
+function generatedHeader(source) {
+  const suffix = source ? ` from ${source}` : "";
+  return `<!-- Generated by MonkeyBars${suffix}. Edit workflow-src/ instead. -->`;
+}
+function renderSkill(meta, body) {
+  return [
+    "---",
+    `name: ${renderFrontmatterValue(meta.name)}`,
+    `description: ${renderFrontmatterValue(meta.description)}`,
+    "disable-model-invocation: true",
+    "---",
+    "",
+    generatedHeader(),
+    "",
+    body
+  ].join(`
+`);
+}
+function renderOpenCodeCommand(meta, body) {
+  const lines = ["---", `description: ${renderFrontmatterValue(meta.description)}`];
+  if (meta.opencode_agent) {
+    lines.push(`agent: ${renderFrontmatterValue(meta.opencode_agent)}`);
+  }
+  lines.push("---", "", generatedHeader(), "", body);
+  return lines.join(`
+`);
+}
+function includedTemplateNames(meta) {
+  const value = meta.include_templates?.trim();
+  if (!value)
+    return [];
+  return value.split(",").map((name) => name.trim().replace(/\.md$/, "")).filter(Boolean);
+}
+function markdownFenceFor(text) {
+  const longest = text.match(/`+/g)?.reduce((max, match) => Math.max(max, match.length), 0) ?? 0;
+  return "`".repeat(Math.max(3, longest + 1));
+}
+function appendIncludedTemplates(body, names, allPaths) {
+  if (names.length === 0)
+    return body;
+  const sections = names.map((name) => {
+    const templatePath = join2(allPaths.templateSource, `${name}.md`);
+    if (!existsSync2(templatePath)) {
+      throw new Error(`Included template does not exist: ${name}`);
+    }
+    const template = readFileSync2(templatePath, "utf8").trimEnd();
+    const fence = markdownFenceFor(template);
+    return [`### \`templates/${name}.md\``, "", `${fence}markdown`, template, fence].join(`
+`);
+  });
+  return [
+    body.trimEnd(),
+    "",
+    "## Included Templates",
+    "",
+    "Use these bundled templates when creating or updating project-local workflow files.",
+    "",
+    sections.join(`
+
+`)
+  ].join(`
+`);
+}
+function copyTemplates(allPaths) {
+  const target = join2(allPaths.plugin, "templates");
+  resetDir(target);
+  const files = [];
+  for (const template of sortedMarkdownFiles(allPaths.templateSource)) {
+    const name = template.split(/[\\/]/).at(-1) ?? "";
+    copyFileSync(template, join2(target, name));
+    files.push(name);
+  }
+  writeMarker(target, { type: "templates", files });
+}
+function copyDirectory(source, target) {
+  resetDir(target);
+  if (!existsSync2(source)) {
+    writeMarker(target, { type: "directory", files: [] });
+    return;
+  }
+  const files = [];
+  const copyRecursive = (sourcePath) => {
+    for (const name of readdirSync(sourcePath)) {
+      const sourceEntry = join2(sourcePath, name);
+      const relativePath = relative(source, sourceEntry);
+      const destination = join2(target, relativePath);
+      const stat = statSync(sourceEntry);
+      if (stat.isDirectory()) {
+        mkdirSync(destination, { recursive: true });
+        copyRecursive(sourceEntry);
+        continue;
+      }
+      mkdirSync(join2(destination, ".."), { recursive: true });
+      copyFileSync(sourceEntry, destination);
+      chmodSync(destination, stat.mode);
+      files.push(relative(target, destination));
+    }
+  };
+  copyRecursive(source);
+  writeMarker(target, { type: "directory", files: files.sort() });
+}
+function copyCli(allPaths) {
+  if (!existsSync2(allPaths.cliDist))
+    return;
+  const target = join2(allPaths.plugin, "bin");
+  resetDir(target);
+  const files = [];
+  const copyRecursive = (source) => {
+    for (const name of readdirSync(source)) {
+      const sourcePath = join2(source, name);
+      const relativePath = relative(allPaths.cliDist, sourcePath);
+      const destination = join2(target, relativePath);
+      const stat = statSync(sourcePath);
+      if (stat.isDirectory()) {
+        mkdirSync(destination, { recursive: true });
+        copyRecursive(sourcePath);
+        continue;
+      }
+      mkdirSync(join2(destination, ".."), { recursive: true });
+      copyFileSync(sourcePath, destination);
+      chmodSync(destination, stat.mode);
+      files.push(relative(target, destination));
+    }
+  };
+  copyRecursive(allPaths.cliDist);
+  writeMarker(target, { type: "bin", files: files.sort() });
+}
+function writeMarker(directory, data) {
+  writeFileSync(join2(directory, GENERATED_MARKER), `${JSON.stringify({ generatedBy: "monkeybars", ...data }, null, 2)}
+`);
+}
+function generateAdapters(options = {}) {
+  const allPaths = pathsWithOutput(options);
+  const skillsDir = join2(allPaths.plugin, "skills");
+  const commandsDir = join2(allPaths.plugin, "commands");
+  resetDir(skillsDir);
+  resetDir(commandsDir);
+  const skillNames = [];
+  const commandFiles = [];
+  for (const sourceFile of sortedMarkdownFiles(allPaths.commandSource)) {
+    const { meta, body } = parseFrontmatter(sourceFile);
+    const name = meta.name;
+    const renderedBody = appendIncludedTemplates(body, includedTemplateNames(meta), allPaths);
+    const skillDir = join2(skillsDir, name);
+    mkdirSync(skillDir, { recursive: true });
+    writeFileSync(join2(skillDir, "SKILL.md"), renderSkill(meta, renderedBody));
+    skillNames.push(name);
+    const commandFile = `${name}.md`;
+    writeFileSync(join2(commandsDir, commandFile), renderOpenCodeCommand(meta, renderedBody));
+    commandFiles.push(commandFile);
+  }
+  writeMarker(skillsDir, { type: "skills", directories: skillNames.sort() });
+  writeMarker(commandsDir, { type: "commands", files: commandFiles.sort() });
+  copyTemplates(allPaths);
+  copyDirectory(allPaths.hookSource, join2(allPaths.plugin, "hooks"));
+  copyCli(allPaths);
+  return allPaths.plugin;
+}
+function collectFiles(directory) {
+  if (!existsSync2(directory))
+    return [];
+  const files = [];
+  const walk = (current) => {
+    for (const name of readdirSync(current).sort()) {
+      const path = join2(current, name);
+      const stat = statSync(path);
+      if (stat.isDirectory()) {
+        walk(path);
+      } else if (stat.isFile()) {
+        files.push(relative(directory, path));
+      }
+    }
+  };
+  walk(directory);
+  return files;
+}
+function compareGeneratedDirectory(expected, actual, label) {
+  const differences = [];
+  const expectedFiles = collectFiles(expected);
+  const actualFiles = collectFiles(actual);
+  const allFiles = [...new Set([...expectedFiles, ...actualFiles])].sort();
+  for (const file of allFiles) {
+    const expectedPath = join2(expected, file);
+    const actualPath = join2(actual, file);
+    if (!existsSync2(expectedPath)) {
+      differences.push(`${label}/${file} exists but is no longer generated`);
+      continue;
+    }
+    if (!existsSync2(actualPath)) {
+      differences.push(`${label}/${file} is missing`);
+      continue;
+    }
+    if (readFileSync2(expectedPath, "utf8") !== readFileSync2(actualPath, "utf8")) {
+      differences.push(`${label}/${file} differs`);
+    }
+  }
+  return differences;
+}
+function checkGeneratedAdapters(options = {}) {
+  const root = resolve2(options.root ?? defaultRoot());
+  const tempRoot = mkdtempSync(join2(tmpdir(), "monkeybars-generate-"));
+  const expectedPlugin = join2(tempRoot, "plugins", "monkeybars");
+  try {
+    generateAdapters({ root, pluginOutput: expectedPlugin });
+    const actualPlugin = join2(root, "plugins", "monkeybars");
+    const generatedDirs = ["commands", "skills", "templates", "hooks", "bin"];
+    const differences = generatedDirs.flatMap((directory) => compareGeneratedDirectory(join2(expectedPlugin, directory), join2(actualPlugin, directory), `plugins/monkeybars/${directory}`));
+    return { ok: differences.length === 0, differences };
+  } finally {
+    rmSync(tempRoot, { recursive: true, force: true });
+  }
+}
+
+// cli/src/install.ts
+import {
+  chmodSync as chmodSync2,
+  copyFileSync as copyFileSync2,
+  existsSync as existsSync3,
+  mkdirSync as mkdirSync2,
+  readFileSync as readFileSync3,
+  readdirSync as readdirSync2,
+  rmSync as rmSync2,
+  statSync as statSync2,
+  writeFileSync as writeFileSync2
+} from "node:fs";
+import { dirname as dirname2, isAbsolute, join as join3, relative as relative2, resolve as resolve3 } from "node:path";
+import { fileURLToPath as fileURLToPath2 } from "node:url";
+var SUPPORTED_INSTALL_TARGETS = ["opencode", "claude", "codex"];
+var GENERATED_MARKER2 = ".monkeybars-generated.json";
+function moduleDirectory2() {
+  return dirname2(fileURLToPath2(import.meta.url));
+}
+function packageRoot() {
+  const fromModule = moduleDirectory2();
+  const candidates = [resolve3(fromModule, ".."), resolve3(fromModule, "..", ".."), process.cwd()];
+  for (const candidate of candidates) {
+    if (existsSync3(join3(candidate, "plugins", "monkeybars"))) {
+      return candidate;
+    }
+  }
+  return resolve3(fromModule, "..");
 }
 function sourcePaths(rootOption) {
-  const root = resolve2(rootOption ?? packageRoot());
+  const root = resolve3(rootOption ?? packageRoot());
   return {
-    plugin: join2(root, "plugins", "monkeybars"),
-    marketplace: join2(root, ".agents", "plugins", "marketplace.json"),
-    hooks: join2(root, "plugins", "monkeybars", "hooks")
+    plugin: join3(root, "plugins", "monkeybars"),
+    marketplace: join3(root, ".agents", "plugins", "marketplace.json"),
+    hooks: join3(root, "plugins", "monkeybars", "hooks")
   };
 }
 function projectRootOrThrow(projectPath) {
-  const project = resolve2(projectPath ?? process.cwd());
-  if (!existsSync2(project)) {
+  const project = resolve3(projectPath ?? process.cwd());
+  if (!existsSync3(project)) {
     throw new Error(`Project path does not exist: ${project}`);
   }
-  const projectStat = statSync(project);
+  const projectStat = statSync2(project);
   if (!projectStat.isDirectory()) {
     throw new Error(`Project path is not a directory: ${project}`);
   }
   return project;
 }
 function samePath(left, right) {
-  return resolve2(left) === resolve2(right);
+  return resolve3(left) === resolve3(right);
 }
 function isInsidePath(parent, child) {
-  const relativePath = relative(resolve2(parent), resolve2(child));
+  const relativePath = relative2(resolve3(parent), resolve3(child));
   return relativePath !== "" && !relativePath.startsWith("..") && !isAbsolute(relativePath);
 }
 function replaceDirectory(source, target) {
-  const sourcePath = resolve2(source);
-  const targetPath = resolve2(target);
+  const sourcePath = resolve3(source);
+  const targetPath = resolve3(target);
   if (samePath(sourcePath, targetPath)) {
     throw new Error(`Refusing to copy directory onto itself: ${sourcePath}`);
   }
   if (isInsidePath(sourcePath, targetPath)) {
     throw new Error(`Refusing to copy directory into itself: ${sourcePath} -> ${targetPath}`);
   }
-  const sourceStat = statSync(sourcePath);
+  const sourceStat = statSync2(sourcePath);
   if (!sourceStat.isDirectory()) {
     throw new Error(`Source is not a directory: ${sourcePath}`);
   }
-  rmSync(targetPath, { recursive: true, force: true });
-  mkdirSync(targetPath, { recursive: true });
-  for (const entry of readdirSync(sourcePath)) {
-    const sourceEntry = join2(sourcePath, entry);
-    const targetEntry = join2(targetPath, entry);
-    const entryStat = statSync(sourceEntry);
+  rmSync2(targetPath, { recursive: true, force: true });
+  mkdirSync2(targetPath, { recursive: true });
+  for (const entry of readdirSync2(sourcePath)) {
+    const sourceEntry = join3(sourcePath, entry);
+    const targetEntry = join3(targetPath, entry);
+    const entryStat = statSync2(sourceEntry);
     if (entryStat.isDirectory()) {
       replaceDirectory(sourceEntry, targetEntry);
       continue;
     }
     if (entryStat.isFile()) {
-      mkdirSync(join2(targetEntry, ".."), { recursive: true });
-      copyFileSync(sourceEntry, targetEntry);
-      chmodSync(targetEntry, entryStat.mode);
+      mkdirSync2(join3(targetEntry, ".."), { recursive: true });
+      copyFileSync2(sourceEntry, targetEntry);
+      chmodSync2(targetEntry, entryStat.mode);
+    }
+  }
+}
+function removePath(path) {
+  if (existsSync3(path)) {
+    rmSync2(path, { recursive: true, force: true });
+  }
+}
+function copyFilePreservingMode(source, target) {
+  const sourceStat = statSync2(source);
+  if (!sourceStat.isFile()) {
+    throw new Error(`Source is not a file: ${source}`);
+  }
+  mkdirSync2(join3(target, ".."), { recursive: true });
+  copyFileSync2(source, target);
+  chmodSync2(target, sourceStat.mode);
+}
+function copyDirectoryInto(source, target) {
+  const sourcePath = resolve3(source);
+  const targetPath = resolve3(target);
+  if (samePath(sourcePath, targetPath))
+    return;
+  if (isInsidePath(sourcePath, targetPath)) {
+    throw new Error(`Refusing to copy directory into itself: ${sourcePath} -> ${targetPath}`);
+  }
+  removePath(targetPath);
+  mkdirSync2(targetPath, { recursive: true });
+  for (const entry of readdirSync2(sourcePath)) {
+    const sourceEntry = join3(sourcePath, entry);
+    const targetEntry = join3(targetPath, entry);
+    const entryStat = statSync2(sourceEntry);
+    if (entryStat.isDirectory()) {
+      copyDirectoryInto(sourceEntry, targetEntry);
+    } else if (entryStat.isFile()) {
+      copyFilePreservingMode(sourceEntry, targetEntry);
     }
   }
 }
 function copyHookFile(source, target) {
-  const sourceStat = statSync(source);
-  if (!sourceStat.isFile()) {
-    throw new Error(`Hook source is not a file: ${source}`);
-  }
-  mkdirSync(join2(target, ".."), { recursive: true });
-  copyFileSync(source, target);
-  chmodSync(target, sourceStat.mode);
+  copyFilePreservingMode(source, target);
 }
 function warn(message) {
   console.warn(`Warning: ${message}`);
 }
+function readMarkerEntries(target, key) {
+  const marker = join3(target, GENERATED_MARKER2);
+  if (!existsSync3(marker))
+    return [];
+  try {
+    const parsed = JSON.parse(readFileSync3(marker, "utf8"));
+    const value = parsed?.[key];
+    return Array.isArray(value) ? value.filter((entry) => typeof entry === "string") : [];
+  } catch {
+    return [];
+  }
+}
+function writeInstallMarker(target, key, entries) {
+  mkdirSync2(target, { recursive: true });
+  writeFileSync2(join3(target, GENERATED_MARKER2), `${JSON.stringify({ generatedBy: "monkeybars", installedBy: "monkeybars", [key]: entries.sort() }, null, 2)}
+`);
+}
+function sourceFiles(source) {
+  return readdirSync2(source).filter((name) => statSync2(join3(source, name)).isFile() && name !== GENERATED_MARKER2).sort();
+}
+function sourceDirectories(source) {
+  return readdirSync2(source).filter((name) => statSync2(join3(source, name)).isDirectory()).sort();
+}
 function installOpenCode(project, source) {
-  const target = join2(project, ".opencode", "commands");
-  replaceDirectory(join2(source.plugin, "commands"), target);
+  const target = join3(project, ".opencode", "commands");
+  const commandSource = join3(source.plugin, "commands");
+  const commands = sourceFiles(commandSource);
+  mkdirSync2(target, { recursive: true });
+  for (const stale of readMarkerEntries(target, "files")) {
+    if (!commands.includes(stale))
+      removePath(join3(target, stale));
+  }
+  for (const command of commands) {
+    copyFilePreservingMode(join3(commandSource, command), join3(target, command));
+  }
+  writeInstallMarker(target, "files", commands);
   return target;
 }
 function installClaude(project, source) {
-  const target = join2(project, ".claude", "skills");
-  replaceDirectory(join2(source.plugin, "skills"), target);
+  const target = join3(project, ".claude", "skills");
+  const skillSource = join3(source.plugin, "skills");
+  const skills = sourceDirectories(skillSource);
+  mkdirSync2(target, { recursive: true });
+  for (const stale of readMarkerEntries(target, "directories")) {
+    if (!skills.includes(stale))
+      removePath(join3(target, stale));
+  }
+  for (const skill of skills) {
+    copyDirectoryInto(join3(skillSource, skill), join3(target, skill));
+  }
+  writeInstallMarker(target, "directories", skills);
   return target;
 }
 function installCodex(project, source) {
-  const pluginTarget = join2(project, "plugins", "monkeybars");
-  const marketplaceTarget = join2(project, ".agents", "plugins", "marketplace.json");
-  if (!existsSync2(source.marketplace)) {
+  const pluginTarget = join3(project, ".codex", "plugins", "monkeybars");
+  const legacyPluginTarget = join3(project, "plugins", "monkeybars");
+  const marketplaceTarget = join3(project, ".agents", "plugins", "marketplace.json");
+  if (!existsSync3(source.marketplace)) {
     throw new Error(`Missing marketplace metadata: ${source.marketplace}`);
   }
   if (!samePath(source.plugin, pluginTarget)) {
     replaceDirectory(source.plugin, pluginTarget);
   }
-  mkdirSync(join2(marketplaceTarget, ".."), { recursive: true });
+  if (!samePath(source.plugin, legacyPluginTarget) && looksLikeMonkeyBarsPlugin(legacyPluginTarget)) {
+    removePath(legacyPluginTarget);
+  }
+  mkdirSync2(join3(marketplaceTarget, ".."), { recursive: true });
   if (!samePath(source.marketplace, marketplaceTarget)) {
-    copyFileSync(source.marketplace, marketplaceTarget);
+    copyFileSync2(source.marketplace, marketplaceTarget);
   }
   return { plugin: pluginTarget, marketplace: marketplaceTarget };
 }
+function looksLikeMonkeyBarsPlugin(path) {
+  const manifest = join3(path, ".codex-plugin", "plugin.json");
+  if (!existsSync3(manifest))
+    return false;
+  try {
+    const parsed = JSON.parse(readFileSync3(manifest, "utf8"));
+    return parsed?.name === "monkeybars";
+  } catch {
+    return false;
+  }
+}
 function readJsonObject(path, label) {
-  if (!existsSync2(path))
+  if (!existsSync3(path))
     return {};
   try {
-    const value = JSON.parse(readFileSync2(path, "utf8"));
+    const value = JSON.parse(readFileSync3(path, "utf8"));
     if (!value || typeof value !== "object" || Array.isArray(value)) {
       warn(`Skipped MonkeyBars ${label} hooks because ${path} is not a JSON object.`);
       return;
@@ -2584,8 +3160,8 @@ function readJsonObject(path, label) {
   }
 }
 function writeJsonObject(path, value) {
-  mkdirSync(join2(path, ".."), { recursive: true });
-  writeFileSync(path, `${JSON.stringify(value, null, 2)}
+  mkdirSync2(join3(path, ".."), { recursive: true });
+  writeFileSync2(path, `${JSON.stringify(value, null, 2)}
 `);
 }
 function hookRoot(settings) {
@@ -2641,18 +3217,18 @@ function addCommandHook(settings, event, command, options = {}) {
   hooks[event] = [...groups, group];
 }
 function installOpenCodeAgentHooks(project, source) {
-  const target = join2(project, ".opencode", "plugins", "monkeybars-workflow.js");
-  copyHookFile(join2(source.hooks, "opencode", "monkeybars-workflow.js"), target);
+  const target = join3(project, ".opencode", "plugins", "monkeybars-workflow.js");
+  copyHookFile(join3(source.hooks, "opencode", "monkeybars-workflow.js"), target);
   console.log(`Installed MonkeyBars OpenCode workflow hooks to ${target}.`);
 }
 function installClaudeAgentHooks(project, source) {
-  const settingsPath = join2(project, ".claude", "settings.json");
+  const settingsPath = join3(project, ".claude", "settings.json");
   const settings = readJsonObject(settingsPath, "Claude");
   if (!settings)
     return;
-  const target = join2(project, ".claude", "hooks", "monkeybars-workflow-context.js");
-  copyHookFile(join2(source.hooks, "shared", "monkeybars-workflow-context.js"), target);
-  const command = 'bun "$CLAUDE_PROJECT_DIR"/.claude/hooks/monkeybars-workflow-context.js claude';
+  const target = join3(project, ".claude", "hooks", "monkeybars-workflow-context.js");
+  copyHookFile(join3(source.hooks, "shared", "monkeybars-workflow-context.js"), target);
+  const command = 'node "$CLAUDE_PROJECT_DIR"/.claude/hooks/monkeybars-workflow-context.js claude';
   removeMonkeyBarsHooks(settings);
   addCommandHook(settings, "SessionStart", command, {
     matcher: "startup|resume|clear|compact",
@@ -2660,9 +3236,6 @@ function installClaudeAgentHooks(project, source) {
   });
   addCommandHook(settings, "UserPromptSubmit", command, {
     statusMessage: "Loading MonkeyBars prompt context"
-  });
-  addCommandHook(settings, "Stop", command, {
-    statusMessage: "Checking MonkeyBars workflow boundary"
   });
   writeJsonObject(settingsPath, settings);
   console.log(`Installed MonkeyBars Claude workflow hooks to ${target}.`);
@@ -2700,31 +3273,41 @@ codex_hooks = true
 `;
 }
 function updateCodexConfig(path) {
-  const text = existsSync2(path) ? readFileSync2(path, "utf8") : "";
-  try {
-    if (text.trim())
-      Bun.TOML.parse(text);
-  } catch (error) {
-    warn(`Skipped MonkeyBars Codex hooks because ${path} could not be parsed: ${error instanceof Error ? error.message : String(error)}`);
+  const text = existsSync3(path) ? readFileSync3(path, "utf8") : "";
+  if (!isSupportedTomlShape(text)) {
+    warn(`Skipped MonkeyBars Codex hooks because ${path} could not be parsed.`);
     return false;
   }
   const next = codexConfigWithHooksEnabled(text);
-  Bun.TOML.parse(next);
-  mkdirSync(join2(path, ".."), { recursive: true });
-  writeFileSync(path, next);
+  mkdirSync2(join3(path, ".."), { recursive: true });
+  writeFileSync2(path, next);
+  return true;
+}
+function isSupportedTomlShape(text) {
+  for (const rawLine of text.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith("#"))
+      continue;
+    if (/^\[[A-Za-z0-9_.-]+\]$/.test(line))
+      continue;
+    if (/^[A-Za-z0-9_.-]+\s*=\s*(?:"[^"]*"|'[^']*'|true|false|[-+]?\d+(?:\.\d+)?)(?:\s+#.*)?$/.test(line)) {
+      continue;
+    }
+    return false;
+  }
   return true;
 }
 function installCodexAgentHooks(project, source) {
-  const hooksPath = join2(project, ".codex", "hooks.json");
-  const configPath = join2(project, ".codex", "config.toml");
+  const hooksPath = join3(project, ".codex", "hooks.json");
+  const configPath = join3(project, ".codex", "config.toml");
   const settings = readJsonObject(hooksPath, "Codex");
   if (!settings)
     return;
   if (!updateCodexConfig(configPath))
     return;
-  const target = join2(project, ".codex", "hooks", "monkeybars-workflow-context.js");
-  copyHookFile(join2(source.hooks, "shared", "monkeybars-workflow-context.js"), target);
-  const command = `sh -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd); exec bun "$ROOT/.codex/hooks/monkeybars-workflow-context.js" codex'`;
+  const target = join3(project, ".codex", "hooks", "monkeybars-workflow-context.js");
+  copyHookFile(join3(source.hooks, "shared", "monkeybars-workflow-context.js"), target);
+  const command = `sh -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd); exec node "$ROOT/.codex/hooks/monkeybars-workflow-context.js" codex'`;
   removeMonkeyBarsHooks(settings);
   addCommandHook(settings, "SessionStart", command, {
     matcher: "startup|resume|clear",
@@ -2732,9 +3315,6 @@ function installCodexAgentHooks(project, source) {
   });
   addCommandHook(settings, "UserPromptSubmit", command, {
     statusMessage: "Loading MonkeyBars prompt context"
-  });
-  addCommandHook(settings, "Stop", command, {
-    statusMessage: "Checking MonkeyBars workflow boundary"
   });
   writeJsonObject(hooksPath, settings);
   console.log(`Installed MonkeyBars Codex workflow hooks to ${target}.`);
@@ -2785,15 +3365,294 @@ function installPackageTargets(targets = [], options = {}) {
   const source = sourcePaths(options.packageRoot);
   const project = projectRootOrThrow(options.project);
   const installHooks = options.agentHooks ?? true;
-  if (!existsSync2(source.plugin)) {
+  if (!existsSync3(source.plugin)) {
     throw new Error(`Missing plugin source directory: ${source.plugin}`);
   }
-  if (installHooks && !existsSync2(source.hooks)) {
+  if (installHooks && !existsSync3(source.hooks)) {
     throw new Error(`Missing hook source directory: ${source.hooks}`);
   }
   for (const target of normalizeInstallTargets(targets)) {
     runInstallTarget(target, source, project, installHooks);
   }
+}
+
+// cli/src/workflow-state.ts
+import { execSync, spawnSync } from "node:child_process";
+import { existsSync as existsSync4, readFileSync as readFileSync4, readdirSync as readdirSync3, statSync as statSync3, writeFileSync as writeFileSync3 } from "node:fs";
+import { join as join4, resolve as resolve4 } from "node:path";
+function today() {
+  return new Date().toISOString().slice(0, 10);
+}
+function phaseDisplay(number, title) {
+  return `${number} — ${title}`;
+}
+function taskDisplay(task) {
+  if (!task)
+    return "complete";
+  const description = task.text.split("|")[0]?.trim() || task.text;
+  return `${task.id} — ${description}`;
+}
+function readWorkflowSnapshot(cwd = process.cwd()) {
+  const root = resolve4(cwd);
+  const statusPath = join4(root, "docs", "status.md");
+  const planPath = join4(root, "docs", "plan.md");
+  const status = existsSync4(statusPath) ? readStatusFile(statusPath) : undefined;
+  const planPhases = existsSync4(planPath) ? readPlanPhases(planPath) : [];
+  const phaseFile = status?.active["phase file"];
+  const phasePath = phaseFile ? resolve4(root, phaseFile) : undefined;
+  const phase = phasePath && existsSync4(phasePath) ? readPhaseFile(phasePath) : undefined;
+  return {
+    cwd: root,
+    statusPath,
+    planPath,
+    phasePath,
+    status,
+    phase,
+    planPhases
+  };
+}
+function summarizeWorkflow(cwd = process.cwd()) {
+  const snapshot = readWorkflowSnapshot(cwd);
+  if (!snapshot.status) {
+    return {
+      initialized: false,
+      completedTasks: 0,
+      remainingTasks: 0
+    };
+  }
+  const active = snapshot.status.active;
+  const phase = snapshot.phase;
+  return {
+    initialized: true,
+    phase: active.phase,
+    phaseFile: active["phase file"],
+    state: active.state ?? phase?.status.state,
+    currentTask: active["current task"] ?? phase?.status["current task"],
+    lastCommit: active["last commit"] ?? phase?.status["last commit"],
+    completedTasks: phase?.tasks.filter((task) => task.checked).length ?? 0,
+    remainingTasks: phase?.tasks.filter((task) => !task.checked).length ?? 0,
+    blockers: phase?.status.blockers,
+    wipFiles: phase?.status["wip files"]
+  };
+}
+function updateBulletSection(text, heading, fields) {
+  const lines = text.split(/\r?\n/);
+  const start = lines.findIndex((line) => line.trim() === heading);
+  if (start === -1)
+    return text;
+  let end = lines.length;
+  for (let index = start + 1;index < lines.length; index += 1) {
+    if (lines[index].startsWith("## ")) {
+      end = index;
+      break;
+    }
+  }
+  const seen = new Set;
+  for (let index = start + 1;index < end; index += 1) {
+    const match = lines[index].match(/^- \*\*(.+?):\*\*\s*(.*)$/);
+    if (!match)
+      continue;
+    const key = match[1].trim().toLowerCase();
+    if (fields[key] === undefined)
+      continue;
+    lines[index] = `- **${match[1].trim()}:** ${fields[key]}`;
+    seen.add(key);
+  }
+  const missing = Object.entries(fields).filter(([key]) => !seen.has(key));
+  if (missing.length > 0) {
+    const insertAt = end;
+    lines.splice(insertAt, 0, ...missing.map(([key, value]) => `- **${titleCaseField(key)}:** ${value}`));
+  }
+  return lines.join(`
+`);
+}
+function titleCaseField(key) {
+  return key.replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+function updateLastUpdated(text, date) {
+  if (/^> Last updated:/m.test(text)) {
+    return text.replace(/^> Last updated:.*$/m, `> Last updated: ${date}`);
+  }
+  return text;
+}
+function updatePhaseSummary(text, phaseNumber, title, state) {
+  const lines = text.split(/\r?\n/);
+  const heading = lines.findIndex((line) => line.trim() === "## Phase Summary");
+  if (heading === -1)
+    return text;
+  let end = lines.length;
+  for (let index = heading + 1;index < lines.length; index += 1) {
+    if (lines[index].startsWith("## ")) {
+      end = index;
+      break;
+    }
+  }
+  const rowPattern = new RegExp(`^\\|\\s*${phaseNumber}\\s*\\|`);
+  const row = `| ${phaseNumber} | ${title} | ${state} |`;
+  const existing = lines.findIndex((line, index) => index > heading && index < end && rowPattern.test(line));
+  if (existing !== -1) {
+    lines[existing] = row;
+  } else {
+    lines.splice(end, 0, row);
+  }
+  return lines.join(`
+`);
+}
+function statusFieldsForWrite(status, phaseLabel, phaseFile, state, currentTask, commit) {
+  return {
+    ...status.active,
+    "phase file": phaseFile,
+    phase: phaseDisplay(phaseLabel.number, phaseLabel.title),
+    state,
+    "current task": currentTask,
+    "last commit": commit,
+    "last updated": today()
+  };
+}
+function migrateStatus(cwd = process.cwd()) {
+  const snapshot = readWorkflowSnapshot(cwd);
+  if (!snapshot.status) {
+    throw new Error("Missing docs/status.md.");
+  }
+  const fields = {
+    ...snapshot.status.active,
+    "last updated": snapshot.status.active["last updated"] ?? today()
+  };
+  const next = upsertStructuredStatusFields(snapshot.status.text ?? readFileSync4(snapshot.statusPath, "utf8"), fields);
+  writeFileSync3(snapshot.statusPath, next.endsWith(`
+`) ? next : `${next}
+`);
+  return snapshot.statusPath;
+}
+function advanceTask(taskId, commit, cwd = process.cwd()) {
+  if (!taskId.trim())
+    throw new Error("--task is required.");
+  if (!commit.trim())
+    throw new Error("--commit is required.");
+  const snapshot = readWorkflowSnapshot(cwd);
+  if (!snapshot.status)
+    throw new Error("Missing docs/status.md.");
+  if (!snapshot.phase || !snapshot.phasePath)
+    throw new Error("Active phase file is missing.");
+  const phaseFile = snapshot.status.active["phase file"];
+  if (!phaseFile)
+    throw new Error("docs/status.md does not define Active Work phase file.");
+  const normalizedTask = normalizeTaskId(taskId);
+  const phase = snapshot.phase;
+  const targetTask = phase.tasks.find((task) => task.id === normalizedTask);
+  if (!targetTask)
+    throw new Error(`Task ${normalizedTask} was not found in ${phaseFile}.`);
+  if (targetTask.checked)
+    throw new Error(`Task ${normalizedTask} is already checked.`);
+  const firstUnchecked = phase.tasks.find((task) => !task.checked);
+  if (firstUnchecked && firstUnchecked.id !== normalizedTask) {
+    throw new Error(`Task ${normalizedTask} cannot advance before first unchecked task ${firstUnchecked.id}.`);
+  }
+  const phaseLabel = parsePhaseLabel(phase.title);
+  if (!phaseLabel)
+    throw new Error(`Active phase file title must look like "# Phase 1 — Title".`);
+  const lines = readFileSync4(snapshot.phasePath, "utf8").split(/\r?\n/);
+  lines[targetTask.line - 1] = lines[targetTask.line - 1].replace(/^- \[ \]/, "- [x]");
+  const nextTask = phase.tasks.find((task) => !task.checked && task.id !== normalizedTask);
+  const nextTaskText = taskDisplay(nextTask);
+  const nextState = nextTask ? "in_progress" : "complete";
+  let phaseText = lines.join(`
+`);
+  phaseText = updateBulletSection(phaseText, "## Status", {
+    state: nextState,
+    "current task": nextTaskText,
+    "last commit": commit,
+    "wip files": "none"
+  });
+  phaseText = appendLogEntry(phaseText, normalizedTask, nextTaskText, commit);
+  writeFileSync3(snapshot.phasePath, phaseText.endsWith(`
+`) ? phaseText : `${phaseText}
+`);
+  const statusFields = statusFieldsForWrite(snapshot.status, phaseLabel, phaseFile, nextState, nextTaskText, commit);
+  const { "last updated": _lastUpdated, ...activeStatusFields } = statusFields;
+  let statusText = snapshot.status.text ?? readFileSync4(snapshot.statusPath, "utf8");
+  statusText = updateLastUpdated(statusText, statusFields["last updated"]);
+  statusText = updateBulletSection(statusText, "## Active Work", activeStatusFields);
+  statusText = updatePhaseSummary(statusText, phaseLabel.number, phaseLabel.title, nextState);
+  statusText = upsertStructuredStatusFields(statusText, statusFields);
+  writeFileSync3(snapshot.statusPath, statusText.endsWith(`
+`) ? statusText : `${statusText}
+`);
+  return {
+    phaseFile,
+    completedTask: normalizedTask,
+    nextTask: nextTaskText,
+    state: nextState,
+    commit
+  };
+}
+function appendLogEntry(text, taskId, nextTask, commit) {
+  const lines = text.split(/\r?\n/);
+  const logIndex = lines.findIndex((line) => line.trim() === "## Log");
+  const entry = `- ${today()}: Completed ${taskId}; next task ${nextTask}; commit subject \`${commit}\`.`;
+  if (logIndex === -1) {
+    return `${text.trimEnd()}
+
+## Log
+
+${entry}
+`;
+  }
+  const insertAt = logIndex + 1;
+  if (lines[insertAt]?.trim() === "") {
+    lines.splice(insertAt + 1, 0, entry);
+  } else {
+    lines.splice(insertAt, 0, "", entry);
+  }
+  return lines.join(`
+`);
+}
+function preflight(dryRun, cwd = process.cwd()) {
+  const agentsPath = join4(resolve4(cwd), "AGENTS.md");
+  const commands = existsSync4(agentsPath) ? extractPreflightCommands(readFileSync4(agentsPath, "utf8")) : [];
+  if (dryRun || commands.length === 0) {
+    return { commands, ok: true, dryRun };
+  }
+  for (const command of commands) {
+    const result = spawnSync(command, {
+      cwd,
+      shell: true,
+      stdio: "inherit"
+    });
+    if (result.status !== 0) {
+      return {
+        commands,
+        ok: false,
+        dryRun,
+        failedCommand: command,
+        status: result.status
+      };
+    }
+  }
+  return { commands, ok: true, dryRun };
+}
+function doctor(cwd = process.cwd()) {
+  const lines = [];
+  lines.push(`Node: ${process.version}`);
+  lines.push(`Git repository: ${isGitRepository(cwd) ? "yes" : "no"}`);
+  const root = resolve4(cwd);
+  const packageAssets = [
+    ".opencode/commands",
+    ".claude/skills",
+    ".codex/plugins/monkeybars/.codex-plugin/plugin.json",
+    ".codex/hooks/monkeybars-workflow-context.js",
+    ".opencode/plugins/monkeybars-workflow.js",
+    ".agents/plugins/marketplace.json"
+  ];
+  for (const asset of packageAssets) {
+    lines.push(`${asset}: ${existsSync4(join4(root, asset)) ? "present" : "missing"}`);
+  }
+  const snapshot = readWorkflowSnapshot(cwd);
+  lines.push(`docs/status.md: ${snapshot.status ? "present" : "missing"}`);
+  lines.push(`docs/plan.md: ${existsSync4(snapshot.planPath) ? "present" : "missing"}`);
+  lines.push(`active phase file: ${snapshot.phase ? displayPath(snapshot.phase.path) : "missing"}`);
+  lines.push(`dirty files: ${gitStatus(cwd).length}`);
+  return lines;
 }
 
 // cli/src/index.ts
@@ -2808,6 +3667,63 @@ function createProgram() {
       printCheckResult(result);
     }
     process.exitCode = result.ok ? 0 : 1;
+  });
+  program2.command("status").description("Show current MonkeyBars workflow status.").option("--json", "emit JSON").allowExcessArguments(false).allowUnknownOption(false).action((options) => {
+    const summary = summarizeWorkflow();
+    if (options.json) {
+      console.log(JSON.stringify(summary, null, 2));
+      return;
+    }
+    if (!summary.initialized) {
+      console.log("MonkeyBars is not initialized in this repository.");
+      return;
+    }
+    console.log(`Phase: ${summary.phase ?? "unknown"}`);
+    console.log(`State: ${summary.state ?? "unknown"}`);
+    console.log(`Current task: ${summary.currentTask ?? "unknown"}`);
+    console.log(`Tasks: ${summary.completedTasks} complete, ${summary.remainingTasks} remaining`);
+    console.log(`Blockers: ${summary.blockers ?? "unknown"}`);
+    console.log(`WIP files: ${summary.wipFiles ?? "unknown"}`);
+  });
+  program2.command("preflight").description("Run documented project preflight checks.").option("--dry-run", "print commands without running them").allowExcessArguments(false).allowUnknownOption(false).action((options) => {
+    const result = preflight(Boolean(options.dryRun));
+    if (result.commands.length === 0) {
+      console.log("No preflight commands found in AGENTS.md.");
+    } else if (result.dryRun) {
+      for (const command of result.commands)
+        console.log(command);
+    }
+    if (!result.ok) {
+      console.error(`Preflight failed: ${result.failedCommand}`);
+      process.exitCode = result.status ?? 1;
+    }
+  });
+  program2.command("advance").description("Advance workflow tracking files after a completed task, before committing.").requiredOption("--task <id>", "completed task id").requiredOption("--commit <subject>", "commit subject to record").allowExcessArguments(false).allowUnknownOption(false).action((options) => {
+    const result = advanceTask(options.task, options.commit);
+    console.log(`Advanced ${result.phaseFile}: completed ${result.completedTask}, next ${result.nextTask}, state ${result.state}.`);
+  });
+  program2.command("migrate-status").description("Add or refresh the structured MonkeyBars status block in docs/status.md.").allowExcessArguments(false).allowUnknownOption(false).action(() => {
+    const path = migrateStatus();
+    console.log(`Migrated ${path}.`);
+  });
+  program2.command("doctor").description("Print MonkeyBars installation and repository diagnostics.").allowExcessArguments(false).allowUnknownOption(false).action(() => {
+    for (const line of doctor())
+      console.log(line);
+  });
+  program2.command("generate").description("Regenerate MonkeyBars adapter artifacts.").option("--check", "fail if generated artifacts are stale without modifying files").allowExcessArguments(false).allowUnknownOption(false).action((options) => {
+    if (options.check) {
+      const result = checkGeneratedAdapters();
+      if (result.ok) {
+        console.log("Generated adapters are up to date.");
+        return;
+      }
+      for (const difference of result.differences)
+        console.log(`STALE ${difference}`);
+      process.exitCode = 1;
+      return;
+    }
+    const pluginPath = generateAdapters();
+    console.log(`Generated adapters into ${pluginPath}`);
   });
   program2.command("install").description("Install MonkeyBars workflow assets into a project.").addArgument(new Argument("[targets...]", "install targets").choices(SUPPORTED_INSTALL_TARGETS)).option("--project <path>", "target project directory").option("--no-agent-hooks", "skip agent-native workflow hook installation").allowExcessArguments(false).allowUnknownOption(false).action((targets = [], options) => {
     installPackageTargets(targets, {

@@ -99,15 +99,19 @@ describe("brainstorm-plan workflow content", () => {
     expect(readme).toContain(
       "npm exec --package github:paiyar/monkeybars#<tag-or-commit> -- monkeybars install --project /path/to/repo"
     );
-    expect(readme).toContain("Bun must be installed");
-    expect(readme).toContain("npm runs the package `prepack` script");
+    expect(readme).toContain("Node.js 20 or newer");
+    expect(readme).toContain("Bun is still used for\n" + "development, tests, and generating packaged adapter artifacts");
     expect(readme).toContain("monkeybars install --project /path/to/repo");
     expect(readme).toContain("monkeybars install opencode claude --project /path/to/repo");
     expect(readme).toContain("monkeybars install --no-agent-hooks --project /path/to/repo");
     expect(readme).toContain("monkeybars install codex --project /path/to/repo");
-    expect(readme).toContain("bun dist/index.js install --project /path/to/repo");
-    expect(readme).toContain("plugins/monkeybars/.codex-plugin/plugin.json");
+    expect(readme).toContain("node dist/index.js install --project /path/to/repo");
+    expect(readme).toContain(".codex/plugins/monkeybars/.codex-plugin/plugin.json");
     expect(readme).toContain(".agents/plugins/marketplace.json");
+    expect(readme).toContain("./.codex/plugins/monkeybars");
+    expect(readme).toContain("monkeybars status");
+    expect(readme).toContain("monkeybars advance --task T01");
+    expect(readme).toContain("bun run generate:check");
     expect(readme).toContain("agent-native workflow hooks");
     expect(readme).toContain("Hooks never update workflow files, block tool calls");
     expect(readme).toContain("$initialize-monkeybars");
@@ -119,13 +123,15 @@ describe("brainstorm-plan workflow content", () => {
     expect(pluginReadme).toContain(
       "npm exec --package github:paiyar/monkeybars#<tag-or-commit> -- monkeybars install --project /path/to/repo"
     );
-    expect(pluginReadme).toContain("Bun must be installed");
-    expect(pluginReadme).toContain("npm runs the package `prepack` script");
+    expect(pluginReadme).toContain("Node.js 20 or newer");
+    expect(pluginReadme).toContain("Bun is still used for\n" + "development, tests, and generating packaged adapter artifacts");
     expect(pluginReadme).toContain("monkeybars install --project /path/to/repo");
     expect(pluginReadme).toContain("monkeybars install opencode claude --project /path/to/repo");
     expect(pluginReadme).toContain("monkeybars install --no-agent-hooks --project /path/to/repo");
     expect(pluginReadme).toContain("plugins/monkeybars/.codex-plugin/plugin.json");
+    expect(pluginReadme).toContain(".codex/plugins/monkeybars/.codex-plugin/plugin.json");
     expect(pluginReadme).toContain(".agents/plugins/marketplace.json");
+    expect(pluginReadme).toContain("./.codex/plugins/monkeybars");
     expect(pluginReadme).toContain("agent-native hooks inject or preserve");
     expect(pluginReadme).toContain("$initialize-monkeybars");
     expect(pluginReadme).not.toContain("monkeybars hooks install");

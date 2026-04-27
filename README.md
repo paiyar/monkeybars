@@ -68,6 +68,39 @@ missing, stale, contradictory, or too rough, it moves into guided planning
 intake to define the needed spec, architecture, data, interface, and active
 plan docs before implementation starts.
 
+## First 10 Minutes
+
+1. Install MonkeyBars into the repo:
+
+   ```sh
+   monkeybars install --project /path/to/repo
+   ```
+
+2. In the target repo, run the initializer with your agent:
+
+   ```text
+   /initialize-monkeybars
+   ```
+
+3. Check the deterministic state:
+
+   ```sh
+   monkeybars status
+   monkeybars check
+   ```
+
+4. Start work from a fresh agent context:
+
+   ```text
+   /start-session
+   ```
+
+5. When one task is done, complete it as one logical commit:
+
+   ```text
+   /complete-task
+   ```
+
 ## How It Works
 
 Your project gets a small set of planning and tracking files:
@@ -252,10 +285,8 @@ npm exec --package github:paiyar/monkeybars#<tag-or-commit> -- monkeybars instal
 Omit `#<tag-or-commit>` only when you intentionally want npm to install the
 current default branch. Prefer a tag or commit SHA for repeatable installs.
 
-Bun must be installed and available on `PATH` for the v1 package because the
-CLI entrypoint runs with `#!/usr/bin/env bun`. GitHub installs also need Bun
-during package installation because npm runs the package `prepack` script,
-which generates the bundled CLI and plugin assets.
+The published CLI runs on Node.js 20 or newer. Bun is still used for
+development, tests, and generating packaged adapter artifacts from a checkout.
 
 Omitting targets installs all supported agents: OpenCode, Claude Code, and
 Codex. It also installs project-local, agent-native workflow hooks/events by
@@ -314,11 +345,13 @@ After install, invoke skills as slash commands such as
 Install or point Codex at the plugin directory. The manifest is:
 
 ```text
-plugins/monkeybars/.codex-plugin/plugin.json
+.codex/plugins/monkeybars/.codex-plugin/plugin.json
 ```
 
-The CLI copies the plugin directory, `.agents/plugins/marketplace.json`, and
-advisory Codex workflow hooks into the target repo:
+The repository marketplace remains at `.agents/plugins/marketplace.json`, with
+`source.path` pointing to `./.codex/plugins/monkeybars`. The CLI copies the
+plugin payload, marketplace metadata, and advisory Codex workflow hooks into
+the target repo:
 
 ```sh
 monkeybars install codex --project /path/to/repo
@@ -332,11 +365,17 @@ After install, invoke skills explicitly with the skill mention UI, such as
 
 ## CLI And Advisory Hooks
 
-The skills and commands are the main workflow. The installed CLI also exposes a
-deterministic read-only workflow check:
+The skills and commands are the main workflow. The installed CLI also exposes
+deterministic helpers for checking and updating workflow state:
 
 ```sh
+monkeybars status
 monkeybars check
+monkeybars preflight --dry-run
+monkeybars preflight
+monkeybars advance --task T01 --commit "feat(T01): finish task"
+monkeybars migrate-status
+monkeybars doctor
 ```
 
 Installed agent-native hooks are project-local and advisory:
@@ -369,13 +408,14 @@ Local checkout usage is for development only:
 ```sh
 bun install
 bun run generate
-bun dist/index.js install --project /path/to/repo
+node dist/index.js install --project /path/to/repo
 ```
 
 Regenerate adapters after changing command sources or templates:
 
 ```sh
 bun run generate
+bun run generate:check
 ```
 
 Review the generated diff:

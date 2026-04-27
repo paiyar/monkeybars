@@ -10,6 +10,8 @@ export interface Finding {
 export interface StatusFile {
   path: string;
   active: Record<string, string>;
+  structured?: Record<string, string>;
+  text?: string;
 }
 
 export interface PhaseTask {
@@ -25,6 +27,12 @@ export interface PhaseFile {
   status: Record<string, string>;
   tasks: PhaseTask[];
   logText: string;
+}
+
+export interface PlanPhase {
+  number: string;
+  title: string;
+  line: number;
 }
 
 export interface CheckResult {

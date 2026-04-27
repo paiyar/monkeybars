@@ -1,0 +1,16 @@
+{
+  "generatedBy": "monkeybars",
+  "type": "skills",
+  "directories": [
+    "brainstorm-plan",
+    "complete-task",
+    "context-boundary",
+    "create-phase",
+    "fix-bug",
+    "handoff-session",
+    "initialize-monkeybars",
+    "project-status",
+    "start-session",
+    "workflow-check"
+  ]
+}

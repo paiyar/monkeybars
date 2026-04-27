@@ -1,0 +1,16 @@
+{
+  "generatedBy": "monkeybars",
+  "type": "commands",
+  "files": [
+    "brainstorm-plan.md",
+    "complete-task.md",
+    "context-boundary.md",
+    "create-phase.md",
+    "fix-bug.md",
+    "handoff-session.md",
+    "initialize-monkeybars.md",
+    "project-status.md",
+    "start-session.md",
+    "workflow-check.md"
+  ]
+}

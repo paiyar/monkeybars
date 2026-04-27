@@ -8,7 +8,7 @@
       "name": "monkeybars",
       "source": {
         "source": "local",
-        "path": "./plugins/monkeybars"
+        "path": "./.codex/plugins/monkeybars"
       },
       "policy": {
         "installation": "AVAILABLE",

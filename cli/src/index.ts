@@ -1,7 +1,9 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 import { Argument, Command, CommanderError } from "commander";
 import { printCheckResult, runCheck } from "./check.js";
+import { checkGeneratedAdapters, generateAdapters } from "./generator.js";
 import { installPackageTargets, SUPPORTED_INSTALL_TARGETS } from "./install.js";
+import { advanceTask, doctor, migrateStatus, preflight, summarizeWorkflow } from "./workflow-state.js";
 
 type CheckOptions = {
   json?: boolean;
@@ -10,6 +12,23 @@ type CheckOptions = {
 type PackageInstallOptions = {
   project?: string;
   agentHooks?: boolean;
+};
+
+type GenerateOptions = {
+  check?: boolean;
+};
+
+type StatusOptions = {
+  json?: boolean;
+};
+
+type PreflightOptions = {
+  dryRun?: boolean;
+};
+
+type AdvanceOptions = {
+  task: string;
+  commit: string;
 };
 
 function createProgram(): Command {
@@ -34,6 +53,103 @@ function createProgram(): Command {
         printCheckResult(result);
       }
       process.exitCode = result.ok ? 0 : 1;
+    });
+
+  program
+    .command("status")
+    .description("Show current MonkeyBars workflow status.")
+    .option("--json", "emit JSON")
+    .allowExcessArguments(false)
+    .allowUnknownOption(false)
+    .action((options: StatusOptions) => {
+      const summary = summarizeWorkflow();
+      if (options.json) {
+        console.log(JSON.stringify(summary, null, 2));
+        return;
+      }
+      if (!summary.initialized) {
+        console.log("MonkeyBars is not initialized in this repository.");
+        return;
+      }
+      console.log(`Phase: ${summary.phase ?? "unknown"}`);
+      console.log(`State: ${summary.state ?? "unknown"}`);
+      console.log(`Current task: ${summary.currentTask ?? "unknown"}`);
+      console.log(`Tasks: ${summary.completedTasks} complete, ${summary.remainingTasks} remaining`);
+      console.log(`Blockers: ${summary.blockers ?? "unknown"}`);
+      console.log(`WIP files: ${summary.wipFiles ?? "unknown"}`);
+    });
+
+  program
+    .command("preflight")
+    .description("Run documented project preflight checks.")
+    .option("--dry-run", "print commands without running them")
+    .allowExcessArguments(false)
+    .allowUnknownOption(false)
+    .action((options: PreflightOptions) => {
+      const result = preflight(Boolean(options.dryRun));
+      if (result.commands.length === 0) {
+        console.log("No preflight commands found in AGENTS.md.");
+      } else if (result.dryRun) {
+        for (const command of result.commands) console.log(command);
+      }
+      if (!result.ok) {
+        console.error(`Preflight failed: ${result.failedCommand}`);
+        process.exitCode = result.status ?? 1;
+      }
+    });
+
+  program
+    .command("advance")
+    .description("Advance workflow tracking files after a completed task, before committing.")
+    .requiredOption("--task <id>", "completed task id")
+    .requiredOption("--commit <subject>", "commit subject to record")
+    .allowExcessArguments(false)
+    .allowUnknownOption(false)
+    .action((options: AdvanceOptions) => {
+      const result = advanceTask(options.task, options.commit);
+      console.log(
+        `Advanced ${result.phaseFile}: completed ${result.completedTask}, next ${result.nextTask}, state ${result.state}.`
+      );
+    });
+
+  program
+    .command("migrate-status")
+    .description("Add or refresh the structured MonkeyBars status block in docs/status.md.")
+    .allowExcessArguments(false)
+    .allowUnknownOption(false)
+    .action(() => {
+      const path = migrateStatus();
+      console.log(`Migrated ${path}.`);
+    });
+
+  program
+    .command("doctor")
+    .description("Print MonkeyBars installation and repository diagnostics.")
+    .allowExcessArguments(false)
+    .allowUnknownOption(false)
+    .action(() => {
+      for (const line of doctor()) console.log(line);
+    });
+
+  program
+    .command("generate")
+    .description("Regenerate MonkeyBars adapter artifacts.")
+    .option("--check", "fail if generated artifacts are stale without modifying files")
+    .allowExcessArguments(false)
+    .allowUnknownOption(false)
+    .action((options: GenerateOptions) => {
+      if (options.check) {
+        const result = checkGeneratedAdapters();
+        if (result.ok) {
+          console.log("Generated adapters are up to date.");
+          return;
+        }
+        for (const difference of result.differences) console.log(`STALE ${difference}`);
+        process.exitCode = 1;
+        return;
+      }
+      const pluginPath = generateAdapters();
+      console.log(`Generated adapters into ${pluginPath}`);
     });
 
   program

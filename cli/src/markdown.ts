@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { basename } from "node:path";
-import type { PhaseFile, PhaseTask, StatusFile } from "./types.js";
+import type { PhaseFile, PhaseTask, PlanPhase, StatusFile } from "./types.js";
 
 export interface PhaseLabel {
   number: string;
@@ -23,6 +23,88 @@ function parseBulletFields(lines: string[], startHeading: string): Record<string
   }
 
   return fields;
+}
+
+const STRUCTURED_STATUS_START = "<!-- monkeybars:status";
+const STRUCTURED_STATUS_END = "-->";
+
+const structuredStatusKeys: Record<string, string> = {
+  plan_scope: "plan scope",
+  phase_file: "phase file",
+  phase: "phase",
+  state: "state",
+  current_task: "current task",
+  last_commit: "last commit",
+  last_updated: "last updated"
+};
+
+export function structuredKeyForField(field: string): string {
+  return field.trim().toLowerCase().replace(/\s+/g, "_");
+}
+
+export function parseStructuredStatusFields(text: string): Record<string, string> {
+  const start = text.indexOf(STRUCTURED_STATUS_START);
+  if (start === -1) return {};
+  const contentStart = text.indexOf("\n", start);
+  if (contentStart === -1) return {};
+  const end = text.indexOf(STRUCTURED_STATUS_END, contentStart);
+  if (end === -1) return {};
+
+  const fields: Record<string, string> = {};
+  const block = text.slice(contentStart + 1, end);
+  for (const rawLine of block.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line) continue;
+    const separator = line.indexOf(":");
+    if (separator === -1) continue;
+    const rawKey = line.slice(0, separator).trim();
+    const value = line.slice(separator + 1).trim();
+    const key = structuredStatusKeys[rawKey] ?? rawKey.replace(/_/g, " ");
+    fields[key] = value;
+  }
+  return fields;
+}
+
+export function formatStructuredStatusFields(fields: Record<string, string>): string {
+  const orderedFields = [
+    "plan scope",
+    "phase file",
+    "phase",
+    "state",
+    "current task",
+    "last commit",
+    "last updated"
+  ];
+  const keys = [
+    ...orderedFields.filter((key) => fields[key] !== undefined),
+    ...Object.keys(fields)
+      .filter((key) => !orderedFields.includes(key))
+      .sort()
+  ];
+  return [
+    STRUCTURED_STATUS_START,
+    ...keys.map((key) => `${structuredKeyForField(key)}: ${fields[key]}`),
+    STRUCTURED_STATUS_END
+  ].join("\n");
+}
+
+export function upsertStructuredStatusFields(text: string, fields: Record<string, string>): string {
+  const block = formatStructuredStatusFields(fields);
+  const start = text.indexOf(STRUCTURED_STATUS_START);
+  if (start !== -1) {
+    const end = text.indexOf(STRUCTURED_STATUS_END, start);
+    if (end !== -1) {
+      return `${text.slice(0, start)}${block}${text.slice(end + STRUCTURED_STATUS_END.length)}`;
+    }
+  }
+
+  const lines = text.split(/\r?\n/);
+  const insertAt = lines.findIndex((line, index) => index > 0 && line.startsWith("## "));
+  if (insertAt === -1) {
+    return `${text.trimEnd()}\n\n${block}\n`;
+  }
+  lines.splice(insertAt, 0, block, "");
+  return lines.join("\n");
 }
 
 function parseTasks(lines: string[]): PhaseTask[] {
@@ -58,9 +140,13 @@ function sectionText(lines: string[], startHeading: string): string {
 export function readStatusFile(path: string): StatusFile {
   const text = readFileSync(path, "utf8");
   const lines = text.split(/\r?\n/);
+  const legacy = parseBulletFields(lines, "## Active Work");
+  const structured = parseStructuredStatusFields(text);
   return {
     path,
-    active: parseBulletFields(lines, "## Active Work")
+    active: { ...legacy, ...structured },
+    structured,
+    text
   };
 }
 
@@ -98,6 +184,22 @@ export function parsePhaseLabel(value: string | undefined): PhaseLabel | undefin
 
 export function displayPath(path: string): string {
   return path.split(/[\\/]/).slice(-3).join("/") || basename(path);
+}
+
+export function readPlanPhases(path: string): PlanPhase[] {
+  const text = readFileSync(path, "utf8");
+  const phases: PlanPhase[] = [];
+  const lines = text.split(/\r?\n/);
+  for (let index = 0; index < lines.length; index += 1) {
+    const match = lines[index].match(/^##\s+Phase\s+(\d+)\s+[—-]\s+(.+)$/i);
+    if (!match) continue;
+    phases.push({
+      number: match[1],
+      title: match[2].trim(),
+      line: index + 1
+    });
+  }
+  return phases;
 }
 
 export function extractPreflightCommands(agentsText: string): string[] {

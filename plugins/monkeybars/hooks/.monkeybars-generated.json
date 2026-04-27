@@ -1,0 +1,8 @@
+{
+  "generatedBy": "monkeybars",
+  "type": "directory",
+  "files": [
+    "opencode/monkeybars-workflow.js",
+    "shared/monkeybars-workflow-context.js"
+  ]
+}

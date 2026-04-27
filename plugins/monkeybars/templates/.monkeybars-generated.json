@@ -1,0 +1,15 @@
+{
+  "generatedBy": "monkeybars",
+  "type": "templates",
+  "files": [
+    "agents.md",
+    "api.md",
+    "architecture.md",
+    "claude.md",
+    "data-model.md",
+    "phase.md",
+    "plan.md",
+    "spec.md",
+    "status.md"
+  ]
+}

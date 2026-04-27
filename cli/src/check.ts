@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { gitStatus, isGitRepository, recentCommits } from "./git.js";
-import { displayPath, normalizeTaskId, parsePhaseLabel, readPhaseFile, readStatusFile } from "./markdown.js";
+import { gitStatus, isGitRepository, recentCommits, recentCommitSubjects } from "./git.js";
+import { displayPath, normalizeTaskId, parsePhaseLabel, readPhaseFile, readPlanPhases, readStatusFile } from "./markdown.js";
 import type { CheckResult, Finding } from "./types.js";
 
 function add(findings: Finding[], finding: Finding): void {
@@ -10,6 +10,8 @@ function add(findings: Finding[], finding: Finding): void {
 
 function isLastCommitValid(value: string, cwd: string): boolean {
   if (!value || value === "none") return true;
+  const subjects = recentCommitSubjects(cwd);
+  if (subjects.some((subject) => subject.trim() === value.trim())) return true;
   const commits = recentCommits(cwd);
   return commits.some((commit) => commit.includes(value) || value.includes(commit));
 }
@@ -56,6 +58,7 @@ export function runCheck(cwd = process.cwd()): CheckResult {
       file: "docs/plan.md"
     });
   }
+  const planPhases = existsSync(planPath) ? readPlanPhases(planPath) : [];
 
   const status = readStatusFile(statusPath);
   const phaseFile = status.active["phase file"];
@@ -122,6 +125,25 @@ export function runCheck(cwd = process.cwd()): CheckResult {
       message: `Phase mismatch: docs/status.md says ${statusPhase.number} — ${statusPhase.title}, ${displayPath(phase.path)} says ${phaseLabel.number} — ${phaseLabel.title}.`,
       file: phaseFile
     });
+  }
+
+  if (statusPhase && planPhases.length > 0) {
+    const planPhase = planPhases.find((candidate) => candidate.number === statusPhase.number);
+    if (!planPhase) {
+      add(findings, {
+        severity: "error",
+        code: "active-phase-not-in-plan",
+        message: `Active phase ${statusPhase.number} is not present in docs/plan.md.`,
+        file: "docs/plan.md"
+      });
+    } else if (planPhase.title !== statusPhase.title) {
+      add(findings, {
+        severity: "error",
+        code: "plan-phase-title-mismatch",
+        message: `docs/plan.md says Phase ${planPhase.number} is ${planPhase.title}, docs/status.md says ${statusPhase.title}.`,
+        file: "docs/plan.md"
+      });
+    }
   }
 
   const statusState = status.active.state;

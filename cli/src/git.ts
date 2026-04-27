@@ -24,6 +24,12 @@ export function recentCommits(cwd = process.cwd()): string[] {
   return output.split(/\r?\n/).filter(Boolean);
 }
 
+export function recentCommitSubjects(cwd = process.cwd()): string[] {
+  const output = git(["log", "--format=%s", "-n", "100"], cwd);
+  if (!output) return [];
+  return output.split(/\r?\n/).filter(Boolean);
+}
+
 export function isGitRepository(cwd = process.cwd()): boolean {
   return git(["rev-parse", "--is-inside-work-tree"], cwd) === "true";
 }
