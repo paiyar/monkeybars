@@ -2,22 +2,55 @@
 
 ## Project Structure & Module Organization
 
-This repository packages MonkeyBars for OpenCode, Claude Code, and Codex. The root `README.md` is the human-facing overview. Canonical workflow content lives in `workflow-src/`: `commands/` contains command definitions with YAML-style frontmatter, and `templates/` contains project initialization templates. TypeScript implementation code lives in `cli/src/`, including the CLI, advisory hook support, and adapter generator. Bun tests live in `test/`. Generated plugin artifacts live in `plugins/monkeybars/`, including `skills/`, `commands/`, `templates/`, generated CLI output in `bin/`, helper install scripts, and the Codex manifest at `.codex-plugin/plugin.json`. `.agents/plugins/marketplace.json` contains local plugin marketplace metadata.
+This repository packages MonkeyBars for OpenCode, Claude Code, and Codex. The root `README.md` is the human-facing overview. Canonical workflow content lives in `workflow-src/`: `commands/` contains command definitions with YAML-style frontmatter, `templates/` contains project initialization templates, and `hooks/{shared,opencode}/` contains agent-native hook scripts. TypeScript implementation code lives in `cli/src/`, including the CLI, advisory hook support, and adapter generator. Bun tests live in `test/`. Generated plugin artifacts live in `plugins/monkeybars/`, including `skills/`, `commands/`, `templates/`, `hooks/`, generated CLI output in `bin/`, helper install scripts, and the Codex manifest at `.codex-plugin/plugin.json`. `.agents/plugins/marketplace.json` contains local plugin marketplace metadata.
 
 ## Build, Test, and Development Commands
 
 - `bun run build` builds the TypeScript CLI into `dist/`.
 - `bun run test` builds the CLI and runs Bun tests.
+- `bun test test/<file>.test.ts` runs a single test file. `bun test -t "<name>"` filters by test name.
 - `bun run generate` builds the CLI and regenerates tool-specific adapters from `workflow-src/` into `plugins/monkeybars/`.
+- `bun dist/index.js install --project /path/to/repo` is a local smoke test of the installer after `bun run build`.
+- `bun dist/index.js check` runs the deterministic workflow-status check against the current project's `docs/status.md` and active phase file.
 - `plugins/monkeybars/scripts/install-opencode-commands.sh` installs generated OpenCode commands globally.
 - `plugins/monkeybars/scripts/install-claude-skills.sh` installs generated Claude Code skills globally.
 - `git diff -- workflow-src plugins/monkeybars` checks that generated files match source edits before review.
 
-This repo uses Bun for the TypeScript CLI, generator, and tests.
+This repo uses Bun for the TypeScript CLI, generator, and tests. `npm` publishing runs `bun run generate` via `prepack`, so GitHub/npm installs require Bun on `PATH` (the CLI entrypoint uses `#!/usr/bin/env bun`).
+
+## Architecture
+
+MonkeyBars packages one set of workflow commands for three coding-agent targets (OpenCode, Claude Code, Codex). The code is organized around a single-source-of-truth generator: canonical workflow content lives in `workflow-src/`, and per-tool artifacts in `plugins/monkeybars/` are produced from it.
+
+### Source → generator → adapter pipeline
+
+- `workflow-src/commands/*.md` — canonical command definitions. Markdown with YAML-style frontmatter requiring `name` and `description`. Optional keys: `include_templates` (comma-separated template names appended to the body under an "Included Templates" section), `opencode_agent` (propagated to OpenCode frontmatter).
+- `workflow-src/templates/*.md` — project templates that end up both (a) copied verbatim to `plugins/monkeybars/templates/` and (b) inlined into skill bodies when a command lists them via `include_templates`.
+- `workflow-src/hooks/{shared,opencode}/` — canonical agent-native hook scripts, copied verbatim to `plugins/monkeybars/hooks/`.
+- `cli/src/generator.ts` (`generateAdapters`) — parses each command, then emits one Claude/Codex skill (`plugins/monkeybars/skills/<name>/SKILL.md` with `disable-model-invocation: true`) and one OpenCode command (`plugins/monkeybars/commands/<name>.md`). It also resets and refills `templates/`, `hooks/`, and `bin/` under the plugin directory. The CLI bin copy comes from `dist/`, so the generator implicitly depends on a prior build.
+
+### CLI surface (`cli/src/`)
+
+`index.ts` wires Commander with two subcommands, both strict about unknown args/options:
+
+- `check` (`check.ts`) — read-only, cross-validates `docs/status.md` against the active `docs/work/phase-N.md`: matching phase label/state/current task, first-unchecked-task invariant, last-commit recency via `git log`, and WIP documentation vs. `git status --porcelain`. Returns a `CheckResult` with severity-tagged findings; errors flip `ok` to false (exit 1).
+- `install` (`install.ts`) — copies generated assets into a target project. Targets are `opencode`, `claude`, and `codex`; omitting the `[targets...]` argument installs all three. Layout per target:
+  - OpenCode: `.opencode/commands/` (replaces directory) and, when agent hooks are enabled, `.opencode/plugins/monkeybars-workflow.js`.
+  - Claude: `.claude/skills/` (replaces directory) and, when agent hooks are enabled, `.claude/hooks/monkeybars-workflow-context.js` plus idempotent merges into `.claude/settings.json` (`SessionStart`, `UserPromptSubmit`, `Stop`).
+  - Codex: `plugins/monkeybars/` (full plugin copy) and `.agents/plugins/marketplace.json`; agent hooks additionally copy `.codex/hooks/monkeybars-workflow-context.js`, merge `.codex/hooks.json`, and ensure `[features].codex_hooks = true` in `.codex/config.toml`.
+  - `--no-agent-hooks` skips only the hook installation for every selected target.
+
+Hook installs are advisory: they inject or preserve workflow context at lifecycle events but never block tool calls or mutate workflow files. `removeMonkeyBarsHooks` identifies prior MonkeyBars entries by the `monkeybars-workflow-context.js` substring in the command, so re-running `install` is idempotent. If a user config file is present but unparseable, the installer warns and skips *that target's* hooks while still installing core assets.
+
+`markdown.ts` + `git.ts` provide the small parsers `check.ts` relies on (phase label parsing, task-id normalization, `git status --porcelain`, `git log --oneline -n`).
+
+### Workflow concepts that shape the code
+
+The commands under `workflow-src/commands/` implement a repo-local planning loop that the CLI only has to *verify*, not execute: `docs/plan.md` is the active plan; `docs/work/phase-N.md` files hold reviewable chunks of tasks; `docs/status.md` is the pointer (active phase, current task, state, last commit, WIP files). The invariants enforced by `runCheck` reflect this model — e.g. "current task must be the first unchecked task in the active phase file" and "phase label in status must match the phase file title."
 
 ## Coding Style & Naming Conventions
 
-Use Markdown for workflow content and keep instructions direct, imperative, and tool-agnostic unless a command is explicitly platform-specific. Command source files should be lowercase kebab-case, for example `start-session.md`, and must include `name` and `description` frontmatter. TypeScript code should use standard Node/Bun APIs where practical and avoid runtime dependencies unless they clearly pay for themselves.
+Use Markdown for workflow content and keep instructions direct, imperative, and tool-agnostic unless a command is explicitly platform-specific. Command source files should be lowercase kebab-case, for example `start-session.md`, and must include `name` and `description` frontmatter. TypeScript code uses strict `tsconfig` options and Node/Bun standard APIs. Avoid adding runtime dependencies unless they clearly pay for themselves; `commander` is the only one today.
 
 ## Testing Guidelines
 
@@ -29,4 +62,4 @@ Recent history uses short subjects, with Conventional Commit style for features,
 
 ## Agent-Specific Instructions
 
-Edit canonical workflow files in `workflow-src/` first, then regenerate adapters. Edit CLI, hook, and generator behavior in `cli/src/`. Do not hand-edit generated plugin files under `plugins/monkeybars/commands/`, `skills/`, `templates/`, or `bin/` unless the generator itself is being changed.
+Edit canonical workflow files in `workflow-src/` first, then regenerate adapters. Edit CLI, hook, and generator behavior in `cli/src/`. Do not hand-edit generated plugin files under `plugins/monkeybars/commands/`, `skills/`, `templates/`, `hooks/`, or `bin/` unless the generator itself is being changed.
