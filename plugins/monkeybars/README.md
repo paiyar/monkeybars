@@ -2,7 +2,7 @@
 
 Repo-local workflow commands for greenfield builds, brownfield rescue, and
 post-v1 agentic coding sessions, plus an optional CLI for deterministic checks
-and advisory Git hooks.
+and advisory agent-native workflow hooks.
 
 ## Commands
 
@@ -19,22 +19,58 @@ and advisory Git hooks.
 
 ## Install Shape
 
-This package is command-first. Hooks are optional, project-local, and advisory.
-The supported install flow is the package CLI:
+This package is command-first. Agent-native workflow hooks are project-local,
+advisory, and installed by default.
+Install the npm package globally, then install MonkeyBars into each target repo:
+
+```sh
+npm install -g @paiyar/monkeybars
+monkeybars install --project /path/to/repo
+```
+
+For one-shot use without a global install:
+
+```sh
+npx @paiyar/monkeybars install --project /path/to/repo
+```
+
+If the package is not published to npm yet, or you want to consume a specific
+repo revision directly, install from GitHub:
+
+```sh
+npm install -g github:paiyar/monkeybars#<tag-or-commit>
+monkeybars install --project /path/to/repo
+```
+
+For one-shot GitHub use:
+
+```sh
+npm exec --package github:paiyar/monkeybars#<tag-or-commit> -- monkeybars install --project /path/to/repo
+```
+
+Omit `#<tag-or-commit>` only when you intentionally want npm to install the
+current default branch. Prefer a tag or commit SHA for repeatable installs.
+
+Bun must be installed and available on `PATH` for the v1 package because the
+CLI entrypoint runs with `#!/usr/bin/env bun`. GitHub installs also need Bun
+during package installation because npm runs the package `prepack` script,
+which generates the bundled CLI and plugin assets.
+
+Omitting targets installs all supported agents: OpenCode, Claude Code, and
+Codex. Pass one or more targets only when you want a subset, or
+`--no-agent-hooks` when you want assets without lifecycle hooks:
 
 ```sh
 monkeybars install --project /path/to/repo
-monkeybars install opencode codex --project /path/to/repo
+monkeybars install opencode claude --project /path/to/repo
+monkeybars install --no-agent-hooks --project /path/to/repo
 ```
-
-Omitting targets installs all supported agents: OpenCode, Claude Code, and
-Codex. Pass one or more targets only when you want a subset.
 
 The generated assets land in the tool-specific project-local directories:
 
-- OpenCode: `.opencode/commands/`
-- Claude Code: `.claude/skills/`
-- Codex: `plugins/monkeybars/` plus `.agents/plugins/marketplace.json`
+- OpenCode: `.opencode/commands/` plus `.opencode/plugins/`
+- Claude Code: `.claude/skills/`, `.claude/hooks/`, and `.claude/settings.json`
+- Codex: `plugins/monkeybars/`, `.agents/plugins/marketplace.json`, and `.codex/`
 
 The shell scripts in `scripts/` remain for checkout-based compatibility, but
 the CLI is the primary install path.
@@ -80,12 +116,11 @@ The CLI is for deterministic checks outside an agent session:
 
 ```sh
 monkeybars check
-monkeybars hooks install
-monkeybars hooks uninstall
 ```
 
-Installed hooks run the CLI and print guidance. They do not edit workflow
-files, commit, stash, or check off tasks.
+Installed agent-native hooks inject or preserve MonkeyBars workflow context.
+They do not edit workflow files, block tool calls, commit, stash, or check off
+tasks.
 
 ## Source of Truth
 

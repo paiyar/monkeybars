@@ -33,9 +33,3 @@ export interface CheckResult {
   status?: StatusFile;
   phase?: PhaseFile;
 }
-
-export interface HookInstallOptions {
-  force?: boolean;
-  cwd?: string;
-  cliPath?: string;
-}

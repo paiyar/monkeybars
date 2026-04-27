@@ -1,11 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { runCheck } from "../cli/src/check";
-import { installHooks, uninstallHooks } from "../cli/src/hooks";
 
 function tempRepo(): string {
   const root = mkdtempSync(join(tmpdir(), "monkeybars-"));
@@ -178,29 +177,5 @@ describe("monkeybars check", () => {
     const result = runCheck(root);
     expect(result.ok).toBe(false);
     expect(result.findings[0]?.code).toBe("current-task-not-first-unchecked");
-  });
-});
-
-describe("monkeybars hooks", () => {
-  test("install refuses to overwrite user-owned hook", () => {
-    const root = tempRepo();
-    const hookPath = join(root, ".git", "hooks", "pre-commit");
-    writeFileSync(hookPath, "#!/bin/sh\necho user hook\n");
-
-    expect(() => installHooks({ cwd: root, cliPath: "/tmp/monkeybars.js" })).toThrow(
-      /Refusing to overwrite/
-    );
-  });
-
-  test("uninstall only removes managed hooks", () => {
-    const root = tempRepo();
-    installHooks({ cwd: root, cliPath: "/tmp/monkeybars.js" });
-    const preCommit = join(root, ".git", "hooks", "pre-commit");
-    const hook = readFileSync(preCommit, "utf8");
-    expect(hook).toContain("monkeybars managed hook");
-    expect(hook).toContain("exec bun '/tmp/monkeybars.js' hooks run pre-commit");
-
-    uninstallHooks(root);
-    expect(() => readFileSync(preCommit, "utf8")).toThrow();
   });
 });

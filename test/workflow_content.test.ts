@@ -89,23 +89,46 @@ describe("brainstorm-plan workflow content", () => {
     expect(architecture).toContain("## Target Architecture");
   });
 
-  test("install docs cover global and per-repo setup for each tool", () => {
+  test("install docs cover npm package and per-repo setup for each tool", () => {
     const readme = readWorkflow("README.md");
     const pluginReadme = readWorkflow("plugins/monkeybars/README.md");
 
+    expect(readme).toContain("npm install -g @paiyar/monkeybars");
+    expect(readme).toContain("npx @paiyar/monkeybars install --project /path/to/repo");
+    expect(readme).toContain("npm install -g github:paiyar/monkeybars#<tag-or-commit>");
+    expect(readme).toContain(
+      "npm exec --package github:paiyar/monkeybars#<tag-or-commit> -- monkeybars install --project /path/to/repo"
+    );
+    expect(readme).toContain("Bun must be installed");
+    expect(readme).toContain("npm runs the package `prepack` script");
     expect(readme).toContain("monkeybars install --project /path/to/repo");
-    expect(readme).toContain("monkeybars install opencode codex --project /path/to/repo");
+    expect(readme).toContain("monkeybars install opencode claude --project /path/to/repo");
+    expect(readme).toContain("monkeybars install --no-agent-hooks --project /path/to/repo");
     expect(readme).toContain("monkeybars install codex --project /path/to/repo");
     expect(readme).toContain("bun dist/index.js install --project /path/to/repo");
     expect(readme).toContain("plugins/monkeybars/.codex-plugin/plugin.json");
     expect(readme).toContain(".agents/plugins/marketplace.json");
+    expect(readme).toContain("agent-native workflow hooks");
+    expect(readme).toContain("Hooks never update workflow files, block tool calls");
     expect(readme).toContain("$initialize-monkeybars");
+    expect(readme).not.toContain("monkeybars hooks install");
 
+    expect(pluginReadme).toContain("npm install -g @paiyar/monkeybars");
+    expect(pluginReadme).toContain("npx @paiyar/monkeybars install --project /path/to/repo");
+    expect(pluginReadme).toContain("npm install -g github:paiyar/monkeybars#<tag-or-commit>");
+    expect(pluginReadme).toContain(
+      "npm exec --package github:paiyar/monkeybars#<tag-or-commit> -- monkeybars install --project /path/to/repo"
+    );
+    expect(pluginReadme).toContain("Bun must be installed");
+    expect(pluginReadme).toContain("npm runs the package `prepack` script");
     expect(pluginReadme).toContain("monkeybars install --project /path/to/repo");
-    expect(pluginReadme).toContain("monkeybars install opencode codex --project /path/to/repo");
+    expect(pluginReadme).toContain("monkeybars install opencode claude --project /path/to/repo");
+    expect(pluginReadme).toContain("monkeybars install --no-agent-hooks --project /path/to/repo");
     expect(pluginReadme).toContain("plugins/monkeybars/.codex-plugin/plugin.json");
     expect(pluginReadme).toContain(".agents/plugins/marketplace.json");
+    expect(pluginReadme).toContain("agent-native hooks inject or preserve");
     expect(pluginReadme).toContain("$initialize-monkeybars");
+    expect(pluginReadme).not.toContain("monkeybars hooks install");
 
     expect(readme).not.toContain("Codex can invoke automatically");
   });

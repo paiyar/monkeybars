@@ -9,6 +9,7 @@ function tempProject(): string {
   const root = mkdtempSync(join(tmpdir(), "agent-generator-"));
   mkdirSync(join(root, "workflow-src", "commands"), { recursive: true });
   mkdirSync(join(root, "workflow-src", "templates"), { recursive: true });
+  mkdirSync(join(root, "workflow-src", "hooks", "shared"), { recursive: true });
   mkdirSync(join(root, "dist"), { recursive: true });
   return root;
 }
@@ -45,6 +46,7 @@ opencode_agent: plan
 Use for status.
 `);
     writeFileSync(join(root, "workflow-src", "templates", "status.md"), "# Status Template\n");
+    writeFileSync(join(root, "workflow-src", "hooks", "shared", "context.js"), "console.log('hook');\n");
     const cliPath = join(root, "dist", "index.js");
     writeFileSync(cliPath, "#!/usr/bin/env bun\nconsole.log('ok');\n");
     chmodSync(cliPath, 0o755);
@@ -60,6 +62,7 @@ Use for status.
     expect(command).toContain("agent: plan");
 
     expect(readFileSync(join(pluginPath, "templates", "status.md"), "utf8")).toBe("# Status Template\n");
+    expect(readFileSync(join(pluginPath, "hooks", "shared", "context.js"), "utf8")).toBe("console.log('hook');\n");
     expect(existsSync(join(pluginPath, "bin", "index.js"))).toBe(true);
   });
 

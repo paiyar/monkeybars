@@ -24,6 +24,42 @@ function sourceText(relativePath: string): string {
   return readFileSync(join(repoRoot, relativePath), "utf8");
 }
 
+function readJson(relativePath: string): any {
+  return JSON.parse(readFileSync(relativePath, "utf8"));
+}
+
+function hookCommandCount(settings: any): number {
+  return Object.values(settings.hooks ?? {}).flatMap((groups: any) =>
+    Array.isArray(groups) ? groups.flatMap((group) => group.hooks ?? []) : []
+  ).filter((hook: any) => typeof hook.command === "string" && hook.command.includes("monkeybars-workflow-context.js")).length;
+}
+
+function writeWorkflow(root: string): void {
+  mkdirSync(join(root, "docs", "work"), { recursive: true });
+  writeFileSync(join(root, "docs", "plan.md"), "# Implementation Plan\n");
+  writeFileSync(join(root, "docs", "status.md"), `# Project Status
+
+## Active Work
+
+- **Phase file:** docs/work/phase-1.md
+- **Phase:** 1 — Test
+- **State:** in_progress
+- **Current task:** T01 — first task
+- **Last commit:** none
+`);
+  writeFileSync(join(root, "docs", "work", "phase-1.md"), `# Phase 1 — Test
+
+## Status
+
+- **State:** in_progress
+- **Current task:** T01 — first task
+- **Last commit:** none
+- **Preflight:** n/a
+- **Blockers:** none
+- **WIP files:** src/example.ts
+`);
+}
+
 describe("monkeybars install", () => {
   test("codex self-install preserves the source plugin directory", () => {
     const root = tempProject();
@@ -40,7 +76,7 @@ describe("monkeybars install", () => {
     writeFileSync(skill, "skill body\n");
     writeFileSync(marketplace, "marketplace metadata\n");
 
-    installPackageTargets(["codex"], { project: root, packageRoot: root });
+    installPackageTargets(["codex"], { project: root, packageRoot: root, agentHooks: false });
 
     expect(readFileSync(manifest, "utf8")).toBe("plugin manifest\n");
     expect(readFileSync(command, "utf8")).toBe("opencode command\n");
@@ -58,11 +94,17 @@ describe("monkeybars install", () => {
     expect(result.stdout).toContain("Installed MonkeyBars Claude skills");
     expect(result.stdout).toContain("Installed MonkeyBars Codex plugin");
     expect(existsSync(join(project, ".opencode", "commands", "start-session.md"))).toBe(true);
+    expect(existsSync(join(project, ".opencode", "plugins", "monkeybars-workflow.js"))).toBe(true);
     expect(existsSync(join(project, ".claude", "skills", "start-session", "SKILL.md"))).toBe(true);
+    expect(existsSync(join(project, ".claude", "hooks", "monkeybars-workflow-context.js"))).toBe(true);
+    expect(hookCommandCount(readJson(join(project, ".claude", "settings.json")))).toBe(3);
     expect(existsSync(join(project, "plugins", "monkeybars", ".codex-plugin", "plugin.json"))).toBe(
       true
     );
     expect(existsSync(join(project, ".agents", "plugins", "marketplace.json"))).toBe(true);
+    expect(existsSync(join(project, ".codex", "hooks", "monkeybars-workflow-context.js"))).toBe(true);
+    expect(hookCommandCount(readJson(join(project, ".codex", "hooks.json")))).toBe(3);
+    expect(readFileSync(join(project, ".codex", "config.toml"), "utf8")).toContain("codex_hooks = true");
   });
 
   test("installs only selected targets when provided", () => {
@@ -75,10 +117,24 @@ describe("monkeybars install", () => {
     expect(result.stdout).toContain("Installed MonkeyBars Codex plugin");
     expect(result.stdout).not.toContain("Installed MonkeyBars Claude skills");
     expect(existsSync(join(project, ".opencode", "commands", "start-session.md"))).toBe(true);
+    expect(existsSync(join(project, ".opencode", "plugins", "monkeybars-workflow.js"))).toBe(true);
     expect(existsSync(join(project, ".claude", "skills"))).toBe(false);
     expect(existsSync(join(project, "plugins", "monkeybars", ".codex-plugin", "plugin.json"))).toBe(
       true
     );
+    expect(existsSync(join(project, ".codex", "hooks.json"))).toBe(true);
+  });
+
+  test("skips agent-native hooks when requested", () => {
+    const project = tempProject();
+
+    const result = runCli(["install", "--no-agent-hooks", "--project", project]);
+
+    expect(result.status).toBe(0);
+    expect(existsSync(join(project, ".opencode", "commands", "start-session.md"))).toBe(true);
+    expect(existsSync(join(project, ".opencode", "plugins", "monkeybars-workflow.js"))).toBe(false);
+    expect(existsSync(join(project, ".claude", "hooks", "monkeybars-workflow-context.js"))).toBe(false);
+    expect(existsSync(join(project, ".codex", "hooks.json"))).toBe(false);
   });
 
   test("installs OpenCode commands and replaces existing files", () => {
@@ -92,6 +148,9 @@ describe("monkeybars install", () => {
     expect(result.status).toBe(0);
     expect(result.stdout).toContain("Installed MonkeyBars OpenCode commands");
     expect(readFileSync(targetPath, "utf8")).toBe(sourceText("plugins/monkeybars/commands/project-status.md"));
+    expect(readFileSync(join(project, ".opencode", "plugins", "monkeybars-workflow.js"), "utf8")).toBe(
+      sourceText("plugins/monkeybars/hooks/opencode/monkeybars-workflow.js")
+    );
   });
 
   test("installs Claude skills and replaces existing directories", () => {
@@ -105,6 +164,7 @@ describe("monkeybars install", () => {
     expect(result.status).toBe(0);
     expect(result.stdout).toContain("Installed MonkeyBars Claude skills");
     expect(readFileSync(targetPath, "utf8")).toBe(sourceText("plugins/monkeybars/skills/start-session/SKILL.md"));
+    expect(existsSync(join(project, ".claude", "hooks", "monkeybars-workflow-context.js"))).toBe(true);
   });
 
   test("installs Codex plugin assets and marketplace metadata", () => {
@@ -125,6 +185,74 @@ describe("monkeybars install", () => {
     );
     expect(readFileSync(marketplace, "utf8")).toBe(sourceText(".agents/plugins/marketplace.json"));
     expect(existsSync(join(project, "plugins", "monkeybars", "bin", "index.js"))).toBe(true);
+    expect(existsSync(join(project, ".codex", "hooks", "monkeybars-workflow-context.js"))).toBe(true);
+  });
+
+  test("merges agent hook config idempotently", () => {
+    const project = tempProject();
+    const claudeSettings = join(project, ".claude", "settings.json");
+    const codexHooks = join(project, ".codex", "hooks.json");
+    const codexConfig = join(project, ".codex", "config.toml");
+    mkdirSync(join(claudeSettings, ".."), { recursive: true });
+    mkdirSync(join(codexHooks, ".."), { recursive: true });
+    writeFileSync(claudeSettings, JSON.stringify({
+      hooks: {
+        SessionStart: [{ hooks: [{ type: "command", command: "echo user" }] }]
+      }
+    }));
+    writeFileSync(codexHooks, JSON.stringify({
+      hooks: {
+        UserPromptSubmit: [{ hooks: [{ type: "command", command: "echo user" }] }]
+      }
+    }));
+    writeFileSync(codexConfig, "[features]\nother = true\n");
+
+    expect(runCli(["install", "claude", "codex", "--project", project]).status).toBe(0);
+    expect(runCli(["install", "claude", "codex", "--project", project]).status).toBe(0);
+
+    const claude = readJson(claudeSettings);
+    const codex = readJson(codexHooks);
+    expect(hookCommandCount(claude)).toBe(3);
+    expect(hookCommandCount(codex)).toBe(3);
+    expect(JSON.stringify(claude)).toContain("echo user");
+    expect(JSON.stringify(codex)).toContain("echo user");
+    expect(readFileSync(codexConfig, "utf8")).toContain("other = true");
+    expect(readFileSync(codexConfig, "utf8")).toContain("codex_hooks = true");
+  });
+
+  test("invalid agent config warns without failing asset install", () => {
+    const project = tempProject();
+    const settings = join(project, ".claude", "settings.json");
+    mkdirSync(join(settings, ".."), { recursive: true });
+    writeFileSync(settings, "{ bad json");
+
+    const result = runCli(["install", "claude", "--project", project]);
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toContain("Warning: Skipped MonkeyBars Claude hooks");
+    expect(existsSync(join(project, ".claude", "skills", "start-session", "SKILL.md"))).toBe(true);
+    expect(existsSync(join(project, ".claude", "hooks", "monkeybars-workflow-context.js"))).toBe(false);
+  });
+
+  test("workflow hook context emits valid lifecycle JSON", () => {
+    const project = tempProject();
+    writeWorkflow(project);
+
+    const result = spawnSync(
+      "bun",
+      [join(repoRoot, "workflow-src", "hooks", "shared", "monkeybars-workflow-context.js"), "codex"],
+      {
+        cwd: project,
+        input: JSON.stringify({ hook_event_name: "UserPromptSubmit", cwd: project, prompt: "continue" }),
+        encoding: "utf8"
+      }
+    );
+
+    expect(result.status).toBe(0);
+    const output = JSON.parse(result.stdout);
+    expect(output.hookSpecificOutput.hookEventName).toBe("UserPromptSubmit");
+    expect(output.hookSpecificOutput.additionalContext).toContain("Current task: T01");
+    expect(output.hookSpecificOutput.additionalContext).toContain("$start-session");
   });
 
   test("rejects unknown install targets", () => {

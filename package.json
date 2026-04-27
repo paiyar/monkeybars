@@ -1,9 +1,33 @@
 {
-  "name": "monkeybars",
+  "name": "@paiyar/monkeybars",
   "version": "0.1.0",
-  "description": "Spec-to-phase workflow commands and advisory hooks for agentic coding.",
+  "description": "Spec-to-phase workflow commands and advisory workflow hooks for agentic coding.",
   "type": "module",
   "packageManager": "bun@1.3.13",
+  "license": "MIT",
+  "author": {
+    "name": "Pavan Aiyar",
+    "email": "pavan.aiyar@gmail.com",
+    "url": "https://github.com/paiyar"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/paiyar/monkeybars.git"
+  },
+  "homepage": "https://github.com/paiyar/monkeybars#readme",
+  "bugs": {
+    "url": "https://github.com/paiyar/monkeybars/issues"
+  },
+  "keywords": [
+    "agentic-coding",
+    "coding-agents",
+    "codex",
+    "claude-code",
+    "opencode",
+    "workflow",
+    "project-memory",
+    "cli"
+  ],
   "bin": {
     "monkeybars": "dist/index.js"
   },
@@ -13,6 +37,7 @@
     "plugins/monkeybars/README.md",
     "plugins/monkeybars/bin",
     "plugins/monkeybars/commands",
+    "plugins/monkeybars/hooks",
     "plugins/monkeybars/scripts",
     "plugins/monkeybars/skills",
     "plugins/monkeybars/templates",
@@ -23,6 +48,9 @@
     "test": "bun run build && bun test",
     "generate": "bun run build && bun cli/src/generate.ts",
     "prepack": "bun run generate"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "engines": {
     "bun": ">=1.3.13"

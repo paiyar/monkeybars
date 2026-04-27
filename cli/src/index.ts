@@ -1,6 +1,5 @@
 #!/usr/bin/env bun
 import { Argument, Command, CommanderError } from "commander";
-import { installHooks, runHook, SUPPORTED_HOOKS, uninstallHooks } from "./hooks.js";
 import { printCheckResult, runCheck } from "./check.js";
 import { installPackageTargets, SUPPORTED_INSTALL_TARGETS } from "./install.js";
 
@@ -10,10 +9,7 @@ type CheckOptions = {
 
 type PackageInstallOptions = {
   project?: string;
-};
-
-type HookInstallOptions = {
-  force?: boolean;
+  agentHooks?: boolean;
 };
 
 function createProgram(): Command {
@@ -45,50 +41,15 @@ function createProgram(): Command {
     .description("Install MonkeyBars workflow assets into a project.")
     .addArgument(new Argument("[targets...]", "install targets").choices(SUPPORTED_INSTALL_TARGETS))
     .option("--project <path>", "target project directory")
+    .option("--no-agent-hooks", "skip agent-native workflow hook installation")
     .allowExcessArguments(false)
     .allowUnknownOption(false)
     .action((targets: string[] = [], options: PackageInstallOptions) => {
       installPackageTargets(targets as (typeof SUPPORTED_INSTALL_TARGETS)[number][], {
-        project: options.project
+        project: options.project,
+        agentHooks: options.agentHooks
       });
       process.exitCode = 0;
-    });
-
-  const hooks = program
-    .command("hooks")
-    .description("Manage MonkeyBars git hooks.")
-    .allowExcessArguments(false)
-    .allowUnknownOption(false);
-
-  hooks
-    .command("install")
-    .description("Install MonkeyBars git hooks.")
-    .option("--force", "overwrite existing non-managed hooks")
-    .allowExcessArguments(false)
-    .allowUnknownOption(false)
-    .action((options: HookInstallOptions) => {
-      installHooks({ force: options.force });
-      process.exitCode = 0;
-    });
-
-  hooks
-    .command("uninstall")
-    .description("Uninstall managed MonkeyBars git hooks.")
-    .allowExcessArguments(false)
-    .allowUnknownOption(false)
-    .action(() => {
-      uninstallHooks();
-      process.exitCode = 0;
-    });
-
-  hooks
-    .command("run")
-    .description("Run a MonkeyBars git hook.")
-    .addArgument(new Argument("<hook>", "hook name").choices(SUPPORTED_HOOKS))
-    .allowExcessArguments(false)
-    .allowUnknownOption(false)
-    .action((hookName: string) => {
-      process.exitCode = runHook(hookName);
     });
 
   return program;

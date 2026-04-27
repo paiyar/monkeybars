@@ -26,6 +26,7 @@ interface Paths {
   plugin: string;
   commandSource: string;
   templateSource: string;
+  hookSource: string;
   cliDist: string;
 }
 
@@ -38,6 +39,7 @@ function paths(rootOption?: string): Paths {
     plugin: join(root, "plugins", "monkeybars"),
     commandSource: join(source, "commands"),
     templateSource: join(source, "templates"),
+    hookSource: join(source, "hooks"),
     cliDist: join(root, "dist")
   };
 }
@@ -159,6 +161,30 @@ function copyTemplates(allPaths: Paths): void {
   }
 }
 
+function copyDirectory(source: string, target: string): void {
+  resetDir(target);
+  if (!existsSync(source)) return;
+
+  const copyRecursive = (sourcePath: string): void => {
+    for (const name of readdirSync(sourcePath)) {
+      const sourceEntry = join(sourcePath, name);
+      const relativePath = relative(source, sourceEntry);
+      const destination = join(target, relativePath);
+      const stat = statSync(sourceEntry);
+      if (stat.isDirectory()) {
+        mkdirSync(destination, { recursive: true });
+        copyRecursive(sourceEntry);
+        continue;
+      }
+      mkdirSync(join(destination, ".."), { recursive: true });
+      copyFileSync(sourceEntry, destination);
+      chmodSync(destination, stat.mode);
+    }
+  };
+
+  copyRecursive(source);
+}
+
 function copyCli(allPaths: Paths): void {
   if (!existsSync(allPaths.cliDist)) return;
   const target = join(allPaths.plugin, "bin");
@@ -204,6 +230,7 @@ export function generateAdapters(options: GenerateOptions = {}): string {
   }
 
   copyTemplates(allPaths);
+  copyDirectory(allPaths.hookSource, join(allPaths.plugin, "hooks"));
   copyCli(allPaths);
   return allPaths.plugin;
 }

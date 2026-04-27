@@ -2142,10 +2142,9 @@ var {
   Help
 } = import__.default;
 
-// cli/src/hooks.ts
-import { chmodSync, existsSync as existsSync2, mkdirSync, readFileSync as readFileSync2, rmSync, writeFileSync } from "fs";
-import { resolve as resolve2 } from "path";
-import { fileURLToPath } from "url";
+// cli/src/check.ts
+import { existsSync } from "fs";
+import { join, resolve } from "path";
 
 // cli/src/git.ts
 import { execFileSync } from "child_process";
@@ -2174,9 +2173,6 @@ function recentCommits(cwd = process.cwd()) {
 }
 function isGitRepository(cwd = process.cwd()) {
   return git(["rev-parse", "--is-inside-work-tree"], cwd) === "true";
-}
-function gitHooksDir(cwd = process.cwd()) {
-  return git(["rev-parse", "--git-path", "hooks"], cwd);
 }
 
 // cli/src/markdown.ts
@@ -2270,31 +2266,8 @@ function parsePhaseLabel(value) {
 function displayPath(path) {
   return path.split(/[\\/]/).slice(-3).join("/") || basename(path);
 }
-function extractPreflightCommands(agentsText) {
-  const lines = agentsText.split(/\r?\n/);
-  const headingIndex = lines.findIndex((line) => /^##\s+Preflight Checks\s*$/i.test(line.trim()));
-  if (headingIndex === -1)
-    return [];
-  const commands = [];
-  let inFence = false;
-  for (let index = headingIndex + 1;index < lines.length; index += 1) {
-    const line = lines[index];
-    if (line.startsWith("## "))
-      break;
-    if (line.startsWith("```")) {
-      inFence = !inFence;
-      continue;
-    }
-    if (inFence && line.trim() && !line.includes("[fill in")) {
-      commands.push(line.trim());
-    }
-  }
-  return commands;
-}
 
 // cli/src/check.ts
-import { existsSync } from "fs";
-import { join, resolve } from "path";
 function add(findings, finding) {
   findings.push(finding);
 }
@@ -2481,124 +2454,38 @@ function printCheckResult(result) {
   }
 }
 
-// cli/src/hooks.ts
-var MANAGED_MARKER = "monkeybars managed hook";
-var SUPPORTED_HOOKS = ["pre-commit", "post-commit", "pre-push"];
-function shellQuote(value) {
-  return `'${value.replaceAll("'", "'\\''")}'`;
-}
-function currentCliPath() {
-  return process.argv[1] ? resolve2(process.argv[1]) : fileURLToPath(import.meta.url);
-}
-function hookScript(hookName, cliPath) {
-  return [
-    "#!/bin/sh",
-    `# ${MANAGED_MARKER}`,
-    `exec bun ${shellQuote(cliPath)} hooks run ${hookName} "$@"`,
-    ""
-  ].join(`
-`);
-}
-function hooksDirOrThrow(cwd) {
-  const hooksDir = gitHooksDir(cwd);
-  if (!hooksDir) {
-    throw new Error("Not inside a git repository; cannot locate .git/hooks.");
-  }
-  return resolve2(cwd, hooksDir);
-}
-function installHooks(options = {}) {
-  const cwd = options.cwd ?? process.cwd();
-  const hooksDir = hooksDirOrThrow(cwd);
-  const cliPath = options.cliPath ?? currentCliPath();
-  mkdirSync(hooksDir, { recursive: true });
-  for (const hookName of SUPPORTED_HOOKS) {
-    const path = resolve2(hooksDir, hookName);
-    if (existsSync2(path)) {
-      const existing = readFileSync2(path, "utf8");
-      if (!existing.includes(MANAGED_MARKER) && !options.force) {
-        throw new Error(`Refusing to overwrite existing ${hookName}; rerun with --force.`);
-      }
-    }
-    writeFileSync(path, hookScript(hookName, cliPath), { mode: 493 });
-    chmodSync(path, 493);
-  }
-  console.log(`Installed MonkeyBars hooks in ${hooksDir}.`);
-}
-function uninstallHooks(cwd = process.cwd()) {
-  const hooksDir = hooksDirOrThrow(cwd);
-  let removed = 0;
-  for (const hookName of SUPPORTED_HOOKS) {
-    const path = resolve2(hooksDir, hookName);
-    if (!existsSync2(path))
-      continue;
-    const existing = readFileSync2(path, "utf8");
-    if (!existing.includes(MANAGED_MARKER))
-      continue;
-    rmSync(path);
-    removed += 1;
-  }
-  console.log(`Removed ${removed} MonkeyBars hook(s).`);
-}
-function printPreflightReminder(cwd) {
-  const agentsPath = resolve2(cwd, "AGENTS.md");
-  if (!existsSync2(agentsPath))
-    return;
-  const commands = extractPreflightCommands(readFileSync2(agentsPath, "utf8"));
-  if (commands.length === 0)
-    return;
-  console.log("Project preflight checks documented in AGENTS.md:");
-  for (const command of commands) {
-    console.log(`  ${command}`);
-  }
-}
-function runHook(hookName, cwd = process.cwd()) {
-  if (!SUPPORTED_HOOKS.includes(hookName)) {
-    console.error(`Unsupported hook: ${hookName}`);
-    return 2;
-  }
-  if (hookName === "post-commit") {
-    console.log("MonkeyBars: commit recorded. Consider running /context-boundary before continuing.");
-    return 0;
-  }
-  const result = runCheck(cwd);
-  printCheckResult(result);
-  if (!result.ok)
-    return 1;
-  if (hookName === "pre-push") {
-    printPreflightReminder(cwd);
-  }
-  return 0;
-}
-
 // cli/src/install.ts
 import {
-  chmodSync as chmodSync2,
+  chmodSync,
   copyFileSync,
-  existsSync as existsSync3,
-  mkdirSync as mkdirSync2,
+  existsSync as existsSync2,
+  mkdirSync,
+  readFileSync as readFileSync2,
   readdirSync,
-  rmSync as rmSync2,
-  statSync
+  rmSync,
+  statSync,
+  writeFileSync
 } from "fs";
-import { isAbsolute, join as join2, relative, resolve as resolve3 } from "path";
+import { isAbsolute, join as join2, relative, resolve as resolve2 } from "path";
 var SUPPORTED_INSTALL_TARGETS = ["opencode", "claude", "codex"];
 function packageRoot() {
-  const oneUp = resolve3(import.meta.dir, "..");
-  if (existsSync3(join2(oneUp, "plugins", "monkeybars"))) {
+  const oneUp = resolve2(import.meta.dir, "..");
+  if (existsSync2(join2(oneUp, "plugins", "monkeybars"))) {
     return oneUp;
   }
-  return resolve3(import.meta.dir, "..", "..");
+  return resolve2(import.meta.dir, "..", "..");
 }
 function sourcePaths(rootOption) {
-  const root = resolve3(rootOption ?? packageRoot());
+  const root = resolve2(rootOption ?? packageRoot());
   return {
     plugin: join2(root, "plugins", "monkeybars"),
-    marketplace: join2(root, ".agents", "plugins", "marketplace.json")
+    marketplace: join2(root, ".agents", "plugins", "marketplace.json"),
+    hooks: join2(root, "plugins", "monkeybars", "hooks")
   };
 }
 function projectRootOrThrow(projectPath) {
-  const project = resolve3(projectPath ?? process.cwd());
-  if (!existsSync3(project)) {
+  const project = resolve2(projectPath ?? process.cwd());
+  if (!existsSync2(project)) {
     throw new Error(`Project path does not exist: ${project}`);
   }
   const projectStat = statSync(project);
@@ -2608,15 +2495,15 @@ function projectRootOrThrow(projectPath) {
   return project;
 }
 function samePath(left, right) {
-  return resolve3(left) === resolve3(right);
+  return resolve2(left) === resolve2(right);
 }
 function isInsidePath(parent, child) {
-  const relativePath = relative(resolve3(parent), resolve3(child));
+  const relativePath = relative(resolve2(parent), resolve2(child));
   return relativePath !== "" && !relativePath.startsWith("..") && !isAbsolute(relativePath);
 }
 function replaceDirectory(source, target) {
-  const sourcePath = resolve3(source);
-  const targetPath = resolve3(target);
+  const sourcePath = resolve2(source);
+  const targetPath = resolve2(target);
   if (samePath(sourcePath, targetPath)) {
     throw new Error(`Refusing to copy directory onto itself: ${sourcePath}`);
   }
@@ -2627,8 +2514,8 @@ function replaceDirectory(source, target) {
   if (!sourceStat.isDirectory()) {
     throw new Error(`Source is not a directory: ${sourcePath}`);
   }
-  rmSync2(targetPath, { recursive: true, force: true });
-  mkdirSync2(targetPath, { recursive: true });
+  rmSync(targetPath, { recursive: true, force: true });
+  mkdirSync(targetPath, { recursive: true });
   for (const entry of readdirSync(sourcePath)) {
     const sourceEntry = join2(sourcePath, entry);
     const targetEntry = join2(targetPath, entry);
@@ -2638,11 +2525,23 @@ function replaceDirectory(source, target) {
       continue;
     }
     if (entryStat.isFile()) {
-      mkdirSync2(join2(targetEntry, ".."), { recursive: true });
+      mkdirSync(join2(targetEntry, ".."), { recursive: true });
       copyFileSync(sourceEntry, targetEntry);
-      chmodSync2(targetEntry, entryStat.mode);
+      chmodSync(targetEntry, entryStat.mode);
     }
   }
+}
+function copyHookFile(source, target) {
+  const sourceStat = statSync(source);
+  if (!sourceStat.isFile()) {
+    throw new Error(`Hook source is not a file: ${source}`);
+  }
+  mkdirSync(join2(target, ".."), { recursive: true });
+  copyFileSync(source, target);
+  chmodSync(target, sourceStat.mode);
+}
+function warn(message) {
+  console.warn(`Warning: ${message}`);
 }
 function installOpenCode(project, source) {
   const target = join2(project, ".opencode", "commands");
@@ -2657,33 +2556,223 @@ function installClaude(project, source) {
 function installCodex(project, source) {
   const pluginTarget = join2(project, "plugins", "monkeybars");
   const marketplaceTarget = join2(project, ".agents", "plugins", "marketplace.json");
-  if (!existsSync3(source.marketplace)) {
+  if (!existsSync2(source.marketplace)) {
     throw new Error(`Missing marketplace metadata: ${source.marketplace}`);
   }
   if (!samePath(source.plugin, pluginTarget)) {
     replaceDirectory(source.plugin, pluginTarget);
   }
-  mkdirSync2(join2(marketplaceTarget, ".."), { recursive: true });
+  mkdirSync(join2(marketplaceTarget, ".."), { recursive: true });
   if (!samePath(source.marketplace, marketplaceTarget)) {
     copyFileSync(source.marketplace, marketplaceTarget);
   }
   return { plugin: pluginTarget, marketplace: marketplaceTarget };
 }
-function runInstallTarget(target, source, project) {
+function readJsonObject(path, label) {
+  if (!existsSync2(path))
+    return {};
+  try {
+    const value = JSON.parse(readFileSync2(path, "utf8"));
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+      warn(`Skipped MonkeyBars ${label} hooks because ${path} is not a JSON object.`);
+      return;
+    }
+    return value;
+  } catch (error) {
+    warn(`Skipped MonkeyBars ${label} hooks because ${path} could not be parsed: ${error instanceof Error ? error.message : String(error)}`);
+    return;
+  }
+}
+function writeJsonObject(path, value) {
+  mkdirSync(join2(path, ".."), { recursive: true });
+  writeFileSync(path, `${JSON.stringify(value, null, 2)}
+`);
+}
+function hookRoot(settings) {
+  if (!settings.hooks || typeof settings.hooks !== "object" || Array.isArray(settings.hooks)) {
+    settings.hooks = {};
+  }
+  return settings.hooks;
+}
+function isMonkeyBarsCommandHook(value) {
+  return !!value && typeof value === "object" && "command" in value && typeof value.command === "string" && value.command.includes("monkeybars-workflow-context.js");
+}
+function removeMonkeyBarsHooks(settings) {
+  const hooks = hookRoot(settings);
+  for (const event of Object.keys(hooks)) {
+    const groups = Array.isArray(hooks[event]) ? hooks[event] : [];
+    const nextGroups = groups.map((group) => {
+      if (!group || typeof group !== "object" || Array.isArray(group))
+        return group;
+      const hookGroup = group;
+      const handlers = Array.isArray(hookGroup.hooks) ? hookGroup.hooks : [];
+      return {
+        ...hookGroup,
+        hooks: handlers.filter((handler) => !isMonkeyBarsCommandHook(handler))
+      };
+    }).filter((group) => {
+      if (!group || typeof group !== "object" || Array.isArray(group))
+        return true;
+      const handlers = group.hooks;
+      return !Array.isArray(handlers) || handlers.length > 0;
+    });
+    if (nextGroups.length === 0) {
+      delete hooks[event];
+    } else {
+      hooks[event] = nextGroups;
+    }
+  }
+}
+function addCommandHook(settings, event, command, options = {}) {
+  const hooks = hookRoot(settings);
+  const groups = Array.isArray(hooks[event]) ? hooks[event] : [];
+  const handler = {
+    type: "command",
+    command,
+    timeout: 5
+  };
+  if (options.statusMessage)
+    handler.statusMessage = options.statusMessage;
+  const group = {
+    hooks: [handler]
+  };
+  if (options.matcher)
+    group.matcher = options.matcher;
+  hooks[event] = [...groups, group];
+}
+function installOpenCodeAgentHooks(project, source) {
+  const target = join2(project, ".opencode", "plugins", "monkeybars-workflow.js");
+  copyHookFile(join2(source.hooks, "opencode", "monkeybars-workflow.js"), target);
+  console.log(`Installed MonkeyBars OpenCode workflow hooks to ${target}.`);
+}
+function installClaudeAgentHooks(project, source) {
+  const settingsPath = join2(project, ".claude", "settings.json");
+  const settings = readJsonObject(settingsPath, "Claude");
+  if (!settings)
+    return;
+  const target = join2(project, ".claude", "hooks", "monkeybars-workflow-context.js");
+  copyHookFile(join2(source.hooks, "shared", "monkeybars-workflow-context.js"), target);
+  const command = 'bun "$CLAUDE_PROJECT_DIR"/.claude/hooks/monkeybars-workflow-context.js claude';
+  removeMonkeyBarsHooks(settings);
+  addCommandHook(settings, "SessionStart", command, {
+    matcher: "startup|resume|clear|compact",
+    statusMessage: "Loading MonkeyBars workflow context"
+  });
+  addCommandHook(settings, "UserPromptSubmit", command, {
+    statusMessage: "Loading MonkeyBars prompt context"
+  });
+  addCommandHook(settings, "Stop", command, {
+    statusMessage: "Checking MonkeyBars workflow boundary"
+  });
+  writeJsonObject(settingsPath, settings);
+  console.log(`Installed MonkeyBars Claude workflow hooks to ${target}.`);
+}
+function codexConfigWithHooksEnabled(text) {
+  const original = text.trimEnd();
+  if (!original)
+    return `[features]
+codex_hooks = true
+`;
+  const lines = original.split(/\r?\n/);
+  const featureStart = lines.findIndex((line) => /^\s*\[features\]\s*(?:#.*)?$/.test(line));
+  if (featureStart === -1) {
+    return `${original}
+
+[features]
+codex_hooks = true
+`;
+  }
+  let featureEnd = lines.length;
+  for (let index = featureStart + 1;index < lines.length; index += 1) {
+    if (/^\s*\[.+\]\s*(?:#.*)?$/.test(lines[index])) {
+      featureEnd = index;
+      break;
+    }
+  }
+  const existing = lines.slice(featureStart + 1, featureEnd).findIndex((line) => /^\s*codex_hooks\s*=/.test(line));
+  if (existing === -1) {
+    lines.splice(featureStart + 1, 0, "codex_hooks = true");
+  } else {
+    lines[featureStart + 1 + existing] = "codex_hooks = true";
+  }
+  return `${lines.join(`
+`)}
+`;
+}
+function updateCodexConfig(path) {
+  const text = existsSync2(path) ? readFileSync2(path, "utf8") : "";
+  try {
+    if (text.trim())
+      Bun.TOML.parse(text);
+  } catch (error) {
+    warn(`Skipped MonkeyBars Codex hooks because ${path} could not be parsed: ${error instanceof Error ? error.message : String(error)}`);
+    return false;
+  }
+  const next = codexConfigWithHooksEnabled(text);
+  Bun.TOML.parse(next);
+  mkdirSync(join2(path, ".."), { recursive: true });
+  writeFileSync(path, next);
+  return true;
+}
+function installCodexAgentHooks(project, source) {
+  const hooksPath = join2(project, ".codex", "hooks.json");
+  const configPath = join2(project, ".codex", "config.toml");
+  const settings = readJsonObject(hooksPath, "Codex");
+  if (!settings)
+    return;
+  if (!updateCodexConfig(configPath))
+    return;
+  const target = join2(project, ".codex", "hooks", "monkeybars-workflow-context.js");
+  copyHookFile(join2(source.hooks, "shared", "monkeybars-workflow-context.js"), target);
+  const command = `sh -c 'ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd); exec bun "$ROOT/.codex/hooks/monkeybars-workflow-context.js" codex'`;
+  removeMonkeyBarsHooks(settings);
+  addCommandHook(settings, "SessionStart", command, {
+    matcher: "startup|resume|clear",
+    statusMessage: "Loading MonkeyBars workflow context"
+  });
+  addCommandHook(settings, "UserPromptSubmit", command, {
+    statusMessage: "Loading MonkeyBars prompt context"
+  });
+  addCommandHook(settings, "Stop", command, {
+    statusMessage: "Checking MonkeyBars workflow boundary"
+  });
+  writeJsonObject(hooksPath, settings);
+  console.log(`Installed MonkeyBars Codex workflow hooks to ${target}.`);
+}
+function installAgentHooks(target, source, project) {
+  switch (target) {
+    case "opencode":
+      installOpenCodeAgentHooks(project, source);
+      return;
+    case "claude":
+      installClaudeAgentHooks(project, source);
+      return;
+    case "codex":
+      installCodexAgentHooks(project, source);
+      return;
+  }
+}
+function runInstallTarget(target, source, project, installHooks) {
   switch (target) {
     case "opencode": {
       const targetPath = installOpenCode(project, source);
       console.log(`Installed MonkeyBars OpenCode commands to ${targetPath}.`);
+      if (installHooks)
+        installAgentHooks(target, source, project);
       return;
     }
     case "claude": {
       const targetPath = installClaude(project, source);
       console.log(`Installed MonkeyBars Claude skills to ${targetPath}.`);
+      if (installHooks)
+        installAgentHooks(target, source, project);
       return;
     }
     case "codex": {
       const targetPaths = installCodex(project, source);
       console.log(`Installed MonkeyBars Codex plugin to ${targetPaths.plugin} and marketplace metadata to ${targetPaths.marketplace}.`);
+      if (installHooks)
+        installAgentHooks(target, source, project);
       return;
     }
   }
@@ -2695,11 +2784,15 @@ function normalizeInstallTargets(targets) {
 function installPackageTargets(targets = [], options = {}) {
   const source = sourcePaths(options.packageRoot);
   const project = projectRootOrThrow(options.project);
-  if (!existsSync3(source.plugin)) {
+  const installHooks = options.agentHooks ?? true;
+  if (!existsSync2(source.plugin)) {
     throw new Error(`Missing plugin source directory: ${source.plugin}`);
   }
+  if (installHooks && !existsSync2(source.hooks)) {
+    throw new Error(`Missing hook source directory: ${source.hooks}`);
+  }
   for (const target of normalizeInstallTargets(targets)) {
-    runInstallTarget(target, source, project);
+    runInstallTarget(target, source, project, installHooks);
   }
 }
 
@@ -2716,23 +2809,12 @@ function createProgram() {
     }
     process.exitCode = result.ok ? 0 : 1;
   });
-  program2.command("install").description("Install MonkeyBars workflow assets into a project.").addArgument(new Argument("[targets...]", "install targets").choices(SUPPORTED_INSTALL_TARGETS)).option("--project <path>", "target project directory").allowExcessArguments(false).allowUnknownOption(false).action((targets = [], options) => {
+  program2.command("install").description("Install MonkeyBars workflow assets into a project.").addArgument(new Argument("[targets...]", "install targets").choices(SUPPORTED_INSTALL_TARGETS)).option("--project <path>", "target project directory").option("--no-agent-hooks", "skip agent-native workflow hook installation").allowExcessArguments(false).allowUnknownOption(false).action((targets = [], options) => {
     installPackageTargets(targets, {
-      project: options.project
+      project: options.project,
+      agentHooks: options.agentHooks
     });
     process.exitCode = 0;
-  });
-  const hooks = program2.command("hooks").description("Manage MonkeyBars git hooks.").allowExcessArguments(false).allowUnknownOption(false);
-  hooks.command("install").description("Install MonkeyBars git hooks.").option("--force", "overwrite existing non-managed hooks").allowExcessArguments(false).allowUnknownOption(false).action((options) => {
-    installHooks({ force: options.force });
-    process.exitCode = 0;
-  });
-  hooks.command("uninstall").description("Uninstall managed MonkeyBars git hooks.").allowExcessArguments(false).allowUnknownOption(false).action(() => {
-    uninstallHooks();
-    process.exitCode = 0;
-  });
-  hooks.command("run").description("Run a MonkeyBars git hook.").addArgument(new Argument("<hook>", "hook name").choices(SUPPORTED_HOOKS)).allowExcessArguments(false).allowUnknownOption(false).action((hookName) => {
-    process.exitCode = runHook(hookName);
   });
   return program2;
 }

@@ -221,22 +221,52 @@ system and only need agents to execute tickets.
 
 ## Install
 
-Install with the package-style CLI:
+Install the public npm package once, then install MonkeyBars into each target
+repo:
+
+```sh
+npm install -g @paiyar/monkeybars
+monkeybars install --project /path/to/repo
+```
+
+For one-shot use without a global install:
+
+```sh
+npx @paiyar/monkeybars install --project /path/to/repo
+```
+
+If the package is not published to npm yet, or you want to consume a specific
+repo revision directly, install from GitHub:
+
+```sh
+npm install -g github:paiyar/monkeybars#<tag-or-commit>
+monkeybars install --project /path/to/repo
+```
+
+For one-shot GitHub use:
+
+```sh
+npm exec --package github:paiyar/monkeybars#<tag-or-commit> -- monkeybars install --project /path/to/repo
+```
+
+Omit `#<tag-or-commit>` only when you intentionally want npm to install the
+current default branch. Prefer a tag or commit SHA for repeatable installs.
+
+Bun must be installed and available on `PATH` for the v1 package because the
+CLI entrypoint runs with `#!/usr/bin/env bun`. GitHub installs also need Bun
+during package installation because npm runs the package `prepack` script,
+which generates the bundled CLI and plugin assets.
+
+Omitting targets installs all supported agents: OpenCode, Claude Code, and
+Codex. It also installs project-local, agent-native workflow hooks/events by
+default. These hooks only inject or preserve MonkeyBars workflow context; they
+do not block prompts or tool calls. Pass one or more targets only when you want
+a subset, or `--no-agent-hooks` when you want assets without lifecycle hooks:
 
 ```sh
 monkeybars install --project /path/to/repo
-monkeybars install opencode codex --project /path/to/repo
-```
-
-Omitting targets installs all supported agents: OpenCode, Claude Code, and
-Codex. Pass one or more targets only when you want a subset.
-
-That is the supported install surface. The checkout in this repository is just
-the current development transport until a published package is available.
-From this repository root, use:
-
-```sh
-bun dist/index.js install --project /path/to/repo
+monkeybars install opencode claude --project /path/to/repo
+monkeybars install --no-agent-hooks --project /path/to/repo
 ```
 
 The legacy shell scripts under `plugins/monkeybars/scripts/` remain available
@@ -245,16 +275,18 @@ for direct checkout use, but they are no longer the primary install path.
 ### OpenCode
 
 OpenCode reads markdown command files from global
-`~/.config/opencode/commands/` or project-local `.opencode/commands/`.
+`~/.config/opencode/commands/` or project-local `.opencode/commands/`, and
+project plugins from `.opencode/plugins/`.
 
-The CLI installs the generated commands into the project-local directory:
+The CLI installs the generated commands and advisory workflow plugin into the
+project-local directories:
 
 ```sh
 monkeybars install --project /path/to/repo
 ```
 
 Use `monkeybars install opencode --project /path/to/repo` if you only want the
-OpenCode commands.
+OpenCode command/plugin bundle.
 
 After install, run commands such as `/initialize-monkeybars` and
 `/start-session`.
@@ -262,16 +294,17 @@ After install, run commands such as `/initialize-monkeybars` and
 ### Claude Code
 
 Claude Code reads skills from global `~/.claude/skills/` or project-local
-`.claude/skills/`.
+`.claude/skills/`, and project hooks from `.claude/settings.json`.
 
-The CLI installs the generated skills into the project-local directory:
+The CLI installs the generated skills, hook script, and advisory workflow hook
+configuration into the project-local directories:
 
 ```sh
 monkeybars install --project /path/to/repo
 ```
 
 Use `monkeybars install claude --project /path/to/repo` if you only want the
-Claude skills.
+Claude skill/hook bundle.
 
 After install, invoke skills as slash commands such as
 `/initialize-monkeybars` and `/start-session`.
@@ -284,56 +317,60 @@ Install or point Codex at the plugin directory. The manifest is:
 plugins/monkeybars/.codex-plugin/plugin.json
 ```
 
-The CLI copies both the plugin directory and `.agents/plugins/marketplace.json`
-into the target repo:
+The CLI copies the plugin directory, `.agents/plugins/marketplace.json`, and
+advisory Codex workflow hooks into the target repo:
 
 ```sh
 monkeybars install codex --project /path/to/repo
 ```
 
 Use `monkeybars install codex --project /path/to/repo` if you only want the
-Codex plugin bundle.
+Codex plugin/hook bundle.
 
 After install, invoke skills explicitly with the skill mention UI, such as
 `$initialize-monkeybars` and `$start-session`.
 
-The plugin is command-first. It does not install hooks in v1.
-
 ## CLI And Advisory Hooks
 
-The skills and commands are the main workflow. The TypeScript CLI exists for
-deterministic checks and optional Git hooks. Bun is the only required runtime:
+The skills and commands are the main workflow. The installed CLI also exposes a
+deterministic read-only workflow check:
 
 ```sh
-bun install
-bun run build
-bun dist/index.js check
-bun dist/index.js hooks install
+monkeybars check
 ```
 
-Installed hooks are project-local and advisory:
+Installed agent-native hooks are project-local and advisory:
 
-- `pre-commit` runs `monkeybars check` and blocks only on structural
-  workflow errors.
-- `post-commit` reminds you to run `/context-boundary`.
-- `pre-push` runs `monkeybars check` and reminds you about documented
-  preflight checks.
+- Claude and Codex hooks add MonkeyBars workflow context at session and prompt
+  boundaries.
+- OpenCode hooks preserve active phase/task context during compaction.
 
-Hooks never update workflow files, check off tasks, commit, or stash work.
+Hooks never update workflow files, block tool calls, check off tasks, commit,
+or stash work.
 
 ## Repository Layout
 
 - `workflow-src/commands/` — canonical command definitions
+- `workflow-src/hooks/` — canonical agent-native hook assets
 - `workflow-src/templates/` — templates copied into initialized projects
-- `cli/src/` — TypeScript CLI for checks and advisory hooks
+- `cli/src/` — TypeScript CLI for install and checks
 - `plugins/monkeybars/skills/` — generated Codex and Claude skills
 - `plugins/monkeybars/commands/` — generated OpenCode commands
+- `plugins/monkeybars/hooks/` — generated agent-native hook assets
 - `plugins/monkeybars/templates/` — generated project templates
 
 Edit `workflow-src/` first. Generated plugin files should come from the
 generator.
 
 ## Development
+
+Local checkout usage is for development only:
+
+```sh
+bun install
+bun run generate
+bun dist/index.js install --project /path/to/repo
+```
 
 Regenerate adapters after changing command sources or templates:
 

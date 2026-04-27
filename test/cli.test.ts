@@ -98,25 +98,10 @@ describe("monkeybars CLI", () => {
     expect(result.stderr).toContain("unknown option");
   });
 
-  test("hooks run bad-hook fails before running hook logic", () => {
-    const result = runCli(["hooks", "run", "bad-hook"]);
+  test("hooks command is no longer supported", () => {
+    const result = runCli(["hooks", "install"]);
 
     expect(result.status).toBe(2);
-    expect(result.stderr).toContain("invalid for argument 'hook'");
-    expect(result.stderr).not.toContain("Unsupported hook");
-  });
-
-  test("hooks run pre-commit extra fails as excess args", () => {
-    const result = runCli(["hooks", "run", "pre-commit", "extra"]);
-
-    expect(result.status).toBe(2);
-    expect(result.stderr).toContain("too many arguments");
-  });
-
-  test("hooks install --bad-option fails as a usage error", () => {
-    const result = runCli(["hooks", "install", "--bad-option"]);
-
-    expect(result.status).toBe(2);
-    expect(result.stderr).toContain("unknown option");
+    expect(result.stderr).toContain("unknown command");
   });
 });
