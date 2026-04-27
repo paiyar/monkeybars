@@ -3,7 +3,7 @@ import { Argument, Command, CommanderError } from "commander";
 import { printCheckResult, runCheck } from "./check.js";
 import { checkGeneratedAdapters, generateAdapters } from "./generator.js";
 import { installPackageTargets, SUPPORTED_INSTALL_TARGETS } from "./install/index.js";
-import { advanceTask, doctor, migrateStatus, preflight, summarizeWorkflow } from "./workflow-state.js";
+import { advanceTask, doctor, health, migrateStatus, nextRecommendation, preflight, summarizeWorkflow } from "./workflow-state.js";
 
 type CheckOptions = {
   json?: boolean;
@@ -23,8 +23,17 @@ type StatusOptions = {
   json?: boolean;
 };
 
+type NextOptions = {
+  json?: boolean;
+};
+
 type PreflightOptions = {
   dryRun?: boolean;
+};
+
+type HealthOptions = {
+  json?: boolean;
+  repair?: boolean;
 };
 
 type AdvanceOptions = {
@@ -78,6 +87,53 @@ function createProgram(): Command {
       console.log(`Tasks: ${summary.completedTasks} complete, ${summary.remainingTasks} remaining`);
       console.log(`Blockers: ${summary.blockers ?? "unknown"}`);
       console.log(`WIP files: ${summary.wipFiles ?? "unknown"}`);
+    });
+
+  program
+    .command("next")
+    .description("Recommend the next MonkeyBars workflow action from repo state.")
+    .option("--json", "emit JSON")
+    .allowExcessArguments(false)
+    .allowUnknownOption(false)
+    .action((options: NextOptions) => {
+      const recommendation = nextRecommendation();
+      if (options.json) {
+        console.log(JSON.stringify(recommendation, null, 2));
+        return;
+      }
+      console.log(`Next: ${recommendation.command}`);
+      console.log(`Reason: ${recommendation.reason}`);
+      if (recommendation.phase) console.log(`Phase: ${recommendation.phase}`);
+      if (recommendation.currentTask) console.log(`Current task: ${recommendation.currentTask}`);
+      if (recommendation.state) console.log(`State: ${recommendation.state}`);
+      console.log(`Dirty files: ${recommendation.dirtyFiles}`);
+    });
+
+  program
+    .command("health")
+    .description("Validate MonkeyBars workflow structure and setup health.")
+    .option("--json", "emit JSON")
+    .option("--repair", "perform conservative repairs")
+    .allowExcessArguments(false)
+    .allowUnknownOption(false)
+    .action((options: HealthOptions) => {
+      const result = health(Boolean(options.repair));
+      if (options.json) {
+        console.log(JSON.stringify(result, null, 2));
+      } else {
+        if (result.findings.length === 0) {
+          console.log("MonkeyBars health passed.");
+        } else {
+          for (const finding of result.findings) {
+            const label = finding.severity === "error" ? "ERROR" : "WARN";
+            const file = finding.file ? ` ${finding.file}` : "";
+            const repairable = finding.repairable ? " repairable" : "";
+            console.log(`${label} ${finding.code}${file}${repairable}: ${finding.message}`);
+          }
+        }
+        for (const repair of result.repairs) console.log(`REPAIR ${repair}`);
+      }
+      process.exitCode = result.ok ? 0 : 1;
     });
 
   program

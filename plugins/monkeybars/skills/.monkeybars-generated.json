@@ -9,6 +9,7 @@
     "fix-bug",
     "handoff-session",
     "initialize-monkeybars",
+    "map-codebase",
     "project-status",
     "start-session",
     "workflow-check"

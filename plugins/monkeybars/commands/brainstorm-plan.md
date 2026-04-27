@@ -29,7 +29,9 @@ the completed active plan and create the next active plan.
      canonical planning docs and ask only for blocking gaps.
    - **Brownfield synthesis:** If useful code exists without reliable planning
      context, document the current behavior, current architecture, known
-     constraints, and preflight reality before defining target changes.
+     constraints, and preflight reality before defining target changes. Prefer
+     `docs/prd/current-*.md` from `map-codebase`; if they are missing or stale,
+     run or recommend `map-codebase` before inventing target architecture.
    - **Next-release planning:** If the current active plan is complete,
      superseded, or stale, archive it under
      `docs/archive/plans/YYYY-MM-DD-<scope>.md`, update living docs under

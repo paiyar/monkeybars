@@ -23,9 +23,10 @@ plan.
      intent into the canonical planning docs and create the first active plan.
    - **Brownfield adoption path:** If useful code already exists, document the
      current behavior, current architecture, stack conventions, and known
-     risks before proposing target changes. Preserve working behavior and
-     project-specific constraints instead of replacing them with generic
-     template text.
+     risks before proposing target changes. If current-state docs are missing,
+     run or recommend `map-codebase` before writing target architecture.
+     Preserve working behavior and project-specific constraints instead of
+     replacing them with generic template text.
    - **Bring-your-own-docs path:** If existing docs are sufficient, summarize
      the discovered sources and map them into the canonical workflow docs.
      Preserve source-specific decisions instead of replacing them with generic
@@ -51,6 +52,7 @@ plan.
    the bundled templates:
    - `docs/prd/spec.md`
    - `docs/prd/architecture.md`
+   - current-state docs from `map-codebase` for brownfield work, when useful
    - optional companion docs under `docs/prd/`, such as `data-model.md` or
      `api.md`, only when the project needs that detail
    - `docs/plan.md`

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { commitAll, repoRoot, runCli, tempDir, tempRepo, writeWorkflow } from "./helpers";
@@ -28,6 +28,80 @@ describe("monkeybars CLI", () => {
     expect(summary.initialized).toBe(true);
     expect(summary.currentTask).toContain("T01");
     expect(summary.remainingTasks).toBe(1);
+  });
+
+  test("next --json recommends the next workflow action", () => {
+    const root = tempRepo();
+    writeWorkflow(root, { tasks: "- [ ] T01 — first task | files: src/a.ts | verify: bun test" });
+    commitAll(root);
+
+    const result = runCli(["next", "--json"], root);
+
+    expect(result.status).toBe(0);
+    const recommendation = JSON.parse(result.stdout);
+    expect(recommendation.command).toBe("start-session");
+    expect(recommendation.reason).toContain("incomplete current task");
+    expect(recommendation.currentTask).toContain("T01");
+  });
+
+  test("health --json reports structural warnings without failing", () => {
+    const root = tempRepo();
+    writeWorkflow(root);
+    commitAll(root);
+
+    const result = runCli(["health", "--json"], root);
+
+    expect(result.status).toBe(0);
+    const health = JSON.parse(result.stdout);
+    expect(health.ok).toBe(true);
+    expect(health.findings.some((finding: any) => finding.code === "missing-structured-status")).toBe(true);
+    expect(health.findings.some((finding: any) => finding.code === "missing-agents")).toBe(true);
+  });
+
+  test("health --repair adds structured status metadata", () => {
+    const root = tempRepo();
+    writeWorkflow(root);
+    commitAll(root);
+
+    const result = runCli(["health", "--repair"], root);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("REPAIR Added structured status block");
+    expect(readFileSync(join(root, "docs", "status.md"), "utf8")).toContain("<!-- monkeybars:status");
+  });
+
+  test("health --repair does not create workflow files outside an initialized git workflow", () => {
+    const root = tempDir();
+
+    const result = runCli(["health", "--repair", "--json"], root);
+
+    expect(result.status).toBe(1);
+    const health = JSON.parse(result.stdout);
+    expect(health.repairs).toEqual([]);
+    expect(existsSync(join(root, "docs", "work"))).toBe(false);
+  });
+
+  test("health reports a plan with no parseable phases", () => {
+    const root = tempRepo();
+    writeWorkflow(root);
+    writeFileSync(join(root, "docs", "plan.md"), "# Implementation Plan\n\nNo phase headings yet.\n");
+
+    const result = runCli(["health", "--json"], root);
+
+    expect(result.status).toBe(1);
+    const health = JSON.parse(result.stdout);
+    expect(health.findings.some((finding: any) => finding.code === "plan-has-no-phases")).toBe(true);
+  });
+
+  test("health reports literal command placeholders in task verification hints", () => {
+    const root = tempRepo();
+    writeWorkflow(root, { tasks: "- [ ] T01 — first task | files: src/a.ts | verify: [command]" });
+
+    const result = runCli(["health", "--json"], root);
+
+    expect(result.status).toBe(0);
+    const health = JSON.parse(result.stdout);
+    expect(health.findings.some((finding: any) => finding.code === "task-has-placeholder")).toBe(true);
   });
 
   test("preflight --dry-run prints AGENTS commands", () => {

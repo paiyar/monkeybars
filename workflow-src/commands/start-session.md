@@ -34,6 +34,8 @@ continue work on the project.
    user asks, you are about to push, release, deploy, or resume from another
    machine.
 8. Run `workflow-check` and surface inconsistencies.
-9. Report plan scope, phase, current task, last completed work, uncommitted
+9. Run `monkeybars next` when available and compare its recommendation to the
+   session state you found. If they differ, explain the mismatch before editing.
+10. Report plan scope, phase, current task, last completed work, uncommitted
    work, blockers, and next steps. Wait for user confirmation before changing
    files.

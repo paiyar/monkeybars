@@ -29,12 +29,16 @@ numbers increasing across the repo.
 6. Create `docs/work/phase-N.md` from the phase template.
 7. Split deliverables into tasks where each task is one logical commit.
    Include likely files, verification, and acceptance notes for each task.
-8. Update `docs/status.md`:
+8. Add a Coverage section that maps the phase goal, deliverables, and
+   acceptance criteria from `docs/plan.md` to the task ids that cover them. If
+   any required plan item is not covered, stop and revise the task split before
+   updating status.
+9. Update `docs/status.md`:
    - Preserve or set the active `Plan scope`.
    - Append a Phase Summary row with state `not_started`.
    - Update Active Work to the new phase file, state, and first task.
    - Set `Last updated` to today's date.
-9. Show the created phase file to the user for review before proceeding.
+10. Show the created phase file to the user for review before proceeding.
 
 ## Task sizing
 
@@ -155,10 +159,17 @@ last_updated: YYYY-MM-DD
 
 ## Tasks
 
-- [ ] T01 — [description] | files: [key files] | verify: [command]
+- [ ] T01 — [description] | files: [key files] | verify: [automated command]
   - Acceptance: [observable task completion signal]
-- [ ] T02 — [description] | files: [key files] | verify: [command]
+- [ ] T02 — [description] | files: [key files] | verify: [automated command]
   - Acceptance: [observable task completion signal]
+
+## Coverage
+
+| Plan item | Task | Status |
+|---|---|---|
+| Phase goal | T01 | covered |
+| Acceptance: [item] | T02 | covered |
 
 ## Log
 

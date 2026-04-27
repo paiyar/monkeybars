@@ -86,6 +86,7 @@ plan docs before implementation starts.
 
    ```sh
    monkeybars status
+   monkeybars next
    monkeybars check
    ```
 
@@ -194,7 +195,8 @@ oversized chat history, unreliable tests, or unclear architecture.
 2. Let the initializer inspect the current docs, code structure, dependency
    manifests, and available preflight commands.
 3. Capture current behavior honestly in `docs/prd/` before inventing a target
-   architecture.
+   architecture. If the repo has useful code but weak current-state docs, run
+   `/map-codebase` first.
 4. Use `/brainstorm-plan` to define the first active plan. The first phase is
    often inventory, stabilization, test coverage, or preflight setup before
    larger feature work.
@@ -225,13 +227,14 @@ Codex exposes them as plugin skills.
 | Order | Skill / command | Use it when | What it does |
 |---:|---|---|---|
 | 1 | `/initialize-monkeybars` | Once per project, with existing docs, existing code, or rough intent | Creates or updates planning docs, `docs/status.md`, the first phase file, and agent instructions |
-| 2 | `/brainstorm-plan` | When specs or plans are rough, missing, stale, complete, or too broad | Turns intent, repo state, or next-release goals into phase-ready docs |
-| 3 | `/project-status` | Anytime you want a read-only progress check | Summarizes active phase, current task, blockers, and remaining work |
-| 4 | `/start-session` | At the start of each fresh context | Reads current workflow files, checks state, and reports the next task |
-| 5 | `/create-phase` | When the next phase has no phase file yet | Creates the next reviewable `docs/work/phase-N.md` from `docs/plan.md` |
-| 6 | `/complete-task` | After one task is implemented | Runs preflight, updates tracking files, commits once, and recommends whether to continue |
-| 7 | `/context-boundary` | After a commit or when context is getting bulky | Advises whether to continue, hand off, or start a fresh context |
-| 8 | `/handoff-session` | When stopping with unfinished work | Records WIP files, blockers, preflight status, decisions, and next steps |
+| 2 | `/map-codebase` | Before brownfield planning when current architecture, stack, tests, or risks are under-documented | Writes current-state docs under `docs/prd/current-*.md` |
+| 3 | `/brainstorm-plan` | When specs or plans are rough, missing, stale, complete, or too broad | Turns intent, repo state, or next-release goals into phase-ready docs |
+| 4 | `/project-status` | Anytime you want a read-only progress check | Summarizes active phase, current task, blockers, and remaining work |
+| 5 | `/start-session` | At the start of each fresh context | Reads current workflow files, checks state, and reports the next task |
+| 6 | `/create-phase` | When the next phase has no phase file yet | Creates the next reviewable `docs/work/phase-N.md` from `docs/plan.md` |
+| 7 | `/complete-task` | After one task is implemented | Runs preflight, updates tracking files, commits once, and recommends whether to continue |
+| 8 | `/context-boundary` | After a commit or when context is getting bulky | Advises whether to continue, hand off, or start a fresh context |
+| 9 | `/handoff-session` | When stopping with unfinished work | Records WIP files, blockers, preflight status, decisions, and next steps |
 | As needed | `/workflow-check` | When tracking state may be inconsistent | Verifies status, phase files, and repo state agree |
 | As needed | `/fix-bug` | When urgent bug work interrupts phase work | Keeps bug work separate from planned phase work and preserves the handoff trail |
 
@@ -370,7 +373,9 @@ deterministic helpers for checking and updating workflow state:
 
 ```sh
 monkeybars status
+monkeybars next
 monkeybars check
+monkeybars health
 monkeybars preflight --dry-run
 monkeybars preflight
 monkeybars advance --task T01 --commit "feat(T01): finish task"

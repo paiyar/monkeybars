@@ -22,10 +22,17 @@
 
 ## Tasks
 
-- [ ] T01 — [description] | files: [key files] | verify: [command]
+- [ ] T01 — [description] | files: [key files] | verify: [automated command]
   - Acceptance: [observable task completion signal]
-- [ ] T02 — [description] | files: [key files] | verify: [command]
+- [ ] T02 — [description] | files: [key files] | verify: [automated command]
   - Acceptance: [observable task completion signal]
+
+## Coverage
+
+| Plan item | Task | Status |
+|---|---|---|
+| Phase goal | T01 | covered |
+| Acceptance: [item] | T02 | covered |
 
 ## Log
 

@@ -1,6 +1,8 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { runCheck } from "./check.js";
+import { checkGeneratedAdapters } from "./generator.js";
 import { gitStatus, gitVersion, isGitAvailable, isGitRepository, recentCommitSubjects } from "./git.js";
 import {
   displayPath,
@@ -12,7 +14,7 @@ import {
   readStatusFile,
   upsertStructuredStatusFields
 } from "./markdown.js";
-import type { PhaseFile, PhaseTask, PlanPhase, StatusFile } from "./types.js";
+import type { Finding, PhaseFile, PhaseTask, PlanPhase, StatusFile } from "./types.js";
 
 export interface WorkflowSnapshot {
   cwd: string;
@@ -51,6 +53,31 @@ export interface PreflightResult {
   dryRun: boolean;
   failedCommand?: string;
   status?: number | null;
+}
+
+export interface NextRecommendation {
+  initialized: boolean;
+  command: string;
+  reason: string;
+  phase?: string;
+  phaseFile?: string;
+  state?: string;
+  currentTask?: string;
+  blockers?: string;
+  wipFiles?: string;
+  dirtyFiles: number;
+  checkOk?: boolean;
+}
+
+export interface HealthFinding extends Finding {
+  repairable?: boolean;
+}
+
+export interface HealthResult {
+  ok: boolean;
+  repaired: boolean;
+  findings: HealthFinding[];
+  repairs: string[];
 }
 
 function today(): string {
@@ -112,6 +139,317 @@ export function summarizeWorkflow(cwd = process.cwd()): StatusSummary {
     blockers: phase?.status.blockers,
     wipFiles: phase?.status["wip files"]
   };
+}
+
+function commandForInitializedWorkflow(cwd: string): NextRecommendation {
+  const snapshot = readWorkflowSnapshot(cwd);
+  const summary = summarizeWorkflow(cwd);
+  const check = runCheck(cwd);
+  const dirtyFiles = gitStatus(cwd).length;
+
+  const base = {
+    initialized: summary.initialized,
+    phase: summary.phase,
+    phaseFile: summary.phaseFile,
+    state: summary.state,
+    currentTask: summary.currentTask,
+    blockers: summary.blockers,
+    wipFiles: summary.wipFiles,
+    dirtyFiles,
+    checkOk: check.ok
+  };
+
+  if (!summary.initialized) {
+    return {
+      ...base,
+      initialized: false,
+      command: "initialize-monkeybars",
+      reason: "MonkeyBars workflow files are missing."
+    };
+  }
+
+  if (!check.ok) {
+    return {
+      ...base,
+      command: "monkeybars check",
+      reason: "Workflow state has consistency errors that should be resolved first."
+    };
+  }
+
+  const blockers = summary.blockers?.trim().toLowerCase();
+  if (blockers && blockers !== "none") {
+    return {
+      ...base,
+      command: "handoff-session",
+      reason: "The active phase has blockers documented."
+    };
+  }
+
+  const wip = summary.wipFiles?.trim().toLowerCase();
+  if ((wip && wip !== "none") || dirtyFiles > 0) {
+    return {
+      ...base,
+      command: "start-session",
+      reason: "There is documented or uncommitted work to inspect before advancing."
+    };
+  }
+
+  if (summary.state === "complete" || summary.currentTask?.trim().toLowerCase() === "complete") {
+    const activePhase = parsePhaseLabel(summary.phase);
+    const nextPlanPhase = activePhase
+      ? snapshot.planPhases.find((phase) => Number(phase.number) > Number(activePhase.number))
+      : undefined;
+    return {
+      ...base,
+      command: nextPlanPhase ? "create-phase" : "brainstorm-plan",
+      reason: nextPlanPhase
+        ? `Active phase is complete and Phase ${nextPlanPhase.number} exists in docs/plan.md.`
+        : "The active plan appears exhausted; define the next active plan."
+    };
+  }
+
+  return {
+    ...base,
+    command: "start-session",
+    reason: "The active phase has an incomplete current task."
+  };
+}
+
+export function nextRecommendation(cwd = process.cwd()): NextRecommendation {
+  if (!isGitAvailable()) {
+    return {
+      initialized: false,
+      command: "install git",
+      reason: "git is not installed or not on PATH.",
+      dirtyFiles: 0
+    };
+  }
+
+  if (!isGitRepository(cwd)) {
+    return {
+      initialized: false,
+      command: "git init",
+      reason: "Current directory is not inside a git repository.",
+      dirtyFiles: 0
+    };
+  }
+
+  return commandForInitializedWorkflow(cwd);
+}
+
+function addHealth(findings: HealthFinding[], finding: HealthFinding): void {
+  findings.push(finding);
+}
+
+function taskHasHint(task: PhaseTask, hint: "files" | "verify"): boolean {
+  return new RegExp(`(?:^|\\|)\\s*${hint}\\s*:`, "i").test(task.text);
+}
+
+function hasHeading(text: string, heading: string): boolean {
+  return new RegExp(`^##\\s+${heading}\\s*$`, "im").test(text);
+}
+
+function duplicatePlanPhaseNumbers(phases: PlanPhase[]): string[] {
+  const seen = new Set<string>();
+  const duplicates = new Set<string>();
+  for (const phase of phases) {
+    if (seen.has(phase.number)) duplicates.add(phase.number);
+    seen.add(phase.number);
+  }
+  return [...duplicates].sort((a, b) => Number(a) - Number(b));
+}
+
+function canCheckGeneratedAdapters(cwd: string): boolean {
+  return existsSync(join(cwd, "workflow-src")) && existsSync(join(cwd, "plugins", "monkeybars"));
+}
+
+export function health(repair = false, cwd = process.cwd()): HealthResult {
+  const root = resolve(cwd);
+  const findings: HealthFinding[] = [];
+  const repairs: string[] = [];
+  const gitAvailable = isGitAvailable();
+  const gitRepository = gitAvailable && isGitRepository(root);
+
+  if (!gitAvailable) {
+    addHealth(findings, {
+      severity: "error",
+      code: "git-not-installed",
+      message: "git is not installed or not on PATH."
+    });
+  } else if (!gitRepository) {
+    addHealth(findings, {
+      severity: "error",
+      code: "not-git-repository",
+      message: "Current directory is not inside a git repository."
+    });
+  }
+
+  const snapshot = readWorkflowSnapshot(root);
+  const initializedGitWorkflow =
+    gitAvailable && gitRepository && Boolean(snapshot.status) && existsSync(snapshot.planPath);
+  const performRepair = repair && initializedGitWorkflow;
+  const workDir = join(root, "docs", "work");
+  if (!existsSync(workDir)) {
+    addHealth(findings, {
+      severity: "warning",
+      code: "missing-work-directory",
+      message: "Missing docs/work/ directory.",
+      file: "docs/work",
+      repairable: initializedGitWorkflow
+    });
+    if (performRepair) {
+      mkdirSync(workDir, { recursive: true });
+      repairs.push("Created docs/work/.");
+    }
+  }
+
+  if (!snapshot.status) {
+    addHealth(findings, {
+      severity: "error",
+      code: "missing-status",
+      message: "Missing docs/status.md.",
+      file: "docs/status.md"
+    });
+  } else if (!snapshot.status.structured || Object.keys(snapshot.status.structured).length === 0) {
+    addHealth(findings, {
+      severity: "warning",
+      code: "missing-structured-status",
+      message: "docs/status.md is missing the structured MonkeyBars status block.",
+      file: "docs/status.md",
+      repairable: initializedGitWorkflow
+    });
+    if (performRepair) {
+      migrateStatus(root);
+      repairs.push("Added structured status block to docs/status.md.");
+    }
+  }
+
+  if (!existsSync(snapshot.planPath)) {
+    addHealth(findings, {
+      severity: "error",
+      code: "missing-plan",
+      message: "Missing docs/plan.md.",
+      file: "docs/plan.md"
+    });
+  } else {
+    if (snapshot.planPhases.length === 0) {
+      addHealth(findings, {
+        severity: "error",
+        code: "plan-has-no-phases",
+        message: "docs/plan.md has no parseable phase headings. Expected headings like '## Phase 1 — Name'.",
+        file: "docs/plan.md"
+      });
+    }
+    for (const duplicate of duplicatePlanPhaseNumbers(snapshot.planPhases)) {
+      addHealth(findings, {
+        severity: "error",
+        code: "duplicate-plan-phase",
+        message: `docs/plan.md defines Phase ${duplicate} more than once.`,
+        file: "docs/plan.md"
+      });
+    }
+  }
+
+  if (snapshot.status && !snapshot.phase) {
+    addHealth(findings, {
+      severity: "error",
+      code: "missing-active-phase-file",
+      message: "The active phase file referenced by docs/status.md is missing.",
+      file: snapshot.status.active["phase file"] ?? "docs/status.md"
+    });
+  }
+
+  if (snapshot.phase) {
+    const phaseText = readFileSync(snapshot.phase.path, "utf8");
+    if (!hasHeading(phaseText, "Coverage")) {
+      addHealth(findings, {
+        severity: "warning",
+        code: "missing-coverage-section",
+        message: "Active phase file has no ## Coverage section mapping plan items to tasks.",
+        file: displayPath(snapshot.phase.path)
+      });
+    }
+
+    if (snapshot.phase.tasks.length === 0) {
+      addHealth(findings, {
+        severity: "warning",
+        code: "phase-has-no-tasks",
+        message: "Active phase file has no parseable tasks.",
+        file: displayPath(snapshot.phase.path)
+      });
+    }
+
+    for (const task of snapshot.phase.tasks.filter((candidate) => !candidate.checked)) {
+      if (!taskHasHint(task, "files")) {
+        addHealth(findings, {
+          severity: "warning",
+          code: "task-missing-files-hint",
+          message: `Task ${task.id} is missing a files: hint.`,
+          file: displayPath(snapshot.phase.path)
+        });
+      }
+      if (!taskHasHint(task, "verify")) {
+        addHealth(findings, {
+          severity: "warning",
+          code: "task-missing-verify-hint",
+          message: `Task ${task.id} is missing a verify: hint.`,
+          file: displayPath(snapshot.phase.path)
+        });
+      }
+      if (/(?:\bTODO\b|\[command\]|\bcoming soon\b)/i.test(task.text)) {
+        addHealth(findings, {
+          severity: "warning",
+          code: "task-has-placeholder",
+          message: `Task ${task.id} contains placeholder verification text.`,
+          file: displayPath(snapshot.phase.path)
+        });
+      }
+    }
+  }
+
+  const agentsPath = join(root, "AGENTS.md");
+  if (!existsSync(agentsPath)) {
+    addHealth(findings, {
+      severity: "warning",
+      code: "missing-agents",
+      message: "Missing AGENTS.md with project workflow rules.",
+      file: "AGENTS.md"
+    });
+  } else {
+    const agentsText = readFileSync(agentsPath, "utf8");
+    if (!hasHeading(agentsText, "Preflight Checks")) {
+      addHealth(findings, {
+        severity: "warning",
+        code: "missing-preflight-section",
+        message: "AGENTS.md has no ## Preflight Checks section.",
+        file: "AGENTS.md"
+      });
+    } else if (extractPreflightCommands(agentsText).length === 0 && !/no preflight/i.test(agentsText)) {
+      addHealth(findings, {
+        severity: "warning",
+        code: "empty-preflight-section",
+        message: "AGENTS.md has a preflight section but no commands or explicit no-preflight note.",
+        file: "AGENTS.md"
+      });
+    }
+  }
+
+  if (canCheckGeneratedAdapters(root)) {
+    const generated = checkGeneratedAdapters({ root });
+    if (!generated.ok) {
+      for (const difference of generated.differences) {
+        addHealth(findings, {
+          severity: "warning",
+          code: "generated-adapter-drift",
+          message: difference,
+          file: "plugins/monkeybars"
+        });
+      }
+    }
+  }
+
+  const hasErrors = findings.some((finding) => finding.severity === "error");
+  return { ok: !hasErrors, repaired: repair && repairs.length > 0, findings, repairs };
 }
 
 function updateBulletSection(text: string, heading: string, fields: Record<string, string>): string {

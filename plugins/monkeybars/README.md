@@ -8,6 +8,7 @@ and advisory agent-native workflow hooks.
 
 - `/start-session`
 - `/initialize-monkeybars`
+- `/map-codebase`
 - `/brainstorm-plan`
 - `/project-status`
 - `/create-phase`
@@ -121,7 +122,9 @@ The CLI is for deterministic checks and state updates outside an agent session:
 
 ```sh
 monkeybars status
+monkeybars next
 monkeybars check
+monkeybars health
 monkeybars preflight --dry-run
 monkeybars advance --task T01 --commit "feat(T01): finish task"
 monkeybars migrate-status

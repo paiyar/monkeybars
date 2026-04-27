@@ -18,9 +18,10 @@ summary of active work.
 2. Read the active phase file for task-level status.
 3. Summarize plan scope, active phase, current task, completed vs remaining
    tasks, and blockers.
-4. If no phase files exist, check `docs/plan.md` and report which phase should
+4. Run `monkeybars next` when available and include its recommended next action.
+5. If no phase files exist, check `docs/plan.md` and report which phase should
    be started first.
-5. If every phase in the active plan is complete, report that the active plan is
+6. If every phase in the active plan is complete, report that the active plan is
    exhausted and recommend `brainstorm-plan` to archive it and create the next
    active plan.
-6. Do not modify files.
+7. Do not modify files.
