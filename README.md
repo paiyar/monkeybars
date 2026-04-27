@@ -1,436 +1,189 @@
 # MonkeyBars
 
-Guardrails for vibe monkeys.
+> **Guardrails for vibe monkeys.**
+> Monkey thinks up spec. Monkey chunks up spec. Monkey makes iterative progress.
 
-Monkey thinks up spec. Monkey chunks up spec. Monkey makes iterative progress.
-
-MonkeyBars is a repo-local workflow for agent-built projects:
-greenfield builds, brownfield rescue, and v2/v3 iteration. It helps coding
-agents turn rough ideas, specs, and half-built code into plans, phases, small
-tasks, and reviewable commits.
+MonkeyBars is a repo-local workflow plugin that turns rough specs, half-built code, and "next release" goals into phase-by-phase reviewable commits. It works with **Codex, Claude Code, and OpenCode**.
 
 It is also a defense against context rot. Claude's
 [context-window docs](https://platform.claude.com/docs/en/build-with-claude/context-windows)
-put the problem plainly: "more context isn't automatically better. As token
-count grows, accuracy and recall degrade." MonkeyBars keeps the important state
-in the repo instead of trapping it in one fat chat that eventually needs
-compaction.
+put it plainly: *"more context isn't automatically better. As token count grows,
+accuracy and recall degrade."* MonkeyBars keeps the important state — plan,
+current phase, current task, WIP, handoffs — in the repo, not in one fat chat
+that eventually needs compaction.
 
-The goal is not to keep one giant agent conversation alive forever. The goal is
-to make each work chunk clear enough that a fresh context can pick it up, finish
-it, and hand off cleanly.
+The goal isn't to keep one chat alive forever. It's to make every chunk small
+enough that a fresh context can pick it up and finish.
 
-It works with Codex, Claude Code, and OpenCode.
-
-## What It Is For
-
-Use this when you are building a new project, adopting an existing repo, or
-planning the next release from inputs like:
-
-- product requirements
-- architecture notes
-- data models
-- design notes
-- API contracts
-- implementation plans
-- partially implemented or vibe-coded code
-- issue lists, bug reports, or refactor notes
-
-The workflow turns those inputs into:
-
-1. a project plan
-2. phase files
-3. small tasks
-4. reviewable commits
-
-## Before You Start
-
-Use this inside a git repository.
-
-Bring whatever context you have: product notes, architecture sketches, data
-models, design notes, API contracts, rough implementation plans, existing code,
-or notes about what feels broken. It does not need to be complete.
-
-Then run:
-
-```text
-/initialize-monkeybars
-```
-
-The initializer discovers existing project docs, likely stack conventions, and
-preflight commands such as tests, linting, typechecking, builds, migrations, or
-smoke checks. If the project has no clear command surface, it can suggest a
-small `Taskfile.yml` shim, but Taskfile is optional.
-
-You can start with your own docs, a rough idea, or a messy existing repo. When
-docs already exist, the initializer maps them into the workflow. When docs are
-missing, stale, contradictory, or too rough, it moves into guided planning
-intake to define the needed spec, architecture, data, interface, and active
-plan docs before implementation starts.
-
-## First 10 Minutes
-
-1. Install MonkeyBars into the repo:
-
-   ```sh
-   monkeybars install --project /path/to/repo
-   ```
-
-2. In the target repo, run the initializer with your agent:
-
-   ```text
-   /initialize-monkeybars
-   ```
-
-3. Check the deterministic state:
-
-   ```sh
-   monkeybars status
-   monkeybars next
-   monkeybars check
-   ```
-
-4. Start work from a fresh agent context:
-
-   ```text
-   /start-session
-   ```
-
-5. When one task is done, complete it as one logical commit:
-
-   ```text
-   /complete-task
-   ```
-
-## How It Works
-
-Your project gets a small set of planning and tracking files:
-
-- `docs/prd/*.md` — living product, architecture, data, and interface truth
-- `docs/plan.md` — the active implementation plan for the current work slice
-- `docs/work/phase-N.md` — a reviewable chunk of the plan, split into tasks
-- `docs/status.md` — the current phase, task, and handoff pointer
-- `AGENTS.md` — project rules every coding agent should follow
-
-These files externalize the important context. They keep the plan, current
-work, open questions, WIP files, and handoff notes outside the chat window.
-
-That lets you use shorter, cleaner sessions:
-
-1. Start from specs.
-2. Brainstorm missing or rough requirements into phase-ready planning docs.
-3. Generate or review the implementation plan.
-4. Create a phase file for the next chunk.
-5. Start a fresh agent context for that chunk.
-6. Complete one task, or hand off unfinished work.
-7. Start fresh again when the context is getting bulky.
-
-The workflow treats context bloat as a normal failure mode. It gives you a
-repeatable way to stop, write down the state, and resume in a new session.
-
-`docs/plan.md` is intentionally the active plan, not a permanent backlog. When a
-release or work slice is complete, archive the completed plan under
-`docs/archive/plans/YYYY-MM-DD-<scope>.md`, then write a fresh active
-`docs/plan.md` for the next release. Keep old `docs/work/phase-N.md` files as
-execution history, and keep phase numbers increasing instead of reusing Phase 1.
-
-## Basic Loop
-
-The workflow names are shared across tools, but each tool exposes them
-slightly differently. OpenCode uses generated slash commands. Claude Code
-exposes the generated skills as slash commands. Codex packages them as plugin
-skills that you invoke explicitly with the skill mention UI, such as
-`$start-session`.
-
-This README writes the workflow names as slash commands for readability.
-
-Install the plugin or skills once, then initialize each project. You can start
-from existing docs, existing code, or rough project intent:
-
-```text
-/initialize-monkeybars
-```
-
-If the specs or plan are rough, refine them before phase creation:
-
-```text
-/brainstorm-plan      # turn rough intent into phase-ready docs
-```
-
-After that, use the workflow loop:
-
-```text
-/start-session       # read the plan and active phase
-[work with the agent]
-/complete-task       # run preflight, commit, and advance
-/handoff-session     # save unfinished context before stopping
-```
-
-## Common Runs
-
-### Greenfield
-
-1. Put any existing specs in the repo, usually under `docs/prd/` or `docs/`, or
-   start with a rough project idea.
-2. Run `/initialize-monkeybars`.
-3. Review the generated or updated `docs/plan.md`, `docs/status.md`, and
-   `docs/work/phase-1.md`.
-4. If the planning docs are vague or incomplete, run `/brainstorm-plan`.
-5. Start a fresh agent context and run `/start-session`.
-6. Work on the current task from the active phase file.
-7. When the task is done, run `/complete-task`.
-8. Follow `/context-boundary` after the commit. If the next chunk is different
-   or the context is getting large, start a fresh context.
-9. If you stop mid-task, run `/handoff-session` instead of relying on chat
-   history.
-10. When a phase is complete, run `/create-phase` to create the next reviewable
-   phase file from `docs/plan.md`.
-
-### Brownfield Rescue
-
-Use this when an existing repo has useful code but poor planning context, one
-oversized chat history, unreliable tests, or unclear architecture.
-
-1. Run `/initialize-monkeybars` in the repo.
-2. Let the initializer inspect the current docs, code structure, dependency
-   manifests, and available preflight commands.
-3. Capture current behavior honestly in `docs/prd/` before inventing a target
-   architecture. If the repo has useful code but weak current-state docs, run
-   `/map-codebase` first.
-4. Use `/brainstorm-plan` to define the first active plan. The first phase is
-   often inventory, stabilization, test coverage, or preflight setup before
-   larger feature work.
-5. Create phase files from the active plan and proceed one reviewable task and
-   commit at a time.
-
-### Post-v1 Or Next Release
-
-Use this when the current active plan is complete and you need v2, v3, or a new
-work slice.
-
-1. Confirm the current phase and plan are complete with `/project-status` and
-   `/workflow-check`.
-2. Archive the completed `docs/plan.md` to
-   `docs/archive/plans/YYYY-MM-DD-<scope>.md`.
-3. Update the living docs under `docs/prd/` to reflect what is true after the
-   completed release.
-4. Run `/brainstorm-plan` to define the next active plan in `docs/plan.md`.
-5. Run `/create-phase`. Use the next available `docs/work/phase-N.md` number
-   instead of resetting to Phase 1.
-
-## Skills In Workflow Order
-
-The workflow names are shared across tools. OpenCode exposes them as slash
-commands, Claude Code exposes the generated skills as slash commands, and
-Codex exposes them as plugin skills.
-
-| Order | Skill / command | Use it when | What it does |
-|---:|---|---|---|
-| 1 | `/initialize-monkeybars` | Once per project, with existing docs, existing code, or rough intent | Creates or updates planning docs, `docs/status.md`, the first phase file, and agent instructions |
-| 2 | `/map-codebase` | Before brownfield planning when current architecture, stack, tests, or risks are under-documented | Writes current-state docs under `docs/prd/current-*.md` |
-| 3 | `/brainstorm-plan` | When specs or plans are rough, missing, stale, complete, or too broad | Turns intent, repo state, or next-release goals into phase-ready docs |
-| 4 | `/project-status` | Anytime you want a read-only progress check | Summarizes active phase, current task, blockers, and remaining work |
-| 5 | `/start-session` | At the start of each fresh context | Reads current workflow files, checks state, and reports the next task |
-| 6 | `/create-phase` | When the next phase has no phase file yet | Creates the next reviewable `docs/work/phase-N.md` from `docs/plan.md` |
-| 7 | `/complete-task` | After one task is implemented | Runs preflight, updates tracking files, commits once, and recommends whether to continue |
-| 8 | `/context-boundary` | After a commit or when context is getting bulky | Advises whether to continue, hand off, or start a fresh context |
-| 9 | `/handoff-session` | When stopping with unfinished work | Records WIP files, blockers, preflight status, decisions, and next steps |
-| As needed | `/workflow-check` | When tracking state may be inconsistent | Verifies status, phase files, and repo state agree |
-| As needed | `/fix-bug` | When urgent bug work interrupts phase work | Keeps bug work separate from planned phase work and preserves the handoff trail |
-
-## Intended Fit
-
-This is built for projects where agents need repo-tracked context, small
-reviewable changes, and safe handoffs between fresh sessions.
-
-It is especially useful when you want:
-
-- plan chunks checked into the repo for review
-- tasks small enough to inspect and commit one at a time
-- fresh contexts per chunk instead of one long overloaded session
-- explicit handoffs before compaction or context loss
-- the same workflow across Codex, Claude Code, and OpenCode
-
-It is a poor fit for one-off edits where the cost of planning is higher than
-the code change, or for teams that already have a stronger external planning
-system and only need agents to execute tickets.
+---
 
 ## Install
-
-Install the public npm package once, then install MonkeyBars into each target
-repo:
 
 ```sh
 npm install -g @paiyar/monkeybars
 monkeybars install --project /path/to/repo
 ```
 
-For one-shot use without a global install:
+One-shot via npx, or pin to a GitHub revision:
 
 ```sh
+# One-shot:
 npx @paiyar/monkeybars install --project /path/to/repo
-```
 
-If the package is not published to npm yet, or you want to consume a specific
-repo revision directly, install from GitHub:
-
-```sh
+# Or pin to a GitHub tag/commit:
 npm install -g github:paiyar/monkeybars#<tag-or-commit>
 monkeybars install --project /path/to/repo
 ```
 
-For one-shot GitHub use:
+The CLI runs on Node.js 20+. By default `install` covers all three agents
+(OpenCode, Claude Code, Codex) and adds advisory workflow hooks. Pass specific
+targets or `--no-agent-hooks` to scope it down:
 
 ```sh
-npm exec --package github:paiyar/monkeybars#<tag-or-commit> -- monkeybars install --project /path/to/repo
-```
-
-Omit `#<tag-or-commit>` only when you intentionally want npm to install the
-current default branch. Prefer a tag or commit SHA for repeatable installs.
-
-The published CLI runs on Node.js 20 or newer. Bun is still used for
-development, tests, and generating packaged adapter artifacts from a checkout.
-
-Omitting targets installs all supported agents: OpenCode, Claude Code, and
-Codex. It also installs project-local, agent-native workflow hooks/events by
-default. These hooks only inject or preserve MonkeyBars workflow context; they
-do not block prompts or tool calls. Pass one or more targets only when you want
-a subset, or `--no-agent-hooks` when you want assets without lifecycle hooks:
-
-```sh
-monkeybars install --project /path/to/repo
 monkeybars install opencode claude --project /path/to/repo
 monkeybars install --no-agent-hooks --project /path/to/repo
 ```
 
-The legacy shell scripts under `plugins/monkeybars/scripts/` remain available
-for direct checkout use, but they are no longer the primary install path.
+## First run
 
-### OpenCode
-
-OpenCode reads markdown command files from global
-`~/.config/opencode/commands/` or project-local `.opencode/commands/`, and
-project plugins from `.opencode/plugins/`.
-
-The CLI installs the generated commands and advisory workflow plugin into the
-project-local directories:
-
-```sh
-monkeybars install --project /path/to/repo
-```
-
-Use `monkeybars install opencode --project /path/to/repo` if you only want the
-OpenCode command/plugin bundle.
-
-After install, run commands such as `/initialize-monkeybars` and
-`/start-session`.
-
-### Claude Code
-
-Claude Code reads skills from global `~/.claude/skills/` or project-local
-`.claude/skills/`, and project hooks from `.claude/settings.json`.
-
-The CLI installs the generated skills, hook script, and advisory workflow hook
-configuration into the project-local directories:
-
-```sh
-monkeybars install --project /path/to/repo
-```
-
-Use `monkeybars install claude --project /path/to/repo` if you only want the
-Claude skill/hook bundle.
-
-After install, invoke skills as slash commands such as
-`/initialize-monkeybars` and `/start-session`.
-
-### Codex
-
-Install or point Codex at the plugin directory. The manifest is:
+In the target repo, run from your agent:
 
 ```text
-.codex/plugins/monkeybars/.codex-plugin/plugin.json
+/initialize-monkeybars   # one-time setup
+/start-session           # at the start of each fresh chat
+/complete-task           # after one task lands as one commit
+/handoff-session         # if you stop mid-task
 ```
 
-The repository marketplace remains at `.agents/plugins/marketplace.json`, with
-`source.path` pointing to `./.codex/plugins/monkeybars`. The CLI copies the
-plugin payload, marketplace metadata, and advisory Codex workflow hooks into
-the target repo:
+Or use the deterministic CLI to inspect state from a terminal:
 
 ```sh
-monkeybars install codex --project /path/to/repo
+monkeybars status        # current phase / task / WIP
+monkeybars next          # what to run next
+monkeybars check         # invariants between status.md and phase files
 ```
 
-Use `monkeybars install codex --project /path/to/repo` if you only want the
-Codex plugin/hook bundle.
+## What it adds to your repo
 
-After install, invoke skills explicitly with the skill mention UI, such as
-`$initialize-monkeybars` and `$start-session`.
+```
+your-repo/
+├── docs/
+│   ├── plan.md              active implementation plan
+│   ├── status.md            phase / task / handoff pointer
+│   ├── prd/                 product, architecture, data, interface truth
+│   └── work/
+│       ├── phase-1.md       reviewable chunk; tasks T01, T02, T03 …
+│       └── phase-2.md
+└── AGENTS.md                rules every coding agent should follow
+```
 
-## CLI And Advisory Hooks
+**Hierarchy:** `plan.md` ─► `phase-N.md` ─► `T01..TN` ─► one commit each.
 
-The skills and commands are the main workflow. The installed CLI also exposes
-deterministic helpers for checking and updating workflow state:
+`docs/plan.md` is intentionally the *active* plan, not a permanent backlog.
+When a release is complete, archive it under
+`docs/archive/plans/YYYY-MM-DD-<scope>.md` and start a fresh one. Keep phase
+numbers monotonically increasing across releases — don't reset to Phase 1.
+
+## The loop
+
+```mermaid
+flowchart LR
+    A([/initialize-monkeybars]) --> B([/start-session])
+    B --> C[implement one task]
+    C --> D([/complete-task])
+    D -->|continue| C
+    D -->|fresh chat| B
+    C -.->|stop mid-task| H([/handoff-session])
+    H -.-> B
+```
+
+When the chat starts feeling heavy, run `/context-boundary` and start over from
+`/start-session` — the repo carries the state forward.
+
+## Commands
+
+Workflow names are the same across agents. OpenCode and Claude Code expose them
+as slash commands; Codex uses skill mentions like `$start-session`.
+
+| # | Command | Use it when | What it does |
+|---:|---|---|---|
+| 1 | `/initialize-monkeybars` | Once per project | Creates planning docs, `docs/status.md`, first phase file, agent instructions |
+| 2 | `/map-codebase` | Brownfield repos with weak current-state docs | Writes `docs/prd/current-*.md` |
+| 3 | `/brainstorm-plan` | Specs are rough, missing, stale, or too broad | Turns intent or repo state into phase-ready docs |
+| 4 | `/project-status` | Read-only progress check | Summarizes phase, task, blockers, remaining work |
+| 5 | `/start-session` | Start of every fresh chat | Reads workflow files, reports the next task |
+| 6 | `/create-phase` | Next phase has no phase file | Generates the next `docs/work/phase-N.md` from `plan.md` |
+| 7 | `/complete-task` | One task is implemented | Runs preflight, updates tracking, commits once |
+| 8 | `/context-boundary` | After a commit, or context is heavy | Recommends continue / handoff / fresh chat |
+| 9 | `/handoff-session` | Stopping with unfinished work | Records WIP, blockers, decisions, next steps |
+| — | `/workflow-check` | Tracking state may be inconsistent | Verifies status, phase files, and repo state agree |
+| — | `/fix-bug` | Urgent bug interrupts phase work | Keeps bug separate, preserves the handoff trail |
+
+## Scenarios
+
+**Greenfield.** Put existing specs (or a rough idea) under `docs/`, run
+`/initialize-monkeybars`, then enter the loop above. Use `/brainstorm-plan`
+first if the plan is too vague to phase.
+
+**Brownfield rescue.** When a repo has useful code but weak docs, run
+`/map-codebase` after `/initialize-monkeybars` to capture current behavior
+honestly before inventing a target architecture. The first phase is usually
+inventory or stabilization, not features.
+
+**Post-v1 / next release.** When the active plan is complete, archive
+`docs/plan.md` to `docs/archive/plans/YYYY-MM-DD-<scope>.md`, run
+`/brainstorm-plan` for the next plan, then `/create-phase` with the next
+available phase number.
+
+## When to use it
+
+Good fit:
+
+- you want plan chunks reviewed in PRs, not chat history
+- tasks small enough to inspect and commit one at a time
+- fresh contexts per chunk, not one overloaded session
+- the same workflow across Codex, Claude Code, and OpenCode
+
+Skip it:
+
+- one-off edits where planning costs more than the change
+- you already have a strong external planning system and just need the agent to execute tickets
+
+## Per-agent details
+
+| Agent | Reads from | Invocation |
+|---|---|---|
+| OpenCode | `.opencode/commands/`, `.opencode/plugins/` | `/initialize-monkeybars` |
+| Claude Code | `.claude/skills/`, `.claude/settings.json` (hooks) | `/initialize-monkeybars` |
+| Codex | `.codex/plugins/monkeybars/`, `.agents/plugins/marketplace.json` | `$initialize-monkeybars` |
+
+Hooks are advisory: they inject MonkeyBars context at lifecycle events but
+never block tool calls or mutate workflow files. Re-running `install` is
+idempotent.
+
+## CLI reference
 
 ```sh
 monkeybars status
 monkeybars next
 monkeybars check
 monkeybars health
-monkeybars preflight --dry-run
-monkeybars preflight
+monkeybars preflight [--dry-run]
 monkeybars advance --task T01 --commit "feat(T01): finish task"
 monkeybars migrate-status
 monkeybars doctor
 ```
 
-Installed agent-native hooks are project-local and advisory:
-
-- Claude and Codex hooks add MonkeyBars workflow context at session and prompt
-  boundaries.
-- OpenCode hooks preserve active phase/task context during compaction.
-
-Hooks never update workflow files, block tool calls, check off tasks, commit,
-or stash work.
-
-## Repository Layout
-
-- `workflow-src/commands/` — canonical command definitions
-- `workflow-src/hooks/` — canonical agent-native hook assets
-- `workflow-src/templates/` — templates copied into initialized projects
-- `cli/src/` — TypeScript CLI for install and checks
-- `plugins/monkeybars/skills/` — generated Codex and Claude skills
-- `plugins/monkeybars/commands/` — generated OpenCode commands
-- `plugins/monkeybars/hooks/` — generated agent-native hook assets
-- `plugins/monkeybars/templates/` — generated project templates
-
-Edit `workflow-src/` first. Generated plugin files should come from the
-generator.
-
 ## Development
 
-Local checkout usage is for development only:
+Local checkout (Bun required):
 
 ```sh
 bun install
 bun run generate
+bun run test
 node dist/index.js install --project /path/to/repo
 ```
 
-Regenerate adapters after changing command sources or templates:
-
-```sh
-bun run generate
-bun run generate:check
-```
-
-Review the generated diff:
-
-```sh
-git diff -- workflow-src plugins/monkeybars
-```
-
-Build and test the CLI:
-
-```sh
-bun run test
-```
+Edit canonical workflow files in `workflow-src/` first, then `bun run generate`.
+See [`AGENTS.md`](./AGENTS.md) for the full contributor guide.
