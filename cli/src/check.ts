@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { gitStatus, isGitRepository, recentCommits, recentCommitSubjects } from "./git.js";
+import { gitStatus, isGitAvailable, isGitRepository, recentCommits, recentCommitSubjects } from "./git.js";
 import { displayPath, normalizeTaskId, parsePhaseLabel, readPhaseFile, readPlanPhases, readStatusFile } from "./markdown.js";
 import type { CheckResult, Finding } from "./types.js";
 
@@ -30,6 +30,15 @@ export function runCheck(cwd = process.cwd()): CheckResult {
   const findings: Finding[] = [];
   const statusPath = join(cwd, "docs", "status.md");
   const planPath = join(cwd, "docs", "plan.md");
+
+  if (!isGitAvailable()) {
+    add(findings, {
+      severity: "error",
+      code: "git-not-installed",
+      message: "git is not installed or not on PATH."
+    });
+    return { ok: false, findings };
+  }
 
   if (!isGitRepository(cwd)) {
     add(findings, {

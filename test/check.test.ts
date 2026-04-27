@@ -1,96 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { runCheck } from "../cli/src/check";
-
-function tempRepo(): string {
-  const root = mkdtempSync(join(tmpdir(), "monkeybars-"));
-  execFileSync("git", ["init"], { cwd: root, stdio: "ignore" });
-  return root;
-}
-
-function tempDir(): string {
-  return mkdtempSync(join(tmpdir(), "monkeybars-"));
-}
-
-function writeWorkflow(root: string, options: {
-  current?: string;
-  phaseCurrent?: string;
-  state?: string;
-  phaseState?: string;
-  phase?: string;
-  phaseTitle?: string;
-  tasks?: string;
-} = {}): void {
-  mkdirSync(join(root, "docs", "work"), { recursive: true });
-  writeFileSync(join(root, "docs", "plan.md"), `# Implementation Plan
-
-## Phase 1 — Test
-
-- **Goal:** Test workflow fixture
-- **User-visible outcome:** Test
-- **Deliverables:**
-  - Test task
-- **Likely files/modules:** test
-- **Dependencies:** none
-- **Acceptance criteria:**
-  - Test passes
-- **Preflight:** bun test
-- **Open questions:** none
-`);
-  const current = options.current ?? "T01";
-  const phaseCurrent = options.phaseCurrent ?? current;
-  const state = options.state ?? "not_started";
-  const phaseState = options.phaseState ?? state;
-  const phase = options.phase ?? "1 — Test";
-  const phaseTitle = options.phaseTitle ?? "Phase 1 — Test";
-  const tasks = options.tasks ?? "- [ ] T01 — first task | files\n- [ ] T02 — second task | files";
-
-  writeFileSync(join(root, "docs", "status.md"), `# Project Status
-
-## Active Work
-
-- **Phase file:** docs/work/phase-1.md
-- **Phase:** ${phase}
-- **State:** ${state}
-- **Current task:** ${current} — first task
-- **Last commit:** none
-
-## Phase Summary
-
-| Phase | Title | State |
-|---|---|---|
-| 1 | Test | ${state} |
-`);
-
-  writeFileSync(join(root, "docs", "work", "phase-1.md"), `# ${phaseTitle}
-
-## Status
-
-- **State:** ${phaseState}
-- **Current task:** ${phaseCurrent} — first task
-- **Last commit:** none
-- **Preflight:** n/a
-- **Blockers:** none
-- **WIP files:** none
-
-## Tasks
-
-${tasks}
-
-## Log
-`);
-}
-
-function commitAll(root: string): void {
-  execFileSync("git", ["config", "user.email", "test@example.com"], { cwd: root });
-  execFileSync("git", ["config", "user.name", "Test User"], { cwd: root });
-  execFileSync("git", ["add", "."], { cwd: root });
-  execFileSync("git", ["commit", "-m", "test fixture"], { cwd: root, stdio: "ignore" });
-}
+import { commitAll, tempDir, tempRepo, writeWorkflow } from "./helpers";
 
 describe("monkeybars check", () => {
   test("passes with matching status and phase files", () => {

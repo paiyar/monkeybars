@@ -1,67 +1,15 @@
 import { describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { advanceTask, migrateStatus, summarizeWorkflow } from "../cli/src/workflow-state";
 import { readStatusFile } from "../cli/src/markdown";
-
-function tempProject(): string {
-  return mkdtempSync(join(tmpdir(), "monkeybars-state-"));
-}
-
-function writeWorkflow(root: string, statusExtra = ""): void {
-  mkdirSync(join(root, "docs", "work"), { recursive: true });
-  writeFileSync(join(root, "docs", "plan.md"), `# Implementation Plan
-
-## Phase 1 — Test
-
-- **Goal:** Test workflow fixture
-`);
-  writeFileSync(join(root, "docs", "status.md"), `# Project Status
-
-> Last updated: 2026-01-01
-
-${statusExtra}
-## Active Work
-
-- **Plan scope:** test
-- **Phase file:** docs/work/phase-1.md
-- **Phase:** 1 — Test
-- **State:** not_started
-- **Current task:** T01 — first task
-- **Last commit:** none
-
-## Phase Summary
-
-| Phase | Title | State |
-|---|---|---|
-| 1 | Test | not_started |
-`);
-  writeFileSync(join(root, "docs", "work", "phase-1.md"), `# Phase 1 — Test
-
-## Status
-
-- **State:** not_started
-- **Current task:** T01 — first task
-- **Last commit:** none
-- **Preflight:** n/a
-- **Blockers:** none
-- **WIP files:** src/example.ts
-
-## Tasks
-
-- [ ] T01 — first task | files
-- [ ] T02 — second task | files
-
-## Log
-`);
-}
+import { tempDir, writeWorkflow } from "./helpers";
 
 describe("workflow state", () => {
   test("migrateStatus adds structured status block", () => {
-    const root = tempProject();
-    writeWorkflow(root);
+    const root = tempDir("monkeybars-state-");
+    writeWorkflow(root, { minimalPlan: true, wipFiles: "src/example.ts", planScope: "test", lastUpdated: "2026-01-01" });
 
     migrateStatus(root);
 
@@ -72,8 +20,13 @@ describe("workflow state", () => {
   });
 
   test("structured status block takes precedence over legacy bullets", () => {
-    const root = tempProject();
-    writeWorkflow(root, `<!-- monkeybars:status
+    const root = tempDir("monkeybars-state-");
+    writeWorkflow(root, {
+      minimalPlan: true,
+      wipFiles: "src/example.ts",
+      planScope: "test",
+      lastUpdated: "2026-01-01",
+      statusExtra: `<!-- monkeybars:status
 phase_file: docs/work/phase-1.md
 phase: 1 — Test
 state: not_started
@@ -81,7 +34,8 @@ current_task: T01 — first task
 last_commit: none
 -->
 
-`);
+`
+    });
     const statusPath = join(root, "docs", "status.md");
     const text = readFileSync(statusPath, "utf8").replace(
       "- **Current task:** T01 — first task",
@@ -95,8 +49,8 @@ last_commit: none
   });
 
   test("advanceTask checks off current task and updates tracking files before commit", () => {
-    const root = tempProject();
-    writeWorkflow(root);
+    const root = tempDir("monkeybars-state-");
+    writeWorkflow(root, { minimalPlan: true, wipFiles: "src/example.ts", planScope: "test", lastUpdated: "2026-01-01" });
 
     const result = advanceTask("T01", "feat(T01): finish first task", root);
 

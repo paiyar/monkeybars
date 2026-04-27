@@ -7,6 +7,26 @@ export function git(args: string[], cwd = process.cwd()): string | undefined {
       encoding: "utf8",
       stdio: ["ignore", "pipe", "ignore"]
     }).trim();
+  } catch (error: unknown) {
+    if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") {
+      throw new Error("git is not installed or not on PATH.");
+    }
+    return undefined;
+  }
+}
+
+export function isGitAvailable(): boolean {
+  try {
+    git(["--version"]);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function gitVersion(): string | undefined {
+  try {
+    return git(["--version"]);
   } catch {
     return undefined;
   }

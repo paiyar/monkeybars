@@ -36,7 +36,6 @@ interface Paths {
   commandSource: string;
   templateSource: string;
   hookSource: string;
-  cliDist: string;
 }
 
 const GENERATED_MARKER = ".monkeybars-generated.json";
@@ -65,8 +64,7 @@ function paths(rootOption?: string): Paths {
     plugin: join(root, "plugins", "monkeybars"),
     commandSource: join(source, "commands"),
     templateSource: join(source, "templates"),
-    hookSource: join(source, "hooks"),
-    cliDist: join(root, "dist")
+    hookSource: join(source, "hooks")
   };
 }
 
@@ -268,34 +266,6 @@ function copyDirectory(source: string, target: string): void {
   writeMarker(target, { type: "directory", files: files.sort() });
 }
 
-function copyCli(allPaths: Paths): void {
-  if (!existsSync(allPaths.cliDist)) return;
-  const target = join(allPaths.plugin, "bin");
-  resetDir(target);
-  const files: string[] = [];
-
-  const copyRecursive = (source: string): void => {
-    for (const name of readdirSync(source)) {
-      const sourcePath = join(source, name);
-      const relativePath = relative(allPaths.cliDist, sourcePath);
-      const destination = join(target, relativePath);
-      const stat = statSync(sourcePath);
-      if (stat.isDirectory()) {
-        mkdirSync(destination, { recursive: true });
-        copyRecursive(sourcePath);
-        continue;
-      }
-      mkdirSync(join(destination, ".."), { recursive: true });
-      copyFileSync(sourcePath, destination);
-      chmodSync(destination, stat.mode);
-      files.push(relative(target, destination));
-    }
-  };
-
-  copyRecursive(allPaths.cliDist);
-  writeMarker(target, { type: "bin", files: files.sort() });
-}
-
 function writeMarker(directory: string, data: Record<string, unknown>): void {
   writeFileSync(
     join(directory, GENERATED_MARKER),
@@ -331,7 +301,6 @@ export function generateAdapters(options: GenerateOptions = {}): string {
 
   copyTemplates(allPaths);
   copyDirectory(allPaths.hookSource, join(allPaths.plugin, "hooks"));
-  copyCli(allPaths);
   return allPaths.plugin;
 }
 
@@ -386,7 +355,7 @@ export function checkGeneratedAdapters(options: GenerateOptions = {}): Generated
   try {
     generateAdapters({ root, pluginOutput: expectedPlugin });
     const actualPlugin = join(root, "plugins", "monkeybars");
-    const generatedDirs = ["commands", "skills", "templates", "hooks", "bin"];
+    const generatedDirs = ["commands", "skills", "templates", "hooks"];
     const differences = generatedDirs.flatMap((directory) =>
       compareGeneratedDirectory(join(expectedPlugin, directory), join(actualPlugin, directory), `plugins/monkeybars/${directory}`)
     );

@@ -111,7 +111,7 @@ function parseTasks(lines: string[]): PhaseTask[] {
   const tasks: PhaseTask[] = [];
   for (let index = 0; index < lines.length; index += 1) {
     const line = lines[index];
-    const match = line.match(/^- \[([ xX])\]\s+([A-Za-z]+\d+)\s+[—-]\s+(.+)$/);
+    const match = line.match(/^- \[([ xX])\]\s+([A-Za-z]+\d+)\s+(?:—|-)\s+(.+)$/);
     if (!match) continue;
 
     tasks.push({
@@ -173,7 +173,7 @@ export function parsePhaseLabel(value: string | undefined): PhaseLabel | undefin
   const trimmed = value?.trim() ?? "";
   if (!trimmed) return undefined;
 
-  const match = trimmed.match(/^(?:Phase\s+)?(\d+)\s+[—-]\s+(.+)$/i);
+  const match = trimmed.match(/^(?:Phase\s+)?(\d+)\s+(?:—|-)\s+(.+)$/i);
   if (!match) return undefined;
 
   return {
@@ -191,7 +191,7 @@ export function readPlanPhases(path: string): PlanPhase[] {
   const phases: PlanPhase[] = [];
   const lines = text.split(/\r?\n/);
   for (let index = 0; index < lines.length; index += 1) {
-    const match = lines[index].match(/^##\s+Phase\s+(\d+)\s+[—-]\s+(.+)$/i);
+    const match = lines[index].match(/^##\s+Phase\s+(\d+)\s+(?:—|-)\s+(.+)$/i);
     if (!match) continue;
     phases.push({
       number: match[1],

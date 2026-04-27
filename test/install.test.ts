@@ -1,32 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 
 import { installPackageTargets } from "../cli/src/install";
-
-const cliPath = resolve("dist", "index.js");
-const repoRoot = resolve(import.meta.dir, "..");
-
-function tempProject(): string {
-  return mkdtempSync(join(tmpdir(), "monkeybars-install-"));
-}
-
-function runCli(args: string[], cwd = process.cwd()) {
-  return spawnSync("node", [cliPath, ...args], {
-    cwd,
-    encoding: "utf8"
-  });
-}
-
-function sourceText(relativePath: string): string {
-  return readFileSync(join(repoRoot, relativePath), "utf8");
-}
-
-function readJson(relativePath: string): any {
-  return JSON.parse(readFileSync(relativePath, "utf8"));
-}
+import { readJson, repoRoot, runCli, sourceText, tempDir } from "./helpers";
 
 function hookCommandCount(settings: any): number {
   return Object.values(settings.hooks ?? {}).flatMap((groups: any) =>
@@ -34,7 +12,7 @@ function hookCommandCount(settings: any): number {
   ).filter((hook: any) => typeof hook.command === "string" && hook.command.includes("monkeybars-workflow-context.js")).length;
 }
 
-function writeWorkflow(root: string): void {
+function writeInstallWorkflow(root: string): void {
   mkdirSync(join(root, "docs", "work"), { recursive: true });
   writeFileSync(join(root, "docs", "plan.md"), "# Implementation Plan\n");
   writeFileSync(join(root, "docs", "status.md"), `# Project Status
@@ -62,7 +40,7 @@ function writeWorkflow(root: string): void {
 
 describe("monkeybars install", () => {
   test("codex self-install preserves the source plugin directory", () => {
-    const root = tempProject();
+    const root = tempDir("monkeybars-install-");
     const manifest = join(root, "plugins", "monkeybars", ".codex-plugin", "plugin.json");
     const command = join(root, "plugins", "monkeybars", "commands", "start-session.md");
     const skill = join(root, "plugins", "monkeybars", "skills", "start-session", "SKILL.md");
@@ -86,7 +64,7 @@ describe("monkeybars install", () => {
   });
 
   test("installs all supported targets by default", () => {
-    const project = tempProject();
+    const project = tempDir("monkeybars-install-");
 
     const result = runCli(["install", "--project", project]);
 
@@ -114,7 +92,7 @@ describe("monkeybars install", () => {
   });
 
   test("installs only selected targets when provided", () => {
-    const project = tempProject();
+    const project = tempDir("monkeybars-install-");
 
     const result = runCli(["install", "opencode", "codex", "--project", project]);
 
@@ -132,7 +110,7 @@ describe("monkeybars install", () => {
   });
 
   test("skips agent-native hooks when requested", () => {
-    const project = tempProject();
+    const project = tempDir("monkeybars-install-");
 
     const result = runCli(["install", "--no-agent-hooks", "--project", project]);
 
@@ -144,7 +122,7 @@ describe("monkeybars install", () => {
   });
 
   test("installs OpenCode commands and replaces existing files", () => {
-    const project = tempProject();
+    const project = tempDir("monkeybars-install-");
     const targetPath = join(project, ".opencode", "commands", "project-status.md");
     const userCommand = join(project, ".opencode", "commands", "user-command.md");
     mkdirSync(join(targetPath, ".."), { recursive: true });
@@ -163,7 +141,7 @@ describe("monkeybars install", () => {
   });
 
   test("installs Claude skills and replaces existing directories", () => {
-    const project = tempProject();
+    const project = tempDir("monkeybars-install-");
     const targetPath = join(project, ".claude", "skills", "start-session", "SKILL.md");
     const userSkill = join(project, ".claude", "skills", "user-skill", "SKILL.md");
     mkdirSync(join(targetPath, ".."), { recursive: true });
@@ -181,7 +159,7 @@ describe("monkeybars install", () => {
   });
 
   test("installs Codex plugin assets and marketplace metadata", () => {
-    const project = tempProject();
+    const project = tempDir("monkeybars-install-");
     const pluginManifest = join(project, ".codex", "plugins", "monkeybars", ".codex-plugin", "plugin.json");
     const legacyManifest = join(project, "plugins", "monkeybars", ".codex-plugin", "plugin.json");
     const marketplace = join(project, ".agents", "plugins", "marketplace.json");
@@ -201,13 +179,12 @@ describe("monkeybars install", () => {
     );
     expect(readFileSync(marketplace, "utf8")).toBe(sourceText(".agents/plugins/marketplace.json"));
     expect(readFileSync(marketplace, "utf8")).toContain("./.codex/plugins/monkeybars");
-    expect(existsSync(join(project, ".codex", "plugins", "monkeybars", "bin", "index.js"))).toBe(true);
     expect(existsSync(join(project, "plugins", "monkeybars"))).toBe(false);
     expect(existsSync(join(project, ".codex", "hooks", "monkeybars-workflow-context.js"))).toBe(true);
   });
 
   test("merges agent hook config idempotently", () => {
-    const project = tempProject();
+    const project = tempDir("monkeybars-install-");
     const claudeSettings = join(project, ".claude", "settings.json");
     const codexHooks = join(project, ".codex", "hooks.json");
     const codexConfig = join(project, ".codex", "config.toml");
@@ -241,7 +218,7 @@ describe("monkeybars install", () => {
   });
 
   test("invalid agent config warns without failing asset install", () => {
-    const project = tempProject();
+    const project = tempDir("monkeybars-install-");
     const settings = join(project, ".claude", "settings.json");
     mkdirSync(join(settings, ".."), { recursive: true });
     writeFileSync(settings, "{ bad json");
@@ -255,8 +232,8 @@ describe("monkeybars install", () => {
   });
 
   test("workflow hook context emits valid lifecycle JSON", () => {
-    const project = tempProject();
-    writeWorkflow(project);
+    const project = tempDir("monkeybars-install-");
+    writeInstallWorkflow(project);
 
     const result = spawnSync(
       "node",
@@ -283,12 +260,63 @@ describe("monkeybars install", () => {
   });
 
   test("rejects missing project paths", () => {
-    const project = join(tmpdir(), `missing-${Date.now()}`);
+    const project = join(tempDir(), `missing-${Date.now()}`);
     rmSync(project, { recursive: true, force: true });
 
     const result = runCli(["install", "opencode", "--project", project]);
 
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("Project path does not exist");
+  });
+});
+
+describe("monkeybars install --dry-run", () => {
+  test("prints planned operations without creating files", () => {
+    const project = tempDir("monkeybars-install-");
+
+    const result = runCli(["install", "--dry-run", "--project", project]);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("[opencode]");
+    expect(result.stdout).toContain("[claude]");
+    expect(result.stdout).toContain("[codex]");
+    expect(result.stdout).toContain("start-session");
+    expect(result.stdout).not.toContain("Installed MonkeyBars");
+    expect(existsSync(join(project, ".opencode"))).toBe(false);
+    expect(existsSync(join(project, ".claude"))).toBe(false);
+    expect(existsSync(join(project, ".codex"))).toBe(false);
+  });
+
+  test("shows only selected target", () => {
+    const project = tempDir("monkeybars-install-");
+
+    const result = runCli(["install", "claude", "--dry-run", "--project", project]);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("[claude]");
+    expect(result.stdout).not.toContain("[opencode]");
+    expect(result.stdout).not.toContain("[codex]");
+    expect(existsSync(join(project, ".claude"))).toBe(false);
+  });
+
+  test("shows hook operations when hooks enabled", () => {
+    const project = tempDir("monkeybars-install-");
+
+    const result = runCli(["install", "claude", "--dry-run", "--project", project]);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("merge hooks into");
+    expect(result.stdout).toContain("settings.json");
+  });
+
+  test("omits hook operations when --no-agent-hooks", () => {
+    const project = tempDir("monkeybars-install-");
+
+    const result = runCli(["install", "claude", "--dry-run", "--no-agent-hooks", "--project", project]);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("[claude]");
+    expect(result.stdout).not.toContain("merge hooks");
+    expect(result.stdout).not.toContain("settings.json");
   });
 });

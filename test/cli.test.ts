@@ -1,83 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import { execFileSync, spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 
-const cliPath = resolve("dist", "index.js");
-
-function tempRepo(): string {
-  const root = mkdtempSync(join(tmpdir(), "monkeybars-cli-"));
-  execFileSync("git", ["init"], { cwd: root, stdio: "ignore" });
-  return root;
-}
-
-function writeWorkflow(root: string): void {
-  mkdirSync(join(root, "docs", "work"), { recursive: true });
-  writeFileSync(join(root, "docs", "plan.md"), `# Implementation Plan
-
-## Phase 1 — Test
-
-- **Goal:** Test workflow fixture
-- **User-visible outcome:** Test
-- **Deliverables:**
-  - Test task
-- **Likely files/modules:** test
-- **Dependencies:** none
-- **Acceptance criteria:**
-  - Test passes
-- **Preflight:** bun test
-- **Open questions:** none
-`);
-  writeFileSync(join(root, "docs", "status.md"), `# Project Status
-
-## Active Work
-
-- **Phase file:** docs/work/phase-1.md
-- **Phase:** 1 — Test
-- **State:** not_started
-- **Current task:** T01 — first task
-- **Last commit:** none
-
-## Phase Summary
-
-| Phase | Title | State |
-|---|---|---|
-| 1 | Test | not_started |
-`);
-
-  writeFileSync(join(root, "docs", "work", "phase-1.md"), `# Phase 1 — Test
-
-## Status
-
-- **State:** not_started
-- **Current task:** T01 — first task
-- **Last commit:** none
-- **Preflight:** n/a
-- **Blockers:** none
-- **WIP files:** none
-
-## Tasks
-
-- [ ] T01 — first task | files
-
-## Log
-`);
-}
-
-function commitAll(root: string): void {
-  execFileSync("git", ["config", "user.email", "test@example.com"], { cwd: root });
-  execFileSync("git", ["config", "user.name", "Test User"], { cwd: root });
-  execFileSync("git", ["add", "."], { cwd: root });
-  execFileSync("git", ["commit", "-m", "test fixture"], { cwd: root, stdio: "ignore" });
-}
-
-function runCli(args: string[], cwd = process.cwd()) {
-  return spawnSync("node", [cliPath, ...args], {
-    cwd,
-    encoding: "utf8"
-  });
-}
+import { commitAll, repoRoot, runCli, tempDir, tempRepo, writeWorkflow } from "./helpers";
 
 describe("monkeybars CLI", () => {
   test("check --json emits JSON", () => {
@@ -93,7 +18,7 @@ describe("monkeybars CLI", () => {
 
   test("status --json emits workflow summary", () => {
     const root = tempRepo();
-    writeWorkflow(root);
+    writeWorkflow(root, { tasks: "- [ ] T01 — first task | files" });
     commitAll(root);
 
     const result = runCli(["status", "--json"], root);
@@ -137,5 +62,116 @@ npm run lint
 
     expect(result.status).toBe(2);
     expect(result.stderr).toContain("unknown command");
+  });
+});
+
+describe("monkeybars advance", () => {
+  test("advances a task and updates tracking files", () => {
+    const root = tempRepo();
+    writeWorkflow(root);
+    commitAll(root);
+
+    const result = runCli(["advance", "--task", "T01", "--commit", "feat: first task"], root);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Advanced");
+    expect(result.stdout).toContain("T01");
+    const phase = readFileSync(join(root, "docs", "work", "phase-1.md"), "utf8");
+    expect(phase).toContain("- [x] T01");
+    expect(phase).toContain("- **Current task:** T02");
+  });
+
+  test("fails when --task is missing", () => {
+    const result = runCli(["advance", "--commit", "something"]);
+
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain("required");
+  });
+
+  test("fails when --commit is missing", () => {
+    const result = runCli(["advance", "--task", "T01"]);
+
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain("required");
+  });
+
+  test("fails when task ID does not match current task", () => {
+    const root = tempRepo();
+    writeWorkflow(root);
+    commitAll(root);
+
+    const result = runCli(["advance", "--task", "T99", "--commit", "wrong task"], root);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("T99");
+  });
+});
+
+describe("monkeybars migrate-status", () => {
+  test("adds structured status block", () => {
+    const root = tempDir();
+    writeWorkflow(root, { minimalPlan: true });
+
+    const result = runCli(["migrate-status"], root);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Migrated");
+    const status = readFileSync(join(root, "docs", "status.md"), "utf8");
+    expect(status).toContain("<!-- monkeybars:status");
+  });
+
+  test("rejects unknown options", () => {
+    const result = runCli(["migrate-status", "--force"]);
+
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain("unknown option");
+  });
+});
+
+describe("monkeybars doctor", () => {
+  test("prints diagnostics for a repo with workflow", () => {
+    const root = tempRepo();
+    writeWorkflow(root);
+    commitAll(root);
+
+    const result = runCli(["doctor"], root);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Node:");
+    expect(result.stdout).toContain("Git:");
+    expect(result.stdout).toContain("Git repository: yes");
+    expect(result.stdout).toContain("docs/status.md: present");
+  });
+
+  test("works on a bare repo without workflow files", () => {
+    const root = tempRepo();
+
+    const result = runCli(["doctor"], root);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("docs/status.md: missing");
+  });
+
+  test("rejects unknown options", () => {
+    const result = runCli(["doctor", "--verbose"]);
+
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain("unknown option");
+  });
+});
+
+describe("monkeybars generate", () => {
+  test("generate --check passes when adapters are fresh", () => {
+    const result = runCli(["generate", "--check"], repoRoot);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("up to date");
+  });
+
+  test("rejects unknown options", () => {
+    const result = runCli(["generate", "--force"]);
+
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain("unknown option");
   });
 });

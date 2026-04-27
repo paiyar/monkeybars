@@ -1,7 +1,7 @@
-import { execSync, spawnSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { gitStatus, isGitRepository } from "./git.js";
+import { gitStatus, gitVersion, isGitAvailable, isGitRepository, recentCommitSubjects } from "./git.js";
 import {
   displayPath,
   extractPreflightCommands,
@@ -323,7 +323,11 @@ export function preflight(dryRun: boolean, cwd = process.cwd()): PreflightResult
 export function doctor(cwd = process.cwd()): string[] {
   const lines: string[] = [];
   lines.push(`Node: ${process.version}`);
-  lines.push(`Git repository: ${isGitRepository(cwd) ? "yes" : "no"}`);
+  const gitVer = gitVersion();
+  lines.push(`Git: ${gitVer ?? "not found"}`);
+  if (isGitAvailable()) {
+    lines.push(`Git repository: ${isGitRepository(cwd) ? "yes" : "no"}`);
+  }
 
   const root = resolve(cwd);
   const packageAssets = [
@@ -357,10 +361,6 @@ export function phaseFiles(cwd = process.cwd()): string[] {
 
 export function gitLogContains(subject: string, cwd = process.cwd()): boolean {
   if (!subject || subject === "none") return true;
-  try {
-    const log = execSync("git log --format=%s -n 100", { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
-    return log.split(/\r?\n/).some((line) => line.trim() === subject.trim());
-  } catch {
-    return false;
-  }
+  const subjects = recentCommitSubjects(cwd);
+  return subjects.some((line) => line.trim() === subject.trim());
 }

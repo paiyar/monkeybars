@@ -2,7 +2,7 @@
 import { Argument, Command, CommanderError } from "commander";
 import { printCheckResult, runCheck } from "./check.js";
 import { checkGeneratedAdapters, generateAdapters } from "./generator.js";
-import { installPackageTargets, SUPPORTED_INSTALL_TARGETS } from "./install.js";
+import { installPackageTargets, SUPPORTED_INSTALL_TARGETS } from "./install/index.js";
 import { advanceTask, doctor, migrateStatus, preflight, summarizeWorkflow } from "./workflow-state.js";
 
 type CheckOptions = {
@@ -12,6 +12,7 @@ type CheckOptions = {
 type PackageInstallOptions = {
   project?: string;
   agentHooks?: boolean;
+  dryRun?: boolean;
 };
 
 type GenerateOptions = {
@@ -158,12 +159,14 @@ function createProgram(): Command {
     .addArgument(new Argument("[targets...]", "install targets").choices(SUPPORTED_INSTALL_TARGETS))
     .option("--project <path>", "target project directory")
     .option("--no-agent-hooks", "skip agent-native workflow hook installation")
+    .option("--dry-run", "show what would be installed without writing files")
     .allowExcessArguments(false)
     .allowUnknownOption(false)
     .action((targets: string[] = [], options: PackageInstallOptions) => {
       installPackageTargets(targets as (typeof SUPPORTED_INSTALL_TARGETS)[number][], {
         project: options.project,
-        agentHooks: options.agentHooks
+        agentHooks: options.agentHooks,
+        dryRun: options.dryRun
       });
       process.exitCode = 0;
     });

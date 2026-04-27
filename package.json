@@ -35,7 +35,6 @@
     "dist",
     ".agents/plugins/marketplace.json",
     "plugins/monkeybars/README.md",
-    "plugins/monkeybars/bin",
     "plugins/monkeybars/commands",
     "plugins/monkeybars/hooks",
     "plugins/monkeybars/scripts",

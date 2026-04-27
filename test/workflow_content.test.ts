@@ -3,23 +3,18 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { parseFrontmatter } from "../cli/src/generator";
-
-const root = join(import.meta.dir, "..");
-
-function readWorkflow(path: string): string {
-  return readFileSync(join(root, path), "utf8");
-}
+import { repoRoot, sourceText } from "./helpers";
 
 describe("brainstorm-plan workflow content", () => {
   test("includes planning templates in generated adapters", () => {
-    const { meta } = parseFrontmatter(join(root, "workflow-src", "commands", "brainstorm-plan.md"));
+    const { meta } = parseFrontmatter(join(repoRoot, "workflow-src", "commands", "brainstorm-plan.md"));
 
     expect(meta.name).toBe("brainstorm-plan");
     expect(meta.include_templates).toBe("spec, architecture, data-model, api, plan");
   });
 
   test("keeps the required brainstorming gates", () => {
-    const command = readWorkflow("workflow-src/commands/brainstorm-plan.md");
+    const command = sourceText("workflow-src/commands/brainstorm-plan.md");
 
     expect(command).toContain("Explore project context before asking questions");
     expect(command).toContain("Existing-doc synthesis");
@@ -32,7 +27,7 @@ describe("brainstorm-plan workflow content", () => {
   });
 
   test("initialization supports discovered docs and guided intake", () => {
-    const initialize = readWorkflow("workflow-src/commands/initialize-monkeybars.md");
+    const initialize = sourceText("workflow-src/commands/initialize-monkeybars.md");
 
     expect(initialize).toContain("Greenfield path");
     expect(initialize).toContain("Brownfield adoption path");
@@ -43,9 +38,9 @@ describe("brainstorm-plan workflow content", () => {
   });
 
   test("routes unclear planning state back through brainstorm-plan", () => {
-    const initialize = readWorkflow("workflow-src/commands/initialize-monkeybars.md");
-    const createPhase = readWorkflow("workflow-src/commands/create-phase.md");
-    const startSession = readWorkflow("workflow-src/commands/start-session.md");
+    const initialize = sourceText("workflow-src/commands/initialize-monkeybars.md");
+    const createPhase = sourceText("workflow-src/commands/create-phase.md");
+    const startSession = sourceText("workflow-src/commands/start-session.md");
 
     expect(initialize).toMatch(/run\s+`brainstorm-plan`\s+before creating/);
     expect(createPhase).toContain("stop and recommend\n   `brainstorm-plan`");
@@ -53,7 +48,7 @@ describe("brainstorm-plan workflow content", () => {
   });
 
   test("README positions workflow beyond greenfield projects", () => {
-    const readme = readWorkflow("README.md");
+    const readme = sourceText("README.md");
 
     expect(readme).toContain("greenfield builds, brownfield rescue, and v2/v3 iteration");
     expect(readme).toContain("### Brownfield Rescue");
@@ -62,9 +57,9 @@ describe("brainstorm-plan workflow content", () => {
   });
 
   test("commands describe brownfield adoption and post-v1 plan rollover", () => {
-    const brainstorm = readWorkflow("workflow-src/commands/brainstorm-plan.md");
-    const createPhase = readWorkflow("workflow-src/commands/create-phase.md");
-    const workflowCheck = readWorkflow("workflow-src/commands/workflow-check.md");
+    const brainstorm = sourceText("workflow-src/commands/brainstorm-plan.md");
+    const createPhase = sourceText("workflow-src/commands/create-phase.md");
+    const workflowCheck = sourceText("workflow-src/commands/workflow-check.md");
 
     expect(brainstorm).toContain("Brownfield synthesis");
     expect(brainstorm).toContain("Next-release planning");
@@ -75,10 +70,10 @@ describe("brainstorm-plan workflow content", () => {
   });
 
   test("templates encode active plan lifecycle and current vs target state", () => {
-    const plan = readWorkflow("workflow-src/templates/plan.md");
-    const status = readWorkflow("workflow-src/templates/status.md");
-    const spec = readWorkflow("workflow-src/templates/spec.md");
-    const architecture = readWorkflow("workflow-src/templates/architecture.md");
+    const plan = sourceText("workflow-src/templates/plan.md");
+    const status = sourceText("workflow-src/templates/status.md");
+    const spec = sourceText("workflow-src/templates/spec.md");
+    const architecture = sourceText("workflow-src/templates/architecture.md");
 
     expect(plan).toContain("## Plan Scope");
     expect(plan).toContain("docs/archive/plans/YYYY-MM-DD-<scope>.md");
@@ -90,8 +85,8 @@ describe("brainstorm-plan workflow content", () => {
   });
 
   test("install docs cover npm package and per-repo setup for each tool", () => {
-    const readme = readWorkflow("README.md");
-    const pluginReadme = readWorkflow("plugins/monkeybars/README.md");
+    const readme = sourceText("README.md");
+    const pluginReadme = sourceText("plugins/monkeybars/README.md");
 
     expect(readme).toContain("npm install -g @paiyar/monkeybars");
     expect(readme).toContain("npx @paiyar/monkeybars install --project /path/to/repo");
@@ -140,7 +135,7 @@ describe("brainstorm-plan workflow content", () => {
   });
 
   test("Codex plugin metadata reflects full workflow fit", () => {
-    const manifest = readWorkflow("plugins/monkeybars/.codex-plugin/plugin.json");
+    const manifest = sourceText("plugins/monkeybars/.codex-plugin/plugin.json");
 
     expect(manifest).toContain("brownfield rescue");
     expect(manifest).toContain("post-v1 iteration");
@@ -148,7 +143,7 @@ describe("brainstorm-plan workflow content", () => {
   });
 
   test("Claude installer copies complete skill directories", () => {
-    const script = readWorkflow("plugins/monkeybars/scripts/install-claude-skills.sh");
+    const script = sourceText("plugins/monkeybars/scripts/install-claude-skills.sh");
 
     expect(script).toContain('rm -rf "$TARGET_DIR/$skill_name"');
     expect(script).toContain('cp -R "$skill_dir" "$TARGET_DIR/$skill_name"');

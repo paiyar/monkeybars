@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -10,7 +10,6 @@ function tempProject(): string {
   mkdirSync(join(root, "workflow-src", "commands"), { recursive: true });
   mkdirSync(join(root, "workflow-src", "templates"), { recursive: true });
   mkdirSync(join(root, "workflow-src", "hooks", "shared"), { recursive: true });
-  mkdirSync(join(root, "dist"), { recursive: true });
   return root;
 }
 
@@ -60,7 +59,7 @@ test("renderOpenCodeCommand preserves opencode agent metadata", () => {
 });
 
 describe("generateAdapters", () => {
-  test("generates skills, commands, templates, and CLI bin", () => {
+  test("generates skills, commands, templates, and hooks", () => {
     const root = tempProject();
     writeFileSync(join(root, "workflow-src", "commands", "status.md"), `---
 name: status
@@ -74,9 +73,6 @@ Use for status.
 `);
     writeFileSync(join(root, "workflow-src", "templates", "status.md"), "# Status Template\n");
     writeFileSync(join(root, "workflow-src", "hooks", "shared", "context.js"), "console.log('hook');\n");
-    const cliPath = join(root, "dist", "index.js");
-    writeFileSync(cliPath, "#!/usr/bin/env bun\nconsole.log('ok');\n");
-    chmodSync(cliPath, 0o755);
 
     const pluginPath = generateAdapters({ root });
 
@@ -92,7 +88,6 @@ Use for status.
 
     expect(readFileSync(join(pluginPath, "templates", "status.md"), "utf8")).toBe("# Status Template\n");
     expect(readFileSync(join(pluginPath, "hooks", "shared", "context.js"), "utf8")).toBe("console.log('hook');\n");
-    expect(existsSync(join(pluginPath, "bin", "index.js"))).toBe(true);
     expect(existsSync(join(pluginPath, "commands", ".monkeybars-generated.json"))).toBe(true);
   });
 
