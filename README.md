@@ -1,5 +1,7 @@
 # MonkeyBars
 
+![MonkeyBars banner](assets/monkey_bars_logo.png)
+
 > **Guardrails for vibe monkeys.**
 > Monkey thinks up spec. Monkey chunks up spec. Monkey makes iterative progress.
 

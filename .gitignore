@@ -2,6 +2,7 @@ node_modules/
 dist/
 .npm-cache/
 npm-debug.log*
+.DS_Store
 
 # Locally-installed agent footprints (created by `monkeybars install --project .`).
 # The canonical source for these lives in `monkeybars/` and `workflow-src/`.
