@@ -22,38 +22,36 @@ and advisory agent-native workflow hooks.
 
 This package is command-first. Agent-native workflow hooks are project-local,
 advisory, and installed by default.
-Install the npm package globally, then install MonkeyBars into each target repo:
+Run the installer from git with `npx`:
 
 ```sh
-npm install -g @paiyar/monkeybars
+npx --package github:paiyar/monkeybars#main -- monkeybars install --project /path/to/repo
+```
+
+Or install the CLI globally from git:
+
+```sh
+npm install -g github:paiyar/monkeybars#main
 monkeybars install --project /path/to/repo
 ```
 
-For one-shot use without a global install:
+To consume a specific repo revision directly, pin an immutable GitHub tag or
+commit:
 
 ```sh
-npx @paiyar/monkeybars install --project /path/to/repo
-```
-
-If the package is not published to npm yet, or you want to consume a specific
-repo revision directly, install from GitHub:
-
-```sh
+npx --package github:paiyar/monkeybars#<tag-or-commit> -- monkeybars install --project /path/to/repo
 npm install -g github:paiyar/monkeybars#<tag-or-commit>
 monkeybars install --project /path/to/repo
 ```
 
-For one-shot GitHub use:
+The `main` ref is a floating branch. Each install resolves the current tip of
+`main`; use an exact release tag or commit SHA when you need a repeatable
+install.
 
-```sh
-npm exec --package github:paiyar/monkeybars#<tag-or-commit> -- monkeybars install --project /path/to/repo
-```
-
-Omit `#<tag-or-commit>` only when you intentionally want npm to install the
-current default branch. Prefer a tag or commit SHA for repeatable installs.
-
-The published CLI runs on Node.js 20 or newer. Bun is still used for
-development, tests, and generating packaged adapter artifacts from a checkout.
+Git installs run the repository `prepare` build, so Bun must be on `PATH`
+during installation. The installed CLI runs on Node.js 20 or newer. Bun is also
+used for development, tests, and generating packaged adapter artifacts from a
+checkout.
 
 Omitting targets installs all supported agents: OpenCode, Claude Code, and
 Codex. Pass one or more targets only when you want a subset, or

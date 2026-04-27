@@ -20,24 +20,33 @@ enough that a fresh context can pick it up and finish.
 ## Install
 
 ```sh
-npm install -g @paiyar/monkeybars
+npx --package github:paiyar/monkeybars#main -- monkeybars install --project /path/to/repo
+```
+
+Or install the CLI globally from git:
+
+```sh
+npm install -g github:paiyar/monkeybars#main
 monkeybars install --project /path/to/repo
 ```
 
-One-shot via npx, or pin to a GitHub revision:
+Pin to an exact revision when you need a repeatable install:
 
 ```sh
-# One-shot:
-npx @paiyar/monkeybars install --project /path/to/repo
-
-# Or pin to a GitHub tag/commit:
+npx --package github:paiyar/monkeybars#<tag-or-commit> -- monkeybars install --project /path/to/repo
 npm install -g github:paiyar/monkeybars#<tag-or-commit>
 monkeybars install --project /path/to/repo
 ```
 
-The CLI runs on Node.js 20+. By default `install` covers all three agents
-(OpenCode, Claude Code, Codex) and adds advisory workflow hooks. Pass specific
-targets or `--no-agent-hooks` to scope it down:
+The `main` ref is a floating branch. Each install resolves the current tip of
+`main`; use an exact release tag or commit SHA when you need a repeatable
+install.
+
+Git installs run the repository `prepare` build, so Bun must be on `PATH`
+during installation. The installed CLI runs on Node.js 20+. By default
+`install` covers all three agents (OpenCode, Claude Code, Codex) and adds
+advisory workflow hooks. Pass specific targets or `--no-agent-hooks` to scope
+it down:
 
 ```sh
 monkeybars install opencode claude --project /path/to/repo

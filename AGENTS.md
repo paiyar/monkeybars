@@ -16,7 +16,7 @@ This repository packages MonkeyBars for OpenCode, Claude Code, and Codex. The ro
 - `plugins/monkeybars/scripts/install-claude-skills.sh` installs generated Claude Code skills globally.
 - `git diff -- workflow-src plugins/monkeybars` checks that generated files match source edits before review.
 
-This repo uses Bun for the TypeScript CLI, generator, and tests. `npm` publishing runs `bun run generate` via `prepack`, so GitHub/npm installs require Bun on `PATH` (the CLI entrypoint uses `#!/usr/bin/env bun`).
+This repo uses Bun for the TypeScript CLI, generator, and tests. `npm` publishing and GitHub installs run `bun run generate` via `prepare`, so GitHub installs require Bun on `PATH`.
 
 ## Architecture
 

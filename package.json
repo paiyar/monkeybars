@@ -48,7 +48,7 @@
     "generate": "bun run build && node dist/index.js generate",
     "generate:check": "bun run build && node dist/index.js generate --check",
     "smoke:node-pack": "bun run build && node dist/index.js --help && npm pack --dry-run --cache ./.npm-cache",
-    "prepack": "bun run generate"
+    "prepare": "bun run generate"
   },
   "publishConfig": {
     "access": "public"
