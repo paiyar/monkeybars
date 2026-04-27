@@ -83,7 +83,7 @@ function dryRunInstallTarget(
       return;
     }
     case "codex": {
-      console.log(`[codex] copy plugins/monkeybars/ -> ${rel(join(project, ".codex", "plugins", "monkeybars"))}/`);
+      console.log(`[codex] copy monkeybars/ -> ${rel(join(project, ".codex", "plugins", "monkeybars"))}/`);
       console.log(`[codex] copy marketplace.json -> ${rel(join(project, ".agents", "plugins", "marketplace.json"))}`);
       if (installHooks) {
         console.log(`[codex] copy monkeybars-workflow-context.js -> ${rel(join(project, ".codex", "hooks", "monkeybars-workflow-context.js"))}`);

@@ -48,7 +48,7 @@ function defaultRoot(): string {
   const fromModule = moduleDirectory();
   const candidates = [resolve(fromModule, "..", ".."), resolve(fromModule, ".."), process.cwd()];
   for (const candidate of candidates) {
-    if (existsSync(join(candidate, "workflow-src")) && existsSync(join(candidate, "plugins", "monkeybars"))) {
+    if (existsSync(join(candidate, "workflow-src", "commands"))) {
       return candidate;
     }
   }
@@ -61,7 +61,7 @@ function paths(rootOption?: string): Paths {
   return {
     root,
     source,
-    plugin: join(root, "plugins", "monkeybars"),
+    plugin: join(root, "monkeybars"),
     commandSource: join(source, "commands"),
     templateSource: join(source, "templates"),
     hookSource: join(source, "hooks")
@@ -350,14 +350,14 @@ function compareGeneratedDirectory(expected: string, actual: string, label: stri
 export function checkGeneratedAdapters(options: GenerateOptions = {}): GeneratedCheckResult {
   const root = resolve(options.root ?? defaultRoot());
   const tempRoot = mkdtempSync(join(tmpdir(), "monkeybars-generate-"));
-  const expectedPlugin = join(tempRoot, "plugins", "monkeybars");
+  const expectedPlugin = join(tempRoot, "monkeybars");
 
   try {
     generateAdapters({ root, pluginOutput: expectedPlugin });
-    const actualPlugin = join(root, "plugins", "monkeybars");
+    const actualPlugin = join(root, "monkeybars");
     const generatedDirs = ["commands", "skills", "templates", "hooks"];
     const differences = generatedDirs.flatMap((directory) =>
-      compareGeneratedDirectory(join(expectedPlugin, directory), join(actualPlugin, directory), `plugins/monkeybars/${directory}`)
+      compareGeneratedDirectory(join(expectedPlugin, directory), join(actualPlugin, directory), `monkeybars/${directory}`)
     );
     return { ok: differences.length === 0, differences };
   } finally {

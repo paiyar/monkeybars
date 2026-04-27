@@ -11,7 +11,7 @@ export function packageRoot(): string {
   const fromModule = moduleDirectory();
   const candidates = [resolve(fromModule, ".."), resolve(fromModule, "..", ".."), resolve(fromModule, "..", "..", ".."), process.cwd()];
   for (const candidate of candidates) {
-    if (existsSync(join(candidate, "plugins", "monkeybars"))) {
+    if (existsSync(join(candidate, "monkeybars", ".codex-plugin", "plugin.json"))) {
       return candidate;
     }
   }
@@ -22,9 +22,9 @@ export function packageRoot(): string {
 export function sourcePaths(rootOption?: string): SourcePaths {
   const root = resolve(rootOption ?? packageRoot());
   return {
-    plugin: join(root, "plugins", "monkeybars"),
+    plugin: join(root, "monkeybars"),
     marketplace: join(root, ".agents", "plugins", "marketplace.json"),
-    hooks: join(root, "plugins", "monkeybars", "hooks")
+    hooks: join(root, "monkeybars", "hooks")
   };
 }
 

@@ -34,13 +34,13 @@
   "files": [
     "dist",
     ".agents/plugins/marketplace.json",
-    "plugins/monkeybars/README.md",
-    "plugins/monkeybars/commands",
-    "plugins/monkeybars/hooks",
-    "plugins/monkeybars/scripts",
-    "plugins/monkeybars/skills",
-    "plugins/monkeybars/templates",
-    "plugins/monkeybars/.codex-plugin/plugin.json"
+    "monkeybars/README.md",
+    "monkeybars/commands",
+    "monkeybars/hooks",
+    "monkeybars/scripts",
+    "monkeybars/skills",
+    "monkeybars/templates",
+    "monkeybars/.codex-plugin/plugin.json"
   ],
   "scripts": {
     "build": "bun build cli/src/index.ts --target=node --format=esm --outdir=dist && bun cli/src/postbuild.ts",

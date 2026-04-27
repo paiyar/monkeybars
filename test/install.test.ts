@@ -3,7 +3,6 @@ import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { installPackageTargets } from "../cli/src/install";
 import { readJson, repoRoot, runCli, sourceText, tempDir, writeWorkflow } from "./helpers";
 
 function hookCommandCount(settings: any): number {
@@ -17,28 +16,38 @@ function hookCommandCount(settings: any): number {
 }
 
 describe("monkeybars install", () => {
-  test("codex self-install preserves the source plugin directory", () => {
-    const root = tempDir("monkeybars-install-");
-    const manifest = join(root, "plugins", "monkeybars", ".codex-plugin", "plugin.json");
-    const command = join(root, "plugins", "monkeybars", "commands", "start-session.md");
-    const skill = join(root, "plugins", "monkeybars", "skills", "start-session", "SKILL.md");
-    const marketplace = join(root, ".agents", "plugins", "marketplace.json");
-    mkdirSync(join(manifest, ".."), { recursive: true });
-    mkdirSync(join(command, ".."), { recursive: true });
-    mkdirSync(join(skill, ".."), { recursive: true });
-    mkdirSync(join(marketplace, ".."), { recursive: true });
-    writeFileSync(manifest, "plugin manifest\n");
-    writeFileSync(command, "opencode command\n");
-    writeFileSync(skill, "skill body\n");
-    writeFileSync(marketplace, "marketplace metadata\n");
+  test("install is purely additive within the agent footprint", () => {
+    const project = tempDir("monkeybars-install-");
 
-    installPackageTargets(["codex"], { project: root, packageRoot: root, agentHooks: false });
+    // Sentinels mimic pre-existing user content in a consumer project. The installer
+    // must not modify or delete any of these. Notably this includes a sibling
+    // `plugins/monkeybars/` directory that looks like a different tool's plugin.
+    const sentinels: Record<string, string> = {
+      "README.md": "user readme\n",
+      "src/index.ts": "user source\n",
+      "plugins/monkeybars/.codex-plugin/plugin.json": JSON.stringify({ name: "monkeybars", note: "user copy" }),
+      "plugins/monkeybars/commands/keep.md": "user command\n",
+      "monkeybars/SENTINEL.md": "user dogfood file\n",
+      "workflow-src/commands/SENTINEL.md": "user workflow source\n",
+      ".agents/other-plugin.json": "user agent plugin\n"
+    };
 
-    expect(readFileSync(manifest, "utf8")).toBe("plugin manifest\n");
-    expect(readFileSync(command, "utf8")).toBe("opencode command\n");
-    expect(readFileSync(skill, "utf8")).toBe("skill body\n");
-    expect(readFileSync(marketplace, "utf8")).toBe("marketplace metadata\n");
-    expect(existsSync(join(root, ".codex", "plugins", "monkeybars", ".codex-plugin", "plugin.json"))).toBe(true);
+    for (const [rel, body] of Object.entries(sentinels)) {
+      const fullPath = join(project, rel);
+      mkdirSync(join(fullPath, ".."), { recursive: true });
+      writeFileSync(fullPath, body);
+    }
+
+    const result = runCli(["install", "--project", project]);
+    expect(result.status).toBe(0);
+
+    for (const [rel, body] of Object.entries(sentinels)) {
+      expect(readFileSync(join(project, rel), "utf8")).toBe(body);
+    }
+
+    expect(existsSync(join(project, ".opencode", "commands", "start-session.md"))).toBe(true);
+    expect(existsSync(join(project, ".claude", "skills", "start-session", "SKILL.md"))).toBe(true);
+    expect(existsSync(join(project, ".codex", "plugins", "monkeybars", ".codex-plugin", "plugin.json"))).toBe(true);
   });
 
   test("installs all supported targets by default", () => {
@@ -109,10 +118,10 @@ describe("monkeybars install", () => {
 
     expect(result.status).toBe(0);
     expect(result.stdout).toContain("Installed MonkeyBars OpenCode commands");
-    expect(readFileSync(targetPath, "utf8")).toBe(sourceText("plugins/monkeybars/commands/project-status.md"));
+    expect(readFileSync(targetPath, "utf8")).toBe(sourceText("monkeybars/commands/project-status.md"));
     expect(readFileSync(userCommand, "utf8")).toBe("keep me\n");
     expect(readFileSync(join(project, ".opencode", "plugins", "monkeybars-workflow.js"), "utf8")).toBe(
-      sourceText("plugins/monkeybars/hooks/opencode/monkeybars-workflow.js")
+      sourceText("monkeybars/hooks/opencode/monkeybars-workflow.js")
     );
   });
 
@@ -129,7 +138,7 @@ describe("monkeybars install", () => {
 
     expect(result.status).toBe(0);
     expect(result.stdout).toContain("Installed MonkeyBars Claude skills");
-    expect(readFileSync(targetPath, "utf8")).toBe(sourceText("plugins/monkeybars/skills/start-session/SKILL.md"));
+    expect(readFileSync(targetPath, "utf8")).toBe(sourceText("monkeybars/skills/start-session/SKILL.md"));
     expect(readFileSync(userSkill, "utf8")).toBe("keep me\n");
     expect(existsSync(join(project, ".claude", "hooks", "monkeybars-workflow-context.js"))).toBe(true);
   });
@@ -137,12 +146,9 @@ describe("monkeybars install", () => {
   test("installs Codex plugin assets and marketplace metadata", () => {
     const project = tempDir("monkeybars-install-");
     const pluginManifest = join(project, ".codex", "plugins", "monkeybars", ".codex-plugin", "plugin.json");
-    const legacyManifest = join(project, "plugins", "monkeybars", ".codex-plugin", "plugin.json");
     const marketplace = join(project, ".agents", "plugins", "marketplace.json");
     mkdirSync(join(pluginManifest, ".."), { recursive: true });
     writeFileSync(pluginManifest, "old plugin\n");
-    mkdirSync(join(legacyManifest, ".."), { recursive: true });
-    writeFileSync(legacyManifest, JSON.stringify({ name: "monkeybars" }));
     mkdirSync(join(marketplace, ".."), { recursive: true });
     writeFileSync(marketplace, "old marketplace\n");
 
@@ -151,11 +157,10 @@ describe("monkeybars install", () => {
     expect(result.status).toBe(0);
     expect(result.stdout).toContain("Installed MonkeyBars Codex plugin");
     expect(readFileSync(pluginManifest, "utf8")).toBe(
-      sourceText("plugins/monkeybars/.codex-plugin/plugin.json")
+      sourceText("monkeybars/.codex-plugin/plugin.json")
     );
     expect(readFileSync(marketplace, "utf8")).toBe(sourceText(".agents/plugins/marketplace.json"));
     expect(readFileSync(marketplace, "utf8")).toContain("./.codex/plugins/monkeybars");
-    expect(existsSync(join(project, "plugins", "monkeybars"))).toBe(false);
     expect(existsSync(join(project, ".codex", "hooks", "monkeybars-workflow-context.js"))).toBe(true);
   });
 
@@ -213,7 +218,7 @@ describe("monkeybars install", () => {
 
     const result = spawnSync(
       "node",
-      [join(repoRoot, "plugins", "monkeybars", "hooks", "shared", "monkeybars-workflow-context.js"), "codex"],
+      [join(repoRoot, "monkeybars", "hooks", "shared", "monkeybars-workflow-context.js"), "codex"],
       {
         cwd: project,
         input: JSON.stringify({ hook_event_name: "UserPromptSubmit", cwd: project, prompt: "continue" }),

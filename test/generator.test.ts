@@ -130,12 +130,12 @@ description: Show status.
 ## Body
 `);
     generateAdapters({ root });
-    writeFileSync(join(root, "plugins", "monkeybars", "commands", "status.md"), "stale\n");
+    writeFileSync(join(root, "monkeybars", "commands", "status.md"), "stale\n");
 
     const result = checkGeneratedAdapters({ root });
 
     expect(result.ok).toBe(false);
     expect(result.differences.some((difference) => difference.includes("status.md differs"))).toBe(true);
-    expect(readFileSync(join(root, "plugins", "monkeybars", "commands", "status.md"), "utf8")).toBe("stale\n");
+    expect(readFileSync(join(root, "monkeybars", "commands", "status.md"), "utf8")).toBe("stale\n");
   });
 });

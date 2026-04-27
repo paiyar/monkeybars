@@ -17,13 +17,13 @@ function expectContents(text: string, expected: string[]): void {
 }
 
 function commandText(name: string): string {
-  return sourceText(`plugins/monkeybars/commands/${name}.md`);
+  return sourceText(`monkeybars/commands/${name}.md`);
 }
 
 describe("shipped workflow content", () => {
   test("brainstorm-plan adapters include planning templates", () => {
     const command = commandText("brainstorm-plan");
-    const skill = sourceText("plugins/monkeybars/skills/brainstorm-plan/SKILL.md");
+    const skill = sourceText("monkeybars/skills/brainstorm-plan/SKILL.md");
 
     for (const output of [command, skill]) {
       expect(output).toContain("## Included Templates");
@@ -86,10 +86,10 @@ describe("shipped workflow content", () => {
   });
 
   test("templates encode active plan lifecycle and current vs target state", () => {
-    const plan = sourceText("plugins/monkeybars/templates/plan.md");
-    const status = sourceText("plugins/monkeybars/templates/status.md");
-    const spec = sourceText("plugins/monkeybars/templates/spec.md");
-    const architecture = sourceText("plugins/monkeybars/templates/architecture.md");
+    const plan = sourceText("monkeybars/templates/plan.md");
+    const status = sourceText("monkeybars/templates/status.md");
+    const spec = sourceText("monkeybars/templates/spec.md");
+    const architecture = sourceText("monkeybars/templates/architecture.md");
 
     expect(plan).toContain("## Plan Scope");
     expect(plan).toContain("docs/archive/plans/YYYY-MM-DD-<scope>.md");
@@ -101,7 +101,7 @@ describe("shipped workflow content", () => {
   });
 
   test("Codex plugin metadata reflects full workflow fit", () => {
-    const manifest = sourceText("plugins/monkeybars/.codex-plugin/plugin.json");
+    const manifest = sourceText("monkeybars/.codex-plugin/plugin.json");
 
     expect(manifest).toContain("brownfield rescue");
     expect(manifest).toContain("post-v1 iteration");
@@ -109,7 +109,7 @@ describe("shipped workflow content", () => {
   });
 
   test("Claude installer copies complete skill directories", () => {
-    const script = sourceText("plugins/monkeybars/scripts/install-claude-skills.sh");
+    const script = sourceText("monkeybars/scripts/install-claude-skills.sh");
 
     expect(script).toContain('rm -rf "$TARGET_DIR/$skill_name"');
     expect(script).toContain('cp -R "$skill_dir" "$TARGET_DIR/$skill_name"');

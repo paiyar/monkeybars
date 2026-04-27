@@ -196,3 +196,18 @@ node dist/index.js install --project /path/to/repo
 
 Edit canonical workflow files in `workflow-src/` first, then `bun run generate`.
 See [`AGENTS.md`](./AGENTS.md) for the full contributor guide.
+
+### Dogfooding MonkeyBars on this repo
+
+Because the source plugin lives in the eponymous `monkeybars/` directory (not
+`plugins/monkeybars/`), you can install MonkeyBars onto its own repo without
+collisions:
+
+```sh
+bun run generate
+node dist/index.js install --project .
+```
+
+Install is purely additive: it only writes under `.opencode/`, `.claude/`,
+`.codex/`, and `.agents/plugins/marketplace.json`, all of which are gitignored.
+Source under `monkeybars/` and `workflow-src/` is never touched by install.

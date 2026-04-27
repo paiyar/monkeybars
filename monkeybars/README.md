@@ -95,7 +95,7 @@ Install this directory as a Codex plugin. The manifest is:
 From this repository root, the same manifest is:
 
 ```text
-plugins/monkeybars/.codex-plugin/plugin.json
+monkeybars/.codex-plugin/plugin.json
 ```
 
 After CLI install, the target repo manifest is:

@@ -260,7 +260,7 @@ function duplicatePlanPhaseNumbers(phases: PlanPhase[]): string[] {
 }
 
 function canCheckGeneratedAdapters(cwd: string): boolean {
-  return existsSync(join(cwd, "workflow-src")) && existsSync(join(cwd, "plugins", "monkeybars"));
+  return existsSync(join(cwd, "workflow-src")) && existsSync(join(cwd, "monkeybars"));
 }
 
 export function health(repair = false, cwd = process.cwd()): HealthResult {
@@ -442,7 +442,7 @@ export function health(repair = false, cwd = process.cwd()): HealthResult {
           severity: "warning",
           code: "generated-adapter-drift",
           message: difference,
-          file: "plugins/monkeybars"
+          file: "monkeybars"
         });
       }
     }

@@ -1,12 +1,11 @@
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { copyFilePreservingMode, removePath, replaceDirectory, samePath } from "../fs-utils.js";
+import { copyFilePreservingMode, replaceDirectory, samePath } from "../fs-utils.js";
 import { addCommandHook, readJsonObject, removeMonkeyBarsHooks, warn, writeJsonObject } from "../hooks-common.js";
 import type { SourcePaths } from "../types.js";
 
 export function installCodex(project: string, source: SourcePaths): { plugin: string; marketplace: string } {
   const pluginTarget = join(project, ".codex", "plugins", "monkeybars");
-  const legacyPluginTarget = join(project, "plugins", "monkeybars");
   const marketplaceTarget = join(project, ".agents", "plugins", "marketplace.json");
 
   if (!existsSync(source.marketplace)) {
@@ -17,27 +16,12 @@ export function installCodex(project: string, source: SourcePaths): { plugin: st
     replaceDirectory(source.plugin, pluginTarget);
   }
 
-  if (!samePath(source.plugin, legacyPluginTarget) && looksLikeMonkeyBarsPlugin(legacyPluginTarget)) {
-    removePath(legacyPluginTarget);
-  }
-
   mkdirSync(join(marketplaceTarget, ".."), { recursive: true });
   if (!samePath(source.marketplace, marketplaceTarget)) {
     copyFileSync(source.marketplace, marketplaceTarget);
   }
 
   return { plugin: pluginTarget, marketplace: marketplaceTarget };
-}
-
-function looksLikeMonkeyBarsPlugin(path: string): boolean {
-  const manifest = join(path, ".codex-plugin", "plugin.json");
-  if (!existsSync(manifest)) return false;
-  try {
-    const parsed = JSON.parse(readFileSync(manifest, "utf8"));
-    return parsed?.name === "monkeybars";
-  } catch {
-    return false;
-  }
 }
 
 export function installCodexAgentHooks(project: string, source: SourcePaths): void {
