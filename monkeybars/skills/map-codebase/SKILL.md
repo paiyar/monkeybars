@@ -26,10 +26,10 @@ planning does not invent architecture, ignore conventions, or miss risks.
    detailed inspection to those paths. Reject path scopes containing `..`,
    absolute paths, or shell metacharacters.
 4. Create or update these current-state docs from the bundled templates:
-   - `docs/prd/current-stack.md`
-   - `docs/prd/current-architecture.md`
-   - `docs/prd/current-testing.md`
-   - `docs/prd/current-risks.md`
+   - `docs/agents/prd/current-stack.md`
+   - `docs/agents/prd/current-architecture.md`
+   - `docs/agents/prd/current-testing.md`
+   - `docs/agents/prd/current-risks.md`
 5. Stamp each document with:
    - today's date
    - current `git rev-parse --short HEAD` value, or `none` if unavailable
@@ -41,7 +41,7 @@ planning does not invent architecture, ignore conventions, or miss risks.
 7. Show the documents created or updated and recommend `brainstorm-plan` when
    the map is complete.
 
-This command may write only the `docs/prd/current-*.md` files. It must not edit
+This command may write only the `docs/agents/prd/current-*.md` files. It must not edit
 code, change workflow status, check off tasks, or commit.
 
 ## Included Templates

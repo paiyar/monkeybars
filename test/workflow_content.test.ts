@@ -57,7 +57,7 @@ describe("shipped workflow content", () => {
       "Bring-your-own-docs path",
       "Next-release path",
       "Guided initialization path",
-      "optional companion docs under `docs/prd/`"
+      "optional companion docs under `docs/agents/prd/`"
     ]);
   });
 
@@ -79,7 +79,7 @@ describe("shipped workflow content", () => {
     expectContents(brainstorm, [
       "Brownfield synthesis",
       "Next-release planning",
-      "docs/archive/plans/YYYY-MM-DD-<scope>.md"
+      "docs/agents/archive/plans/YYYY-MM-DD-<scope>.md"
     ]);
     expectContents(createPhase, ["keep phase numbers increasing across the repo", "highest existing phase number"]);
     expectContent(workflowCheck, "phase numbers are monotonic");
@@ -92,7 +92,7 @@ describe("shipped workflow content", () => {
     const architecture = sourceText("monkeybars/templates/architecture.md");
 
     expect(plan).toContain("## Plan Scope");
-    expect(plan).toContain("docs/archive/plans/YYYY-MM-DD-<scope>.md");
+    expect(plan).toContain("docs/agents/archive/plans/YYYY-MM-DD-<scope>.md");
     expect(status).toContain("**Plan scope:**");
     expect(spec).toContain("## Current State");
     expect(spec).toContain("## Target Outcome");

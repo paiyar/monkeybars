@@ -18,11 +18,11 @@ coherent phase so the repo is fully migrated at the phase boundary.
 ## Status
 
 - **State:** in_progress
-- **Current task:** T03 — Update workflow source commands and templates to docs/agents/ (not yet started; intervening install-flow and Codex-distribution fixes landed first)
-- **Last commit:** docs: require --install-links=true for global git installs
-- **Preflight:** bun run test ✅, bun run generate:check ✅ (2026-04-28, at commit 13fa699 before install-links docs commit)
+- **Current task:** T04 — Move existing archive and design note into the new tree
+- **Last commit:** feat(T03): point workflow source and generated adapters at docs/agents/
+- **Preflight:** bun run test ✅ 133 pass, bun run generate:check ✅ (2026-04-28)
 - **Blockers:** none
-- **WIP files:** none — install-links docs now committed separately so the T03 diff can stay scoped to `workflow-src/` + regenerated `monkeybars/`.
+- **WIP files:** none
 
 ## Tasks
 
@@ -30,7 +30,7 @@ coherent phase so the repo is fully migrated at the phase boundary.
   - Acceptance: every `"docs/status.md"`, `"docs/plan.md"`, `"docs/work"`, `"docs/prd"`, and `"docs/archive/plans"` literal in `cli/src/` reads from a single constants source. No path semantics change (still `docs/`). `bun run test` passes unchanged.
 - [x] T02 — Flip CLI path constants to docs/agents/ and update fixtures | files: `cli/src/paths.ts`, `test/` fixtures and assertions | verify: `bun run test`
   - Acceptance: the constants from T01 now point at `docs/agents/*`. Every affected test fixture and assertion uses the new paths. `bun run test` passes.
-- [ ] T03 — Update workflow source commands and templates to docs/agents/ | files: `workflow-src/commands/*.md`, `workflow-src/templates/{status,plan,phase}.md` (and any other referencing templates), regenerated `monkeybars/` | verify: `bun run test`, `bun run generate:check`
+- [x] T03 — Update workflow source commands and templates to docs/agents/ | files: `workflow-src/commands/*.md`, `workflow-src/templates/{status,plan,phase}.md` (and any other referencing templates), regenerated `monkeybars/` | verify: `bun run test`, `bun run generate:check`
   - Acceptance: no `docs/status.md`, `docs/plan.md`, `docs/work/`, `docs/prd/`, or `docs/archive/` reference remains in `workflow-src/`. Generated adapters under `monkeybars/` are regenerated and match source. `bun run generate:check` passes.
 - [ ] T04 — Move existing archive and design note into the new tree | files: `docs/archive/plans/*` → `docs/agents/archive/plans/`, `docs/agent-native-workflow-hooks.md` → `docs/agents/design-notes/agent-native-workflow-hooks.md` | verify: `bun run test`
   - Acceptance: the four files are moved with `git mv` (history preserved). `docs/archive/` and `docs/agent-native-workflow-hooks.md` no longer exist at their old paths. `bun run test` passes.
@@ -53,6 +53,7 @@ coherent phase so the repo is fully migrated at the phase boundary.
 
 ## Log
 
+- 2026-04-28: Completed T03. Rewrote all `docs/status.md`, `docs/plan.md`, `docs/work/`, `docs/prd/`, and `docs/archive/` references across 4 `workflow-src/templates/*.md` and 10 `workflow-src/commands/*.md` to `docs/agents/…`; `bun run generate` regenerated 20 adapter files under `monkeybars/` (templates + commands + skills). Fixed three `test/workflow_content.test.ts` assertions that were missed by T02 (`docs/prd/` and `docs/archive/` literals in the expected strings). Project-local agent adapters under `.claude/`, `.opencode/`, `.codex/` are gitignored and out of scope; they'll refresh next `bun dist/index.js install --project .`. Acceptance grep `grep -R 'docs/status\.md\|docs/plan\.md\|docs/work/\|docs/prd/' cli/ workflow-src/ test/` returns 0 hits. `bun run test` 133 pass, `bun run generate:check` green. Next task T04 — Move existing archive and design note into the new tree with `git mv`; commit subject `feat(T03): point workflow source and generated adapters at docs/agents/`.
 - 2026-04-28: Handoff. T03 still pending. Since T02 four unrelated commits landed on `main`: `d96afc2 fix: bootstrap deps during git prepare`, `110a56c test: harden npm pack file guardrail`, `13fa699 docs: capture Codex skill distribution follow-up`, and `2878240 docs: require --install-links=true for global git installs` (committed during this handoff). Preflight (`bun run test` 133 pass, `bun run generate:check` up to date) ran at `13fa699` immediately before the install-links commit; the install-links commit only touches `README.md`, `monkeybars/README.md`, and `docs/agents/todo/npm-git-install-links.md`, so the green result still holds. Worktree now clean other than this handoff's status/phase edits.
 - 2026-04-28: Completed T02; next task T03 — Update workflow source commands and templates to docs/agents/; commit subject `feat(T02): flip MonkeyBars workflow paths to docs/agents/`.
 - 2026-04-27: Completed T01; next task T02 — Flip CLI path constants to docs/agents/ and update fixtures; commit subject `refactor(T01): centralize CLI workflow path constants`.

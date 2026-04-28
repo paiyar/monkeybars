@@ -13,7 +13,7 @@ user asks to save progress for next time.
 
 ## Steps
 
-1. Find the active phase file in `docs/work/`.
+1. Find the active phase file in `docs/agents/work/`.
 2. Run `git status --short`.
 3. If the current task is complete, stop and run `complete-task` first.
 4. Update the phase Status section:
@@ -27,7 +27,7 @@ user asks to save progress for next time.
    exists.
 6. Append a dated Log entry summarizing what was accomplished, what remains,
    dirty files, and decisions made.
-7. Update `docs/status.md` to match the phase file and today's date.
+7. Update `docs/agents/status.md` to match the phase file and today's date.
 8. Run `workflow-check`.
 9. Show a summary of what was saved.
 10. End with: `Context boundary reached. Start a fresh session next time and run /start-session.`

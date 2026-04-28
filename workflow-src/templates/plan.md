@@ -1,6 +1,6 @@
 # Implementation Plan
 
-> Source: `docs/prd/spec.md`, `docs/prd/architecture.md`, and any companion docs under `docs/prd/`
+> Source: `docs/agents/prd/spec.md`, `docs/agents/prd/architecture.md`, and any companion docs under `docs/agents/prd/`
 > Last updated: YYYY-MM-DD
 
 ## Plan Scope
@@ -10,8 +10,8 @@
 ## Plan Lifecycle
 
 This is the active implementation plan. When it is complete, archive it to
-`docs/archive/plans/YYYY-MM-DD-<scope>.md`, then write a fresh `docs/plan.md`
-for the next active scope. Do not archive or renumber `docs/work/phase-N.md`
+`docs/agents/archive/plans/YYYY-MM-DD-<scope>.md`, then write a fresh `docs/agents/plan.md`
+for the next active scope. Do not archive or renumber `docs/agents/work/phase-N.md`
 files. New phases must use the next available global phase number.
 
 ## Phase 1 — [Title]

@@ -1,6 +1,6 @@
 # Phase N — [Title]
 
-> Source: active docs/plan.md, Phase N
+> Source: active docs/agents/plan.md, Phase N
 
 ## Goal
 
@@ -8,7 +8,7 @@
 
 ## Acceptance
 
-- [Observable completion signal from docs/plan.md]
+- [Observable completion signal from docs/agents/plan.md]
 - [Preflight command or verification expected for this phase]
 
 ## Status

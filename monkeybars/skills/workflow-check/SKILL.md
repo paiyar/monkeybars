@@ -14,17 +14,17 @@ whenever progress state looks inconsistent.
 ## Steps
 
 1. Confirm the current directory is inside a git repository.
-2. Confirm `docs/status.md` exists.
-3. Confirm `docs/plan.md` exists and represents the active plan, not an
+2. Confirm `docs/agents/status.md` exists.
+3. Confirm `docs/agents/plan.md` exists and represents the active plan, not an
    already archived or completed historical plan.
-4. Confirm the Phase file named in `docs/status.md` exists.
+4. Confirm the Phase file named in `docs/agents/status.md` exists.
 5. Confirm phase number, title, state, and current task agree between
-   `docs/status.md` and the active phase file.
+   `docs/agents/status.md` and the active phase file.
 6. Confirm current task matches checkbox state:
    - If a task is current, it should be the first unchecked task.
    - If Current task is `complete`, all tasks in that phase should be checked.
 7. Confirm phase numbers are monotonic: a new active plan must not reuse a
-   `docs/work/phase-N.md` number from completed work.
+   `docs/agents/work/phase-N.md` number from completed work.
 8. Confirm Last commit is `none`, a commit subject that appears in `git log`,
    or a `git log -1 --oneline` value written during handoff.
 9. Run `git status --short`. If the worktree is dirty, confirm dirty files are

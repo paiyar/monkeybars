@@ -33,11 +33,11 @@ plan.
      template text.
    - **Next-release path:** If workflow files already exist and the active plan
      is complete or stale, summarize current status and run `brainstorm-plan`
-     to archive the completed plan and define the next active `docs/plan.md`.
+     to archive the completed plan and define the next active `docs/agents/plan.md`.
    - **Guided initialization path:** If planning inputs are missing, vague,
      contradictory, stale, or too broad to split into phase tasks, run
-     `brainstorm-plan` before creating `docs/plan.md` or
-     `docs/work/phase-1.md`.
+     `brainstorm-plan` before creating `docs/agents/plan.md` or
+     `docs/agents/work/phase-1.md`.
    - Ask only for blocking details the repo does not already answer. Prefer one
      concrete question at a time.
 4. Determine the project preflight checks: the commands that should pass before
@@ -50,19 +50,19 @@ plan.
    already present.
 6. When planning inputs are sufficient, create missing planning structure from
    the bundled templates:
-   - `docs/prd/spec.md`
-   - `docs/prd/architecture.md`
+   - `docs/agents/prd/spec.md`
+   - `docs/agents/prd/architecture.md`
    - current-state docs from `map-codebase` for brownfield work, when useful
-   - optional companion docs under `docs/prd/`, such as `data-model.md` or
+   - optional companion docs under `docs/agents/prd/`, such as `data-model.md` or
      `api.md`, only when the project needs that detail
-   - `docs/plan.md`
+   - `docs/agents/plan.md`
 7. Create or update `AGENTS.md` with the workflow rules and documented
    preflight checks. Preserve existing project-specific instructions.
 8. If the user is using Claude Code, create or update `CLAUDE.md` so it
    references `AGENTS.md`.
-9. Create `docs/status.md` from the status template if missing. Set `Plan
+9. Create `docs/agents/status.md` from the status template if missing. Set `Plan
    scope` to the active project, adoption, stabilization, or release scope.
-10. Create the first missing `docs/work/phase-N.md` from `docs/plan.md` only
+10. Create the first missing `docs/agents/work/phase-N.md` from `docs/agents/plan.md` only
     when the phase is phase-ready. Use the next available global phase number;
     do not reuse old phase numbers from completed work.
 11. Install project-local command adapters only if the user asks:

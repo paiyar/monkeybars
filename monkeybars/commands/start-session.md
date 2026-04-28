@@ -12,17 +12,17 @@ continue work on the project.
 
 ## Steps
 
-1. Read `docs/status.md`.
+1. Read `docs/agents/status.md`.
    - If present: note the plan scope, phase file path, current task, and state.
-   - If missing: list `docs/work/` and read each phase file to reconstruct
-     state; create `docs/status.md` from the findings before continuing.
-2. Read only the single phase file pointed to by `docs/status.md`.
-3. Cross-check: if the phase file state differs from `docs/status.md`, scan
-   `docs/work/` forward to find the real active phase and correct
-   `docs/status.md`.
+   - If missing: list `docs/agents/work/` and read each phase file to reconstruct
+     state; create `docs/agents/status.md` from the findings before continuing.
+2. Read only the single phase file pointed to by `docs/agents/status.md`.
+3. Cross-check: if the phase file state differs from `docs/agents/status.md`, scan
+   `docs/agents/work/` forward to find the real active phase and correct
+   `docs/agents/status.md`.
 4. Read the Status section of the phase file to confirm the current task.
 5. Surface blockers before proceeding.
-6. Read the relevant phase section of `docs/plan.md`. If the plan context is
+6. Read the relevant phase section of `docs/agents/plan.md`. If the plan context is
    unclear, stale, contradictory, or missing a phase goal, deliverables,
    dependencies, acceptance criteria, likely files or modules, or preflight
    expectations, surface that and recommend `brainstorm-plan` before changing

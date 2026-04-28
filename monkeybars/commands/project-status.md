@@ -12,15 +12,15 @@ summary of active work.
 
 ## Steps
 
-1. Read `docs/status.md`.
+1. Read `docs/agents/status.md`.
    - If present: use the Plan scope, Phase Summary table, and Active Work for
      the current task.
-   - If missing: list `docs/work/` and read each phase file.
+   - If missing: list `docs/agents/work/` and read each phase file.
 2. Read the active phase file for task-level status.
 3. Summarize plan scope, active phase, current task, completed vs remaining
    tasks, and blockers.
 4. Run `monkeybars next` when available and include its recommended next action.
-5. If no phase files exist, check `docs/plan.md` and report which phase should
+5. If no phase files exist, check `docs/agents/plan.md` and report which phase should
    be started first.
 6. If every phase in the active plan is complete, report that the active plan is
    exhausted and recommend `brainstorm-plan` to archive it and create the next

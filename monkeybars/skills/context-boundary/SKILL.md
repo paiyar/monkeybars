@@ -15,7 +15,7 @@ whether to continue in the current context.
 
 1. Run `workflow-check`.
 2. Run `git status --short`.
-3. Read `docs/status.md` and the active phase file.
+3. Read `docs/agents/status.md` and the active phase file.
 4. If the worktree has undocumented dirty files, recommend `handoff-session`
    before starting a fresh context.
 5. If the current task is `complete`, recommend starting a fresh context unless

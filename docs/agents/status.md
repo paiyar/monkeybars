@@ -7,8 +7,8 @@ plan_scope: Review step, docs/agents migration, and parked-ideas stash
 phase_file: docs/agents/work/phase-1.md
 phase: 1 — Move MonkeyBars docs to docs/agents/
 state: in_progress
-current_task: T03 — Update workflow source commands and templates to docs/agents/
-last_commit: docs: require --install-links=true for global git installs
+current_task: T04 — Move existing archive and design note into the new tree
+last_commit: feat(T03): point workflow source and generated adapters at docs/agents/
 last_updated: 2026-04-28
 -->
 
@@ -18,9 +18,9 @@ last_updated: 2026-04-28
 - **Phase file:** docs/agents/work/phase-1.md
 - **Phase:** 1 — Move MonkeyBars docs to docs/agents/
 - **State:** in_progress
-- **Current task:** T03 — Update workflow source commands and templates to docs/agents/ (not yet started)
-- **Last commit:** docs: require --install-links=true for global git installs
-- **WIP files:** none (install-links docs committed; T03 has not started)
+- **Current task:** T04 — Move existing archive and design note into the new tree
+- **Last commit:** feat(T03): point workflow source and generated adapters at docs/agents/
+- **WIP files:** none
 
 ## Phase Summary
 
