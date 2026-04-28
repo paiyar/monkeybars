@@ -18,11 +18,11 @@ coherent phase so the repo is fully migrated at the phase boundary.
 ## Status
 
 - **State:** in_progress
-- **Current task:** T03 — Update workflow source commands and templates to docs/agents/
-- **Last commit:** feat(T02): flip MonkeyBars workflow paths to docs/agents/
-- **Preflight:** bun run test, bun run generate:check
+- **Current task:** T03 — Update workflow source commands and templates to docs/agents/ (not yet started; intervening install-flow and Codex-distribution fixes landed first)
+- **Last commit:** docs: require --install-links=true for global git installs
+- **Preflight:** bun run test ✅, bun run generate:check ✅ (2026-04-28, at commit 13fa699 before install-links docs commit)
 - **Blockers:** none
-- **WIP files:** none
+- **WIP files:** none — install-links docs now committed separately so the T03 diff can stay scoped to `workflow-src/` + regenerated `monkeybars/`.
 
 ## Tasks
 
@@ -53,5 +53,6 @@ coherent phase so the repo is fully migrated at the phase boundary.
 
 ## Log
 
+- 2026-04-28: Handoff. T03 still pending. Since T02 four unrelated commits landed on `main`: `d96afc2 fix: bootstrap deps during git prepare`, `110a56c test: harden npm pack file guardrail`, `13fa699 docs: capture Codex skill distribution follow-up`, and `2878240 docs: require --install-links=true for global git installs` (committed during this handoff). Preflight (`bun run test` 133 pass, `bun run generate:check` up to date) ran at `13fa699` immediately before the install-links commit; the install-links commit only touches `README.md`, `monkeybars/README.md`, and `docs/agents/todo/npm-git-install-links.md`, so the green result still holds. Worktree now clean other than this handoff's status/phase edits.
 - 2026-04-28: Completed T02; next task T03 — Update workflow source commands and templates to docs/agents/; commit subject `feat(T02): flip MonkeyBars workflow paths to docs/agents/`.
 - 2026-04-27: Completed T01; next task T02 — Flip CLI path constants to docs/agents/ and update fixtures; commit subject `refactor(T01): centralize CLI workflow path constants`.
