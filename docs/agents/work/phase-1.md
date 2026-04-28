@@ -1,0 +1,56 @@
+# Phase 1 — Move MonkeyBars docs to docs/agents/
+
+> Source: active docs/agents/plan.md, Phase 1
+
+## Goal
+
+Cut every workflow file path from `docs/` to `docs/agents/` in one
+coherent phase so the repo is fully migrated at the phase boundary.
+
+## Acceptance
+
+- `bun run test` passes with every fixture on the new path.
+- `bun run generate:check` passes.
+- `grep -R 'docs/status.md\|docs/plan.md\|docs/work/\|docs/prd/' cli/ workflow-src/ test/ README.md AGENTS.md`
+  returns no hits outside of archived content.
+- Preflight: `bun run test`, `bun run generate:check`.
+
+## Status
+
+- **State:** not_started
+- **Current task:** T01 — Centralize CLI workflow path constants
+- **Last commit:** none
+- **Preflight:** n/a
+- **Blockers:** none
+- **WIP files:** none
+
+## Tasks
+
+- [ ] T01 — Centralize CLI workflow path constants | files: `cli/src/paths.ts` (new), `cli/src/workflow-state.ts`, `cli/src/check.ts`, `cli/src/markdown.ts`, `cli/src/index.ts` | verify: `bun run test`
+  - Acceptance: every `"docs/status.md"`, `"docs/plan.md"`, `"docs/work"`, `"docs/prd"`, and `"docs/archive/plans"` literal in `cli/src/` reads from a single constants source. No path semantics change (still `docs/`). `bun run test` passes unchanged.
+- [ ] T02 — Flip CLI path constants to docs/agents/ and update fixtures | files: `cli/src/paths.ts`, `test/` fixtures and assertions | verify: `bun run test`
+  - Acceptance: the constants from T01 now point at `docs/agents/*`. Every affected test fixture and assertion uses the new paths. `bun run test` passes.
+- [ ] T03 — Update workflow source commands and templates to docs/agents/ | files: `workflow-src/commands/*.md`, `workflow-src/templates/{status,plan,phase}.md` (and any other referencing templates), regenerated `monkeybars/` | verify: `bun run test`, `bun run generate:check`
+  - Acceptance: no `docs/status.md`, `docs/plan.md`, `docs/work/`, `docs/prd/`, or `docs/archive/` reference remains in `workflow-src/`. Generated adapters under `monkeybars/` are regenerated and match source. `bun run generate:check` passes.
+- [ ] T04 — Move existing archive and design note into the new tree | files: `docs/archive/plans/*` → `docs/agents/archive/plans/`, `docs/agent-native-workflow-hooks.md` → `docs/agents/design-notes/agent-native-workflow-hooks.md` | verify: `bun run test`
+  - Acceptance: the four files are moved with `git mv` (history preserved). `docs/archive/` and `docs/agent-native-workflow-hooks.md` no longer exist at their old paths. `bun run test` passes.
+- [ ] T05 — Update README and AGENTS.md path references | files: `README.md`, `AGENTS.md` | verify: `bun run test`, `bun run generate:check`
+  - Acceptance: every human-visible mention of a MonkeyBars workflow file under `docs/` in `README.md` and `AGENTS.md` now points at `docs/agents/`. Grep acceptance from the phase Acceptance section passes. `bun run test` and `bun run generate:check` both pass.
+
+## Coverage
+
+| Plan item | Task | Status |
+|---|---|---|
+| Goal: full cutover from docs/ to docs/agents/ | T01, T02, T03, T04, T05 | covered |
+| Deliverable: CLI path constants centralized and updated | T01, T02 | covered |
+| Deliverable: workflow-src commands and templates use docs/agents/ | T03 | covered |
+| Deliverable: README + AGENTS.md path references updated | T05 | covered |
+| Deliverable: existing archive and design note moved via git mv | T04 | covered |
+| Deliverable: test fixtures and assertions updated | T02 | covered |
+| Acceptance: `bun run test` passes | T01, T02, T03, T04, T05 | covered |
+| Acceptance: `bun run generate:check` passes | T03, T05 | covered |
+| Acceptance: grep for old paths returns no hits | T02, T03, T04, T05 | covered |
+
+## Log
+
+(Append dated entries as work progresses)
