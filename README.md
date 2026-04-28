@@ -28,7 +28,7 @@ npx --package github:paiyar/monkeybars#main -- monkeybars install --project /pat
 Or install the CLI globally from git:
 
 ```sh
-npm install -g github:paiyar/monkeybars#main
+npm install -g github:paiyar/monkeybars#main --install-links=true
 monkeybars install --project /path/to/repo
 ```
 
@@ -36,7 +36,7 @@ Pin to an exact revision when you need a repeatable install:
 
 ```sh
 npx --package github:paiyar/monkeybars#<tag-or-commit> -- monkeybars install --project /path/to/repo
-npm install -g github:paiyar/monkeybars#<tag-or-commit>
+npm install -g github:paiyar/monkeybars#<tag-or-commit> --install-links=true
 monkeybars install --project /path/to/repo
 ```
 
@@ -45,7 +45,10 @@ The `main` ref is a floating branch. Each install resolves the current tip of
 install.
 
 Git installs run the repository `prepare` build, so Bun must be on `PATH`
-during installation. The installed CLI runs on Node.js 20+. By default
+during installation. The installed CLI runs on Node.js 20+. The
+`--install-links=true` flag makes npm install the packed Git dependency instead
+of linking to npm's temporary Git clone; without it, some npm versions leave the
+global `monkeybars` binary pointing at a pruned temp directory. By default
 `install` covers all three agents (OpenCode, Claude Code, Codex) and adds
 advisory workflow hooks. Pass specific targets or `--no-agent-hooks` to scope
 it down:
