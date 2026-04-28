@@ -12,7 +12,7 @@ This repository packages MonkeyBars for OpenCode, Claude Code, and Codex. The ro
 - `bun run generate` builds the CLI and regenerates tool-specific adapters from `workflow-src/` into `monkeybars/`.
 - `bun dist/index.js install --project /path/to/repo` is a local smoke test of the installer after `bun run build`.
 - `bun dist/index.js install --project .` dogfoods MonkeyBars on this repo itself; install is purely additive, only writing under `.opencode/`, `.claude/`, `.codex/`, and `.agents/plugins/marketplace.json` (all gitignored).
-- `bun dist/index.js check` runs the deterministic workflow-status check against the current project's `docs/status.md` and active phase file.
+- `bun dist/index.js check` runs the deterministic workflow-status check against the current project's `docs/agents/status.md` and active phase file.
 - `monkeybars/scripts/install-opencode-commands.sh` installs generated OpenCode commands globally.
 - `monkeybars/scripts/install-claude-skills.sh` installs generated Claude Code skills globally.
 - `git diff -- workflow-src monkeybars` checks that generated files match source edits before review.
@@ -34,7 +34,7 @@ MonkeyBars packages one set of workflow commands for three coding-agent targets 
 
 `index.ts` wires Commander with two subcommands, both strict about unknown args/options:
 
-- `check` (`check.ts`) — read-only, cross-validates `docs/status.md` against the active `docs/work/phase-N.md`: matching phase label/state/current task, first-unchecked-task invariant, last-commit recency via `git log`, and WIP documentation vs. `git status --porcelain`. Returns a `CheckResult` with severity-tagged findings; errors flip `ok` to false (exit 1).
+- `check` (`check.ts`) — read-only, cross-validates `docs/agents/status.md` against the active `docs/agents/work/phase-N.md`: matching phase label/state/current task, first-unchecked-task invariant, last-commit recency via `git log`, and WIP documentation vs. `git status --porcelain`. Returns a `CheckResult` with severity-tagged findings; errors flip `ok` to false (exit 1).
 - `install` (`install.ts`) — copies generated assets into a target project. Targets are `opencode`, `claude`, and `codex`; omitting the `[targets...]` argument installs all three. Layout per target:
   - OpenCode: `.opencode/commands/` (replaces directory) and, when agent hooks are enabled, `.opencode/plugins/monkeybars-workflow.js`.
   - Claude: `.claude/skills/` (replaces directory) and, when agent hooks are enabled, `.claude/hooks/monkeybars-workflow-context.js` plus idempotent merges into `.claude/settings.json` (`SessionStart`, `UserPromptSubmit`, `Stop`).
@@ -47,7 +47,7 @@ Install is purely additive: it only writes under the agent footprint listed abov
 
 ### Workflow concepts that shape the code
 
-The commands under `workflow-src/commands/` implement a repo-local planning loop that the CLI only has to *verify*, not execute: `docs/plan.md` is the active plan; `docs/work/phase-N.md` files hold reviewable chunks of tasks; `docs/status.md` is the pointer (active phase, current task, state, last commit, WIP files). The invariants enforced by `runCheck` reflect this model — e.g. "current task must be the first unchecked task in the active phase file" and "phase label in status must match the phase file title."
+The commands under `workflow-src/commands/` implement a repo-local planning loop that the CLI only has to *verify*, not execute: `docs/agents/plan.md` is the active plan; `docs/agents/work/phase-N.md` files hold reviewable chunks of tasks; `docs/agents/status.md` is the pointer (active phase, current task, state, last commit, WIP files). The invariants enforced by `runCheck` reflect this model — e.g. "current task must be the first unchecked task in the active phase file" and "phase label in status must match the phase file title."
 
 ## Coding Style & Naming Conventions
 

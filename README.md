@@ -82,21 +82,23 @@ monkeybars check         # invariants between status.md and phase files
 ```
 your-repo/
 ├── docs/
-│   ├── plan.md              active implementation plan
-│   ├── status.md            phase / task / handoff pointer
-│   ├── prd/                 product, architecture, data, interface truth
-│   └── work/
-│       ├── phase-1.md       reviewable chunk; tasks T01, T02, T03 …
-│       └── phase-2.md
+│   └── agents/
+│       ├── plan.md          active implementation plan
+│       ├── status.md        phase / task / handoff pointer
+│       ├── prd/             product, architecture, data, interface truth
+│       └── work/
+│           ├── phase-1.md   reviewable chunk; tasks T01, T02, T03 …
+│           └── phase-2.md
 └── AGENTS.md                rules every coding agent should follow
 ```
 
 **Hierarchy:** `plan.md` ─► `phase-N.md` ─► `T01..TN` ─► one commit each.
 
-`docs/plan.md` is intentionally the *active* plan, not a permanent backlog.
-When a release is complete, archive it under
-`docs/archive/plans/YYYY-MM-DD-<scope>.md` and start a fresh one. Keep phase
-numbers monotonically increasing across releases — don't reset to Phase 1.
+`docs/agents/plan.md` is intentionally the *active* plan, not a permanent
+backlog. When a release is complete, archive it under
+`docs/agents/archive/plans/YYYY-MM-DD-<scope>.md` and start a fresh one. Keep
+phase numbers monotonically increasing across releases — don't reset to
+Phase 1.
 
 ## The loop
 
@@ -121,12 +123,12 @@ as slash commands; Codex uses skill mentions like `$start-session`.
 
 | # | Command | Use it when | What it does |
 |---:|---|---|---|
-| 1 | `/initialize-monkeybars` | Once per project | Creates planning docs, `docs/status.md`, first phase file, agent instructions |
-| 2 | `/map-codebase` | Brownfield repos with weak current-state docs | Writes `docs/prd/current-*.md` |
+| 1 | `/initialize-monkeybars` | Once per project | Creates planning docs, `docs/agents/status.md`, first phase file, agent instructions |
+| 2 | `/map-codebase` | Brownfield repos with weak current-state docs | Writes `docs/agents/prd/current-*.md` |
 | 3 | `/brainstorm-plan` | Specs are rough, missing, stale, or too broad | Turns intent or repo state into phase-ready docs |
 | 4 | `/project-status` | Read-only progress check | Summarizes phase, task, blockers, remaining work |
 | 5 | `/start-session` | Start of every fresh chat | Reads workflow files, reports the next task |
-| 6 | `/create-phase` | Next phase has no phase file | Generates the next `docs/work/phase-N.md` from `plan.md` |
+| 6 | `/create-phase` | Next phase has no phase file | Generates the next `docs/agents/work/phase-N.md` from `plan.md` |
 | 7 | `/complete-task` | One task is implemented | Runs preflight, updates tracking, commits once |
 | 8 | `/context-boundary` | After a commit, or context is heavy | Recommends continue / handoff / fresh chat |
 | 9 | `/handoff-session` | Stopping with unfinished work | Records WIP, blockers, decisions, next steps |
@@ -145,8 +147,8 @@ honestly before inventing a target architecture. The first phase is usually
 inventory or stabilization, not features.
 
 **Post-v1 / next release.** When the active plan is complete, archive
-`docs/plan.md` to `docs/archive/plans/YYYY-MM-DD-<scope>.md`, run
-`/brainstorm-plan` for the next plan, then `/create-phase` with the next
+`docs/agents/plan.md` to `docs/agents/archive/plans/YYYY-MM-DD-<scope>.md`,
+run `/brainstorm-plan` for the next plan, then `/create-phase` with the next
 available phase number.
 
 ## When to use it

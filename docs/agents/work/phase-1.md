@@ -17,10 +17,10 @@ coherent phase so the repo is fully migrated at the phase boundary.
 
 ## Status
 
-- **State:** in_progress
-- **Current task:** T05 — Update README and AGENTS.md path references
-- **Last commit:** feat(T04): move legacy archive and design note under docs/agents/
-- **Preflight:** bun run test ✅ 133 pass (2026-04-28)
+- **State:** complete
+- **Current task:** complete
+- **Last commit:** feat(T05): point README and AGENTS path references at docs/agents/
+- **Preflight:** bun run test ✅ 133 pass, bun run generate:check ✅ (2026-04-28)
 - **Blockers:** none
 - **WIP files:** none
 
@@ -34,7 +34,7 @@ coherent phase so the repo is fully migrated at the phase boundary.
   - Acceptance: no `docs/status.md`, `docs/plan.md`, `docs/work/`, `docs/prd/`, or `docs/archive/` reference remains in `workflow-src/`. Generated adapters under `monkeybars/` are regenerated and match source. `bun run generate:check` passes.
 - [x] T04 — Move existing archive and design note into the new tree | files: `docs/archive/plans/*` → `docs/agents/archive/plans/`, `docs/agent-native-workflow-hooks.md` → `docs/agents/design-notes/agent-native-workflow-hooks.md` | verify: `bun run test`
   - Acceptance: the four files are moved with `git mv` (history preserved). `docs/archive/` and `docs/agent-native-workflow-hooks.md` no longer exist at their old paths. `bun run test` passes.
-- [ ] T05 — Update README and AGENTS.md path references | files: `README.md`, `AGENTS.md` | verify: `bun run test`, `bun run generate:check`
+- [x] T05 — Update README and AGENTS.md path references | files: `README.md`, `AGENTS.md` | verify: `bun run test`, `bun run generate:check`
   - Acceptance: every human-visible mention of a MonkeyBars workflow file under `docs/` in `README.md` and `AGENTS.md` now points at `docs/agents/`. Grep acceptance from the phase Acceptance section passes. `bun run test` and `bun run generate:check` both pass.
 
 ## Coverage
@@ -53,6 +53,7 @@ coherent phase so the repo is fully migrated at the phase boundary.
 
 ## Log
 
+- 2026-04-28: Completed T05; Phase 1 is now complete. Updated `README.md` (tree diagram nested under `docs/agents/`, active-plan paragraph, two command-table rows, post-v1 paragraph) and `AGENTS.md` (3 workflow-state references). Acceptance grep `grep -R 'docs/status\.md\|docs/plan\.md\|docs/work/\|docs/prd/' cli/ workflow-src/ test/ README.md AGENTS.md` returns 0 hits. `bun run test` 133 pass, `bun run generate:check` up to date. Commit subject `feat(T05): point README and AGENTS path references at docs/agents/`. Next: Phase 2 — Add `/review-work` skill and artifact.
 - 2026-04-28: Completed T04. `git mv`'d the 3 archived plans from `docs/archive/plans/` to `docs/agents/archive/plans/` and `docs/agent-native-workflow-hooks.md` to `docs/agents/design-notes/agent-native-workflow-hooks.md`; git detected all 4 as renames (history preserved). Removed the now-empty `docs/archive/` tree with `rmdir`. Preflight: `bun run test` 133 pass. `docs/` at the repo root now holds only `agents/` and `resources/`. Next task T05 — Update README and AGENTS.md path references; commit subject `feat(T04): move legacy archive and design note under docs/agents/`.
 - 2026-04-28: Completed T03. Rewrote all `docs/status.md`, `docs/plan.md`, `docs/work/`, `docs/prd/`, and `docs/archive/` references across 4 `workflow-src/templates/*.md` and 10 `workflow-src/commands/*.md` to `docs/agents/…`; `bun run generate` regenerated 20 adapter files under `monkeybars/` (templates + commands + skills). Fixed three `test/workflow_content.test.ts` assertions that were missed by T02 (`docs/prd/` and `docs/archive/` literals in the expected strings). Project-local agent adapters under `.claude/`, `.opencode/`, `.codex/` are gitignored and out of scope; they'll refresh next `bun dist/index.js install --project .`. Acceptance grep `grep -R 'docs/status\.md\|docs/plan\.md\|docs/work/\|docs/prd/' cli/ workflow-src/ test/` returns 0 hits. `bun run test` 133 pass, `bun run generate:check` green. Next task T04 — Move existing archive and design note into the new tree with `git mv`; commit subject `feat(T03): point workflow source and generated adapters at docs/agents/`.
 - 2026-04-28: Handoff. T03 still pending. Since T02 four unrelated commits landed on `main`: `d96afc2 fix: bootstrap deps during git prepare`, `110a56c test: harden npm pack file guardrail`, `13fa699 docs: capture Codex skill distribution follow-up`, and `2878240 docs: require --install-links=true for global git installs` (committed during this handoff). Preflight (`bun run test` 133 pass, `bun run generate:check` up to date) ran at `13fa699` immediately before the install-links commit; the install-links commit only touches `README.md`, `monkeybars/README.md`, and `docs/agents/todo/npm-git-install-links.md`, so the green result still holds. Worktree now clean other than this handoff's status/phase edits.
