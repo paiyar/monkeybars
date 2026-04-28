@@ -79,7 +79,7 @@ export interface WriteWorkflowOptions {
  * Consolidates variants previously scattered across test files.
  */
 export function writeWorkflow(root: string, options: WriteWorkflowOptions = {}): void {
-  mkdirSync(join(root, "docs", "work"), { recursive: true });
+  mkdirSync(join(root, "docs", "agents", "work"), { recursive: true });
 
   const current = options.current ?? "T01";
   const phaseCurrent = options.phaseCurrent ?? current;
@@ -95,14 +95,14 @@ export function writeWorkflow(root: string, options: WriteWorkflowOptions = {}):
 
   // plan.md
   if (options.minimalPlan) {
-    writeFileSync(join(root, "docs", "plan.md"), `# Implementation Plan
+    writeFileSync(join(root, "docs", "agents", "plan.md"), `# Implementation Plan
 
 ## Phase 1 — Test
 
 - **Goal:** Test workflow fixture
 `);
   } else {
-    writeFileSync(join(root, "docs", "plan.md"), `# Implementation Plan
+    writeFileSync(join(root, "docs", "agents", "plan.md"), `# Implementation Plan
 
 ## Phase 1 — Test
 
@@ -120,11 +120,11 @@ export function writeWorkflow(root: string, options: WriteWorkflowOptions = {}):
   }
 
   // status.md
-  writeFileSync(join(root, "docs", "status.md"), `# Project Status
+  writeFileSync(join(root, "docs", "agents", "status.md"), `# Project Status
 
 ${lastUpdatedLine}${statusExtra}## Active Work
 
-${planScope}- **Phase file:** docs/work/phase-1.md
+${planScope}- **Phase file:** docs/agents/work/phase-1.md
 - **Phase:** ${phase}
 - **State:** ${state}
 - **Current task:** ${current} — first task
@@ -138,7 +138,7 @@ ${planScope}- **Phase file:** docs/work/phase-1.md
 `);
 
   // phase-1.md
-  writeFileSync(join(root, "docs", "work", "phase-1.md"), `# ${phaseTitle}
+  writeFileSync(join(root, "docs", "agents", "work", "phase-1.md"), `# ${phaseTitle}
 
 ## Status
 

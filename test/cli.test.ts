@@ -67,7 +67,7 @@ describe("monkeybars CLI", () => {
 
     expect(result.status).toBe(0);
     expect(result.stdout).toContain("REPAIR Added structured status block");
-    expect(readFileSync(join(root, "docs", "status.md"), "utf8")).toContain("<!-- monkeybars:status");
+    expect(readFileSync(join(root, "docs", "agents", "status.md"), "utf8")).toContain("<!-- monkeybars:status");
   });
 
   test("health --repair does not create workflow files outside an initialized git workflow", () => {
@@ -78,13 +78,13 @@ describe("monkeybars CLI", () => {
     expect(result.status).toBe(1);
     const health = JSON.parse(result.stdout);
     expect(health.repairs).toEqual([]);
-    expect(existsSync(join(root, "docs", "work"))).toBe(false);
+    expect(existsSync(join(root, "docs", "agents", "work"))).toBe(false);
   });
 
   test("health reports a plan with no parseable phases", () => {
     const root = tempRepo();
     writeWorkflow(root);
-    writeFileSync(join(root, "docs", "plan.md"), "# Implementation Plan\n\nNo phase headings yet.\n");
+    writeFileSync(join(root, "docs", "agents", "plan.md"), "# Implementation Plan\n\nNo phase headings yet.\n");
 
     const result = runCli(["health", "--json"], root);
 
@@ -150,7 +150,7 @@ describe("monkeybars advance", () => {
     expect(result.status).toBe(0);
     expect(result.stdout).toContain("Advanced");
     expect(result.stdout).toContain("T01");
-    const phase = readFileSync(join(root, "docs", "work", "phase-1.md"), "utf8");
+    const phase = readFileSync(join(root, "docs", "agents", "work", "phase-1.md"), "utf8");
     expect(phase).toContain("- [x] T01");
     expect(phase).toContain("- **Current task:** T02");
   });
@@ -190,7 +190,7 @@ describe("monkeybars migrate-status", () => {
 
     expect(result.status).toBe(0);
     expect(result.stdout).toContain("Migrated");
-    const status = readFileSync(join(root, "docs", "status.md"), "utf8");
+    const status = readFileSync(join(root, "docs", "agents", "status.md"), "utf8");
     expect(status).toContain("<!-- monkeybars:status");
   });
 
@@ -214,7 +214,7 @@ describe("monkeybars doctor", () => {
     expect(result.stdout).toContain("Node:");
     expect(result.stdout).toContain("Git:");
     expect(result.stdout).toContain("Git repository: yes");
-    expect(result.stdout).toContain("docs/status.md: present");
+    expect(result.stdout).toContain("docs/agents/status.md: present");
   });
 
   test("works on a bare repo without workflow files", () => {
@@ -223,7 +223,7 @@ describe("monkeybars doctor", () => {
     const result = runCli(["doctor"], root);
 
     expect(result.status).toBe(0);
-    expect(result.stdout).toContain("docs/status.md: missing");
+    expect(result.stdout).toContain("docs/agents/status.md: missing");
   });
 
   test("rejects unknown options", () => {

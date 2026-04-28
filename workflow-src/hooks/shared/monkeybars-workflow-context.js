@@ -24,7 +24,7 @@ function findProjectRoot(start) {
   let current = resolve(start || process.cwd());
   while (true) {
     if (
-      existsSync(join(current, "docs", "status.md")) ||
+      existsSync(join(current, "docs", "agents", "status.md")) ||
       existsSync(join(current, ".git")) ||
       existsSync(join(current, "AGENTS.md"))
     ) {
@@ -78,8 +78,8 @@ function commandNames(agent) {
 
 function workflowContext(root, agent) {
   const commands = commandNames(agent);
-  const statusPath = join(root, "docs", "status.md");
-  const planPath = join(root, "docs", "plan.md");
+  const statusPath = join(root, "docs", "agents", "status.md");
+  const planPath = join(root, "docs", "agents", "plan.md");
 
   if (!existsSync(statusPath) || !existsSync(planPath)) {
     return [

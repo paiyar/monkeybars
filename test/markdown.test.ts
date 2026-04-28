@@ -71,8 +71,8 @@ describe("parseStructuredStatusFields", () => {
   });
 
   test("maps known keys to human-readable names", () => {
-    const result = parseStructuredStatusFields("<!-- monkeybars:status\ncurrent_task: T01\nphase_file: docs/work/phase-1.md\n-->");
-    expect(result).toEqual({ "current task": "T01", "phase file": "docs/work/phase-1.md" });
+    const result = parseStructuredStatusFields("<!-- monkeybars:status\ncurrent_task: T01\nphase_file: docs/agents/work/phase-1.md\n-->");
+    expect(result).toEqual({ "current task": "T01", "phase file": "docs/agents/work/phase-1.md" });
   });
 
   test("maps unknown keys by replacing underscores with spaces", () => {
@@ -102,10 +102,10 @@ describe("formatStructuredStatusFields", () => {
   test("orders known fields in canonical order", () => {
     const result = formatStructuredStatusFields({
       state: "active",
-      "phase file": "docs/work/phase-1.md",
+      "phase file": "docs/agents/work/phase-1.md",
       phase: "1"
     });
-    expect(result).toContain("phase_file: docs/work/phase-1.md");
+    expect(result).toContain("phase_file: docs/agents/work/phase-1.md");
     expect(result).toContain("phase: 1");
     expect(result).toContain("state: active");
     // phase_file should come before phase, phase before state

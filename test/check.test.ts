@@ -15,17 +15,17 @@ describe("monkeybars check", () => {
     expect(result.findings).toEqual([]);
   });
 
-  test("fails when docs/status.md is missing", () => {
+  test("fails when docs/agents/status.md is missing", () => {
     const root = tempRepo();
     const result = runCheck(root);
     expect(result.ok).toBe(false);
     expect(result.findings[0]?.code).toBe("missing-status");
   });
 
-  test("fails when docs/plan.md is missing", () => {
+  test("fails when docs/agents/plan.md is missing", () => {
     const root = tempRepo();
     writeWorkflow(root);
-    rmSync(join(root, "docs", "plan.md"));
+    rmSync(join(root, "docs", "agents", "plan.md"));
 
     const result = runCheck(root);
 

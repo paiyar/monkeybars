@@ -17,7 +17,7 @@ write a fresh `docs/agents/plan.md` for the next active scope. Do not
 archive or renumber `docs/agents/work/phase-N.md` files. New phases must
 use the next available global phase number.
 
-## Phase 1 — Move MonkeyBars docs to `docs/agents/`
+## Phase 1 — Move MonkeyBars docs to docs/agents/
 
 - **Goal:** cut every workflow file path from `docs/` to `docs/agents/`
   in one coherent change; repo is fully migrated at the phase boundary.
