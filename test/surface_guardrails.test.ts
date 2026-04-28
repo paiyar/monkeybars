@@ -14,6 +14,11 @@ function markdownFiles(relativeDir: string): string[] {
 }
 
 function packedFiles(): Set<string> {
+  // `npm pack` always runs `prepack`/`prepare` scripts on the package being
+  // packed, regardless of `--ignore-scripts` (which only applies to dependency
+  // scripts). On npm >=10.5 those script outputs are forwarded to stdout,
+  // which corrupts the `--json` payload. `--foreground-scripts=false` keeps
+  // script output off stdout so we can parse the JSON cleanly.
   const output = execFileSync(
     "npm",
     [
@@ -21,6 +26,7 @@ function packedFiles(): Set<string> {
       "--dry-run",
       "--json",
       "--ignore-scripts",
+      "--foreground-scripts=false",
       "--cache",
       tempDir("monkeybars-npm-cache-"),
       "--pack-destination",
@@ -28,7 +34,11 @@ function packedFiles(): Set<string> {
     ],
     { cwd: repoRoot, encoding: "utf8" }
   );
-  const [pack] = JSON.parse(output) as Array<{ files: Array<{ path: string }> }>;
+  const jsonStart = output.indexOf("[");
+  if (jsonStart < 0) {
+    throw new Error(`npm pack did not emit a JSON array:\n${output}`);
+  }
+  const [pack] = JSON.parse(output.slice(jsonStart)) as Array<{ files: Array<{ path: string }> }>;
   return new Set(pack.files.map((file) => file.path));
 }
 
