@@ -3,6 +3,7 @@ import { Argument, Command, CommanderError } from "commander";
 import { printCheckResult, runCheck } from "./check.js";
 import { checkGeneratedAdapters, generateAdapters } from "./generator.js";
 import { installPackageTargets, SUPPORTED_INSTALL_TARGETS } from "./install/index.js";
+import { STATUS_FILE } from "./paths.js";
 import { advanceTask, doctor, health, migrateStatus, nextRecommendation, preflight, summarizeWorkflow } from "./workflow-state.js";
 
 type CheckOptions = {
@@ -171,7 +172,7 @@ function createProgram(): Command {
 
   program
     .command("migrate-status")
-    .description("Add or refresh the structured MonkeyBars status block in docs/status.md.")
+    .description(`Add or refresh the structured MonkeyBars status block in ${STATUS_FILE}.`)
     .allowExcessArguments(false)
     .allowUnknownOption(false)
     .action(() => {

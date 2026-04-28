@@ -14,6 +14,7 @@ import {
   readStatusFile,
   upsertStructuredStatusFields
 } from "./markdown.js";
+import { PLAN_FILE, STATUS_FILE, WORK_DIR } from "./paths.js";
 import type { Finding, PhaseFile, PhaseTask, PlanPhase, StatusFile } from "./types.js";
 
 export interface WorkflowSnapshot {
@@ -96,8 +97,8 @@ function taskDisplay(task: PhaseTask | undefined): string {
 
 export function readWorkflowSnapshot(cwd = process.cwd()): WorkflowSnapshot {
   const root = resolve(cwd);
-  const statusPath = join(root, "docs", "status.md");
-  const planPath = join(root, "docs", "plan.md");
+  const statusPath = join(root, STATUS_FILE);
+  const planPath = join(root, PLAN_FILE);
   const status = existsSync(statusPath) ? readStatusFile(statusPath) : undefined;
   const planPhases = existsSync(planPath) ? readPlanPhases(planPath) : [];
   const phaseFile = status?.active["phase file"];
@@ -203,7 +204,7 @@ function commandForInitializedWorkflow(cwd: string): NextRecommendation {
       ...base,
       command: nextPlanPhase ? "create-phase" : "brainstorm-plan",
       reason: nextPlanPhase
-        ? `Active phase is complete and Phase ${nextPlanPhase.number} exists in docs/plan.md.`
+        ? `Active phase is complete and Phase ${nextPlanPhase.number} exists in ${PLAN_FILE}.`
         : "The active plan appears exhausted; define the next active plan."
     };
   }
@@ -288,18 +289,18 @@ export function health(repair = false, cwd = process.cwd()): HealthResult {
   const initializedGitWorkflow =
     gitAvailable && gitRepository && Boolean(snapshot.status) && existsSync(snapshot.planPath);
   const performRepair = repair && initializedGitWorkflow;
-  const workDir = join(root, "docs", "work");
+  const workDir = join(root, WORK_DIR);
   if (!existsSync(workDir)) {
     addHealth(findings, {
       severity: "warning",
       code: "missing-work-directory",
-      message: "Missing docs/work/ directory.",
-      file: "docs/work",
+      message: `Missing ${WORK_DIR}/ directory.`,
+      file: WORK_DIR,
       repairable: initializedGitWorkflow
     });
     if (performRepair) {
       mkdirSync(workDir, { recursive: true });
-      repairs.push("Created docs/work/.");
+      repairs.push(`Created ${WORK_DIR}/.`);
     }
   }
 
@@ -307,20 +308,20 @@ export function health(repair = false, cwd = process.cwd()): HealthResult {
     addHealth(findings, {
       severity: "error",
       code: "missing-status",
-      message: "Missing docs/status.md.",
-      file: "docs/status.md"
+      message: `Missing ${STATUS_FILE}.`,
+      file: STATUS_FILE
     });
   } else if (!snapshot.status.structured || Object.keys(snapshot.status.structured).length === 0) {
     addHealth(findings, {
       severity: "warning",
       code: "missing-structured-status",
-      message: "docs/status.md is missing the structured MonkeyBars status block.",
-      file: "docs/status.md",
+      message: `${STATUS_FILE} is missing the structured MonkeyBars status block.`,
+      file: STATUS_FILE,
       repairable: initializedGitWorkflow
     });
     if (performRepair) {
       migrateStatus(root);
-      repairs.push("Added structured status block to docs/status.md.");
+      repairs.push(`Added structured status block to ${STATUS_FILE}.`);
     }
   }
 
@@ -328,24 +329,24 @@ export function health(repair = false, cwd = process.cwd()): HealthResult {
     addHealth(findings, {
       severity: "error",
       code: "missing-plan",
-      message: "Missing docs/plan.md.",
-      file: "docs/plan.md"
+      message: `Missing ${PLAN_FILE}.`,
+      file: PLAN_FILE
     });
   } else {
     if (snapshot.planPhases.length === 0) {
       addHealth(findings, {
         severity: "error",
         code: "plan-has-no-phases",
-        message: "docs/plan.md has no parseable phase headings. Expected headings like '## Phase 1 — Name'.",
-        file: "docs/plan.md"
+        message: `${PLAN_FILE} has no parseable phase headings. Expected headings like '## Phase 1 — Name'.`,
+        file: PLAN_FILE
       });
     }
     for (const duplicate of duplicatePlanPhaseNumbers(snapshot.planPhases)) {
       addHealth(findings, {
         severity: "error",
         code: "duplicate-plan-phase",
-        message: `docs/plan.md defines Phase ${duplicate} more than once.`,
-        file: "docs/plan.md"
+        message: `${PLAN_FILE} defines Phase ${duplicate} more than once.`,
+        file: PLAN_FILE
       });
     }
   }
@@ -354,8 +355,8 @@ export function health(repair = false, cwd = process.cwd()): HealthResult {
     addHealth(findings, {
       severity: "error",
       code: "missing-active-phase-file",
-      message: "The active phase file referenced by docs/status.md is missing.",
-      file: snapshot.status.active["phase file"] ?? "docs/status.md"
+      message: `The active phase file referenced by ${STATUS_FILE} is missing.`,
+      file: snapshot.status.active["phase file"] ?? STATUS_FILE
     });
   }
 
@@ -545,7 +546,7 @@ function statusFieldsForWrite(
 export function migrateStatus(cwd = process.cwd()): string {
   const snapshot = readWorkflowSnapshot(cwd);
   if (!snapshot.status) {
-    throw new Error("Missing docs/status.md.");
+    throw new Error(`Missing ${STATUS_FILE}.`);
   }
 
   const fields = {
@@ -562,11 +563,11 @@ export function advanceTask(taskId: string, commit: string, cwd = process.cwd())
   if (!commit.trim()) throw new Error("--commit is required.");
 
   const snapshot = readWorkflowSnapshot(cwd);
-  if (!snapshot.status) throw new Error("Missing docs/status.md.");
+  if (!snapshot.status) throw new Error(`Missing ${STATUS_FILE}.`);
   if (!snapshot.phase || !snapshot.phasePath) throw new Error("Active phase file is missing.");
 
   const phaseFile = snapshot.status.active["phase file"];
-  if (!phaseFile) throw new Error("docs/status.md does not define Active Work phase file.");
+  if (!phaseFile) throw new Error(`${STATUS_FILE} does not define Active Work phase file.`);
 
   const normalizedTask = normalizeTaskId(taskId);
   const phase = snapshot.phase;
@@ -681,15 +682,15 @@ export function doctor(cwd = process.cwd()): string[] {
   }
 
   const snapshot = readWorkflowSnapshot(cwd);
-  lines.push(`docs/status.md: ${snapshot.status ? "present" : "missing"}`);
-  lines.push(`docs/plan.md: ${existsSync(snapshot.planPath) ? "present" : "missing"}`);
+  lines.push(`${STATUS_FILE}: ${snapshot.status ? "present" : "missing"}`);
+  lines.push(`${PLAN_FILE}: ${existsSync(snapshot.planPath) ? "present" : "missing"}`);
   lines.push(`active phase file: ${snapshot.phase ? displayPath(snapshot.phase.path) : "missing"}`);
   lines.push(`dirty files: ${gitStatus(cwd).length}`);
   return lines;
 }
 
 export function phaseFiles(cwd = process.cwd()): string[] {
-  const workDir = join(resolve(cwd), "docs", "work");
+  const workDir = join(resolve(cwd), WORK_DIR);
   if (!existsSync(workDir) || !statSync(workDir).isDirectory()) return [];
   return readdirSync(workDir)
     .filter((name) => /^phase-\d+\.md$/.test(name))

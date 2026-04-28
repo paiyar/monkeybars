@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { gitStatus, isGitAvailable, isGitRepository, recentCommits, recentCommitSubjects } from "./git.js";
 import { displayPath, normalizeTaskId, parsePhaseLabel, readPhaseFile, readPlanPhases, readStatusFile } from "./markdown.js";
+import { PLAN_FILE, STATUS_FILE } from "./paths.js";
 import type { CheckResult, Finding } from "./types.js";
 
 function add(findings: Finding[], finding: Finding): void {
@@ -28,8 +29,8 @@ function wipDocumented(wipValue: string | undefined, logText: string, dirty: str
 
 export function runCheck(cwd = process.cwd()): CheckResult {
   const findings: Finding[] = [];
-  const statusPath = join(cwd, "docs", "status.md");
-  const planPath = join(cwd, "docs", "plan.md");
+  const statusPath = join(cwd, STATUS_FILE);
+  const planPath = join(cwd, PLAN_FILE);
 
   if (!isGitAvailable()) {
     add(findings, {
@@ -53,8 +54,8 @@ export function runCheck(cwd = process.cwd()): CheckResult {
     add(findings, {
       severity: "error",
       code: "missing-status",
-      message: "Missing docs/status.md.",
-      file: "docs/status.md"
+      message: `Missing ${STATUS_FILE}.`,
+      file: STATUS_FILE
     });
     return { ok: false, findings };
   }
@@ -63,8 +64,8 @@ export function runCheck(cwd = process.cwd()): CheckResult {
     add(findings, {
       severity: "error",
       code: "missing-plan",
-      message: "Missing active docs/plan.md.",
-      file: "docs/plan.md"
+      message: `Missing active ${PLAN_FILE}.`,
+      file: PLAN_FILE
     });
   }
   const planPhases = existsSync(planPath) ? readPlanPhases(planPath) : [];
@@ -75,8 +76,8 @@ export function runCheck(cwd = process.cwd()): CheckResult {
     add(findings, {
       severity: "error",
       code: "missing-phase-pointer",
-      message: "docs/status.md does not define Active Work phase file.",
-      file: "docs/status.md"
+      message: `${STATUS_FILE} does not define Active Work phase file.`,
+      file: STATUS_FILE
     });
     return { ok: false, findings, status };
   }
@@ -98,8 +99,8 @@ export function runCheck(cwd = process.cwd()): CheckResult {
     add(findings, {
       severity: "error",
       code: "missing-phase-label",
-      message: "docs/status.md does not define Active Work phase.",
-      file: "docs/status.md"
+      message: `${STATUS_FILE} does not define Active Work phase.`,
+      file: STATUS_FILE
     });
   }
 
@@ -108,8 +109,8 @@ export function runCheck(cwd = process.cwd()): CheckResult {
     add(findings, {
       severity: "error",
       code: "invalid-phase-label",
-      message: `docs/status.md phase must look like "1 — Title": ${statusPhaseValue}.`,
-      file: "docs/status.md"
+      message: `${STATUS_FILE} phase must look like "1 — Title": ${statusPhaseValue}.`,
+      file: STATUS_FILE
     });
   }
 
@@ -131,7 +132,7 @@ export function runCheck(cwd = process.cwd()): CheckResult {
     add(findings, {
       severity: "error",
       code: "phase-metadata-mismatch",
-      message: `Phase mismatch: docs/status.md says ${statusPhase.number} — ${statusPhase.title}, ${displayPath(phase.path)} says ${phaseLabel.number} — ${phaseLabel.title}.`,
+      message: `Phase mismatch: ${STATUS_FILE} says ${statusPhase.number} — ${statusPhase.title}, ${displayPath(phase.path)} says ${phaseLabel.number} — ${phaseLabel.title}.`,
       file: phaseFile
     });
   }
@@ -142,15 +143,15 @@ export function runCheck(cwd = process.cwd()): CheckResult {
       add(findings, {
         severity: "error",
         code: "active-phase-not-in-plan",
-        message: `Active phase ${statusPhase.number} is not present in docs/plan.md.`,
-        file: "docs/plan.md"
+        message: `Active phase ${statusPhase.number} is not present in ${PLAN_FILE}.`,
+        file: PLAN_FILE
       });
     } else if (planPhase.title !== statusPhase.title) {
       add(findings, {
         severity: "error",
         code: "plan-phase-title-mismatch",
-        message: `docs/plan.md says Phase ${planPhase.number} is ${planPhase.title}, docs/status.md says ${statusPhase.title}.`,
-        file: "docs/plan.md"
+        message: `${PLAN_FILE} says Phase ${planPhase.number} is ${planPhase.title}, ${STATUS_FILE} says ${statusPhase.title}.`,
+        file: PLAN_FILE
       });
     }
   }
@@ -161,7 +162,7 @@ export function runCheck(cwd = process.cwd()): CheckResult {
     add(findings, {
       severity: "error",
       code: "state-mismatch",
-      message: `State mismatch: docs/status.md says ${statusState}, ${displayPath(phase.path)} says ${phaseState}.`,
+      message: `State mismatch: ${STATUS_FILE} says ${statusState}, ${displayPath(phase.path)} says ${phaseState}.`,
       file: phaseFile
     });
   }
@@ -172,7 +173,7 @@ export function runCheck(cwd = process.cwd()): CheckResult {
     add(findings, {
       severity: "error",
       code: "current-task-mismatch",
-      message: `Current task mismatch: docs/status.md says ${statusTask}, ${displayPath(phase.path)} says ${phaseTask}.`,
+      message: `Current task mismatch: ${STATUS_FILE} says ${statusTask}, ${displayPath(phase.path)} says ${phaseTask}.`,
       file: phaseFile
     });
   }

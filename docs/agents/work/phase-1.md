@@ -17,16 +17,16 @@ coherent phase so the repo is fully migrated at the phase boundary.
 
 ## Status
 
-- **State:** not_started
-- **Current task:** T01 — Centralize CLI workflow path constants
-- **Last commit:** none
-- **Preflight:** n/a
+- **State:** in_progress
+- **Current task:** T02 — Flip CLI path constants to docs/agents/ and update fixtures
+- **Last commit:** refactor(T01): centralize CLI workflow path constants
+- **Preflight:** bun run test, bun run generate:check
 - **Blockers:** none
 - **WIP files:** none
 
 ## Tasks
 
-- [ ] T01 — Centralize CLI workflow path constants | files: `cli/src/paths.ts` (new), `cli/src/workflow-state.ts`, `cli/src/check.ts`, `cli/src/markdown.ts`, `cli/src/index.ts` | verify: `bun run test`
+- [x] T01 — Centralize CLI workflow path constants | files: `cli/src/paths.ts` (new), `cli/src/workflow-state.ts`, `cli/src/check.ts`, `cli/src/markdown.ts`, `cli/src/index.ts` | verify: `bun run test`
   - Acceptance: every `"docs/status.md"`, `"docs/plan.md"`, `"docs/work"`, `"docs/prd"`, and `"docs/archive/plans"` literal in `cli/src/` reads from a single constants source. No path semantics change (still `docs/`). `bun run test` passes unchanged.
 - [ ] T02 — Flip CLI path constants to docs/agents/ and update fixtures | files: `cli/src/paths.ts`, `test/` fixtures and assertions | verify: `bun run test`
   - Acceptance: the constants from T01 now point at `docs/agents/*`. Every affected test fixture and assertion uses the new paths. `bun run test` passes.
@@ -53,4 +53,4 @@ coherent phase so the repo is fully migrated at the phase boundary.
 
 ## Log
 
-(Append dated entries as work progresses)
+- 2026-04-27: Completed T01; next task T02 — Flip CLI path constants to docs/agents/ and update fixtures; commit subject `refactor(T01): centralize CLI workflow path constants`.
