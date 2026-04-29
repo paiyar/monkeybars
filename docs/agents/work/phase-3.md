@@ -18,9 +18,9 @@ task commits, and say nothing otherwise.
 
 ## Status
 
-- **State:** in_progress
-- **Current task:** T13 — Dogfood the nudge on this repo
-- **Last commit:** docs(T12): document the review nudge in README and AGENTS
+- **State:** complete
+- **Current task:** complete
+- **Last commit:** chore(T13): dogfood review nudge and park non-md filter gap
 - **Preflight:** n/a
 - **Blockers:** none
 - **WIP files:** none
@@ -33,7 +33,7 @@ task commits, and say nothing otherwise.
   - Acceptance: Each skill gets one new step that reads `docs/agents/reviews/`, applies the T10 resolver logic (described as instructions, not code), and prints exactly `Unreviewed: N commits since YYYY-MM-DD.` when unreviewed task commits exist, and nothing otherwise. Step placement: `/start-session` after the workflow-check / monkeybars-next step and before the final report; `/project-status` after `monkeybars next` and before the final summary. Adapters regenerate clean. `bun run generate:check` passes.
 - [x] T12 — Document the nudge in README and AGENTS.md | files: `README.md`, `AGENTS.md` | verify: `bun run generate:check`
   - Acceptance: `README.md` mentions the passive nudge one line in the `/start-session` or `/project-status` area (whichever already has the closer description). `AGENTS.md` adds one sentence under the workflow-command entries for both skills so agents discover the behavior through the canonical guide. No other behavior changes. `bun run generate:check` passes (no stale adapters).
-- [ ] T13 — Dogfood the nudge on this repo | files: none committed (manual smoke) or a new entry under `docs/agents/todo/` if rough edges surface | verify: manual smoke
+- [x] T13 — Dogfood the nudge on this repo | files: none committed (manual smoke) or a new entry under `docs/agents/todo/` if rough edges surface | verify: manual smoke
   - Acceptance: Run `/start-session` and `/project-status` against current branch state after T10–T12 land. Confirm: (a) before any new task commits are added, both skills emit no nudge because the latest review covers HEAD; (b) if simulated by temporarily moving `reviewed_through:` in the latest review file to an older commit, both skills emit `Unreviewed: N commits since <date>.` with the correct N and date. Revert any simulation changes before committing. Rough edges become parked todos under `docs/agents/todo/`, not inline fixes.
 
 ## Coverage
@@ -54,6 +54,7 @@ task commits, and say nothing otherwise.
 
 ## Log
 
+- 2026-04-29: Completed T13; next task complete; commit subject `chore(T13): dogfood review nudge and park non-md filter gap`.
 - 2026-04-29: Completed T12; next task T13 — Dogfood the nudge on this repo; commit subject `docs(T12): document the review nudge in README and AGENTS`.
 - 2026-04-29: Completed T11; next task T12 — Document the nudge in README and AGENTS.md; commit subject `feat(T11): surface unreviewed task commits in state skills`.
 - 2026-04-29: Completed T10; next task T11 — Add nudge step to `/start-session` and `/project-status` skills; commit subject `feat(T10): add review-nudge resolver with tests`.
