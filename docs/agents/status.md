@@ -7,8 +7,8 @@ plan_scope: Review step, docs/agents migration, and parked-ideas stash
 phase_file: docs/agents/work/phase-3.md
 phase: 3 — Passive review nudge in `/start-session` and `/project-status`
 state: in_progress
-current_task: T11 — Add nudge step to `/start-session` and `/project-status` skills
-last_commit: feat(T10): add review-nudge resolver with tests
+current_task: T12 — Document the nudge in README and AGENTS.md
+last_commit: feat(T11): surface unreviewed task commits in state skills
 last_updated: 2026-04-29
 next: implement T10 in `cli/src/review-nudge.ts` with Bun tests.
 wip_files: none
@@ -20,8 +20,8 @@ wip_files: none
 - **Phase file:** docs/agents/work/phase-3.md
 - **Phase:** 3 — Passive review nudge in `/start-session` and `/project-status`
 - **State:** in_progress
-- **Current task:** T11 — Add nudge step to `/start-session` and `/project-status` skills
-- **Last commit:** feat(T10): add review-nudge resolver with tests
+- **Current task:** T12 — Document the nudge in README and AGENTS.md
+- **Last commit:** feat(T11): surface unreviewed task commits in state skills
 - **WIP files:** none
 - **Next:** implement T10 in `cli/src/review-nudge.ts` with Bun tests.
 

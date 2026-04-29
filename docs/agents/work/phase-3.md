@@ -19,8 +19,8 @@ task commits, and say nothing otherwise.
 ## Status
 
 - **State:** in_progress
-- **Current task:** T11 — Add nudge step to `/start-session` and `/project-status` skills
-- **Last commit:** feat(T10): add review-nudge resolver with tests
+- **Current task:** T12 — Document the nudge in README and AGENTS.md
+- **Last commit:** feat(T11): surface unreviewed task commits in state skills
 - **Preflight:** n/a
 - **Blockers:** none
 - **WIP files:** none
@@ -29,7 +29,7 @@ task commits, and say nothing otherwise.
 
 - [x] T10 — Extract nudge resolver helper and tests | files: `cli/src/review-nudge.ts` (new), `test/review-nudge.test.ts` (new) | verify: `bun run test`
   - Acceptance: Pure function `resolveNudge({ headSha, commits, reviews })` returns either `null` (no nudge) or `{ count, reviewedThrough }`. Date rendering is out of scope for the helper; the skill body (T11) owns that (filename prefix, falling back to `git log -1 --format=%cs <reviewedThrough>`). Reuses `filterTaskCommits` and `pickNewestReview` from `cli/src/review-scope.ts`; `parseReviewedThrough` is used by whatever constructs `ReviewFile` entries, not by the helper itself. Tests cover the three plan acceptance cases (empty reviews, `reviewed_through:` equals HEAD, N unreviewed task commits) plus a merge-commit-in-range case. Helper does no I/O; fixture-driven. `bun run test` passes with 4+ new cases.
-- [ ] T11 — Add nudge step to `/start-session` and `/project-status` skills | files: `workflow-src/commands/start-session.md`, `workflow-src/commands/project-status.md`, regenerated `monkeybars/skills/{start-session,project-status}/SKILL.md`, `monkeybars/commands/{start-session,project-status}.md`, Codex plugin copy | verify: `bun run generate:check`
+- [x] T11 — Add nudge step to `/start-session` and `/project-status` skills | files: `workflow-src/commands/start-session.md`, `workflow-src/commands/project-status.md`, regenerated `monkeybars/skills/{start-session,project-status}/SKILL.md`, `monkeybars/commands/{start-session,project-status}.md`, Codex plugin copy | verify: `bun run generate:check`
   - Acceptance: Each skill gets one new step that reads `docs/agents/reviews/`, applies the T10 resolver logic (described as instructions, not code), and prints exactly `Unreviewed: N commits since YYYY-MM-DD.` when unreviewed task commits exist, and nothing otherwise. Step placement: `/start-session` after the workflow-check / monkeybars-next step and before the final report; `/project-status` after `monkeybars next` and before the final summary. Adapters regenerate clean. `bun run generate:check` passes.
 - [ ] T12 — Document the nudge in README and AGENTS.md | files: `README.md`, `AGENTS.md` | verify: `bun run generate:check`
   - Acceptance: `README.md` mentions the passive nudge one line in the `/start-session` or `/project-status` area (whichever already has the closer description). `AGENTS.md` adds one sentence under the workflow-command entries for both skills so agents discover the behavior through the canonical guide. No other behavior changes. `bun run generate:check` passes (no stale adapters).
@@ -54,5 +54,6 @@ task commits, and say nothing otherwise.
 
 ## Log
 
+- 2026-04-29: Completed T11; next task T12 — Document the nudge in README and AGENTS.md; commit subject `feat(T11): surface unreviewed task commits in state skills`.
 - 2026-04-29: Completed T10; next task T11 — Add nudge step to `/start-session` and `/project-status` skills; commit subject `feat(T10): add review-nudge resolver with tests`.
 (Append dated entries as work progresses)

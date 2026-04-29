@@ -38,6 +38,14 @@ continue work on the project.
 8. Run `workflow-check` and surface inconsistencies.
 9. Run `monkeybars next` when available and compare its recommendation to the
    session state you found. If they differ, explain the mismatch before editing.
-10. Report plan scope, phase, current task, last completed work, uncommitted
+10. Report unreviewed task commits on the current branch. Read the newest file
+   in `docs/agents/reviews/` (lexicographic filename sort). If none exists, skip.
+   Read its `**reviewed_through:** <sha>` line; if the sha equals HEAD, skip.
+   Run `git log <sha>..HEAD --oneline --no-merges` and count subjects matching
+   `^[a-z]+\(T\d+\):`; if zero, skip. Derive the since-date from the filename
+   prefix (`YYYY-MM-DD-`); if the filename does not match that pattern, run
+   `git log -1 --format=%cs <sha>`. Print exactly
+   `Unreviewed: N commits since YYYY-MM-DD.` Otherwise print nothing for this step.
+11. Report plan scope, phase, current task, last completed work, uncommitted
    work, blockers, and next steps. Wait for user confirmation before changing
    files.
