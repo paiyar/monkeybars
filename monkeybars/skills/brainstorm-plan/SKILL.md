@@ -21,6 +21,9 @@ the completed active plan and create the next active plan.
 1. Explore project context before asking questions:
    - `README.md`, `AGENTS.md`, `CLAUDE.md`, and `docs/`
    - existing specs, architecture notes, plans, and phase files
+   - `docs/agents/todo/` — the parking lot for deferred work; each file is a
+     free-form markdown note (one line up to a fully-scoped proposal)
+     and is a candidate input to the new plan scope
    - top-level source layout, dependency manifests, and likely preflight
      commands
 2. Choose the planning mode:
@@ -72,6 +75,21 @@ the completed active plan and create the next active plan.
    If replacing a completed or superseded active plan, archive the old
    `docs/agents/plan.md` before writing the new one. Do not archive or renumber
    `docs/agents/work/phase-N.md` files.
+
+   Apply these two rules when writing or updating the planning docs:
+   - **Delete-on-pickup for parked todos.** If a file under
+     `docs/agents/todo/` is incorporated into the new active plan, delete
+     that todo file in the same commit as the new plan. `git log
+     docs/agents/todo/` plus the archived plan together are the audit
+     trail. Todos that were read but not picked up stay as-is. New plan
+     scope may also come from ideas not sourced from any todo.
+   - **PRD-update-only-on-design-shift.** Edit `docs/agents/prd/spec.md`
+     and `docs/agents/prd/architecture.md` only when the design shifts —
+     a component is added, removed, renamed, or gains a new
+     responsibility. For pure phase reshuffles, re-sequencing, or small
+     acceptance-criteria tweaks, edit `docs/agents/plan.md` only. This
+     keeps the PRDs a reliable input to the next `brainstorm-plan` pass
+     instead of drifting with every mid-flight scope adjustment.
 8. Run a planning self-review:
    - no placeholders, TODOs, or unresolved contradictions
    - scope is small enough to phase

@@ -4,26 +4,26 @@
 
 <!-- monkeybars:status
 plan_scope: Review step, docs/agents migration, and parked-ideas stash
-phase_file: docs/agents/work/phase-3.md
-phase: 3 — Passive review nudge in `/start-session` and `/project-status`
-state: complete
-current_task: complete
-last_commit: chore(T13): dogfood review nudge and park non-md filter gap
+phase_file: docs/agents/work/phase-4.md
+phase: 4 — Formalize `docs/agents/todo/` as the parking lot
+state: in_progress
+current_task: T15 — Add AGENTS.md pointer to `docs/agents/todo/` as the parking lot
+last_commit: feat(T14): wire brainstorm-plan to docs/agents/todo parking lot
 last_updated: 2026-04-29
-next: implement T10 in `cli/src/review-nudge.ts` with Bun tests.
+next: implement T15 — add AGENTS.md pointer to `docs/agents/todo/`.
 wip_files: none
 -->
 
 ## Active Work
 
 - **Plan scope:** Review step, docs/agents migration, and parked-ideas stash
-- **Phase file:** docs/agents/work/phase-3.md
-- **Phase:** 3 — Passive review nudge in `/start-session` and `/project-status`
-- **State:** complete
-- **Current task:** complete
-- **Last commit:** chore(T13): dogfood review nudge and park non-md filter gap
+- **Phase file:** docs/agents/work/phase-4.md
+- **Phase:** 4 — Formalize `docs/agents/todo/` as the parking lot
+- **State:** in_progress
+- **Current task:** T15 — Add AGENTS.md pointer to `docs/agents/todo/` as the parking lot
+- **Last commit:** feat(T14): wire brainstorm-plan to docs/agents/todo parking lot
 - **WIP files:** none
-- **Next:** implement T10 in `cli/src/review-nudge.ts` with Bun tests.
+- **Next:** implement T15 — add AGENTS.md pointer to `docs/agents/todo/`.
 
 ## Phase Summary
 
@@ -32,4 +32,4 @@ wip_files: none
 | 1 | Move MonkeyBars docs to docs/agents/ | complete |
 | 2 | Add `/review-work` skill and artifact | complete |
 | 3 | Passive review nudge in `/start-session` and `/project-status` | complete |
-| 4 | Formalize docs/agents/todo/ as the parking lot | not_started |
+| 4 | Formalize `docs/agents/todo/` as the parking lot | in_progress |
