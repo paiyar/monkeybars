@@ -4,26 +4,26 @@
 
 <!-- monkeybars:status
 plan_scope: Review step, docs/agents migration, and parked-ideas stash
-phase_file: docs/agents/work/phase-2.md
-phase: 2 — Add `/review-work` skill and artifact
-state: complete
-current_task: complete
-last_commit: chore(T09): dogfood /review-work and park skill-body gaps
+phase_file: docs/agents/work/phase-3.md
+phase: 3 — Passive review nudge in `/start-session` and `/project-status`
+state: not_started
+current_task: T10 — Extract nudge resolver helper and tests
+last_commit: none
 last_updated: 2026-04-29
-next: implement T06 in `workflow-src/commands/review-work.md`, then regenerate adapters.
+next: implement T10 in `cli/src/review-nudge.ts` with Bun tests.
 wip_files: none
 -->
 
 ## Active Work
 
 - **Plan scope:** Review step, docs/agents migration, and parked-ideas stash
-- **Phase file:** docs/agents/work/phase-2.md
-- **Phase:** 2 — Add `/review-work` skill and artifact
-- **State:** complete
-- **Current task:** complete
-- **Last commit:** chore(T09): dogfood /review-work and park skill-body gaps
+- **Phase file:** docs/agents/work/phase-3.md
+- **Phase:** 3 — Passive review nudge in `/start-session` and `/project-status`
+- **State:** not_started
+- **Current task:** T10 — Extract nudge resolver helper and tests
+- **Last commit:** none
 - **WIP files:** none
-- **Next:** implement T06 in `workflow-src/commands/review-work.md`, then regenerate adapters.
+- **Next:** implement T10 in `cli/src/review-nudge.ts` with Bun tests.
 
 ## Phase Summary
 
@@ -31,5 +31,5 @@ wip_files: none
 |---|---|---|
 | 1 | Move MonkeyBars docs to docs/agents/ | complete |
 | 2 | Add `/review-work` skill and artifact | complete |
-| 3 | Passive review nudge in /start-session and /project-status | not_started |
+| 3 | Passive review nudge in `/start-session` and `/project-status` | not_started |
 | 4 | Formalize docs/agents/todo/ as the parking lot | not_started |
