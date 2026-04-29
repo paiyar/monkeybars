@@ -61,6 +61,11 @@ this skill reviews committed work, not uncommitted diffs.
        `git merge-base HEAD main`.
    - Record the resolved base sha, head sha, and the commit list for use in
      the artifact. Report the scope to the user before continuing.
+   - The filter and newest-review selection logic is exported from
+     `cli/src/review-scope.ts` (`filterTaskCommits`, `pickNewestReview`,
+     `parseReviewedThrough`, `resolveScope`); agents may call those helpers
+     directly through a small one-off script rather than reimplementing the
+     matching rules.
 
 4. Pass 1 — spec compliance. For each commit in scope, check:
    - Does the implementation fully satisfy the task's acceptance notes from

@@ -7,8 +7,8 @@ plan_scope: Review step, docs/agents migration, and parked-ideas stash
 phase_file: docs/agents/work/phase-2.md
 phase: 2 — Add `/review-work` skill and artifact
 state: in_progress
-current_task: T07 — Bun tests for scope detection edge cases
-last_commit: feat(T06): add /review-work skill with scope resolver and artifact schema
+current_task: T08 — Document `/review-work` in README and AGENTS.md
+last_commit: feat(T07): add review-scope helper and edge-case tests
 last_updated: 2026-04-29
 next: implement T06 in `workflow-src/commands/review-work.md`, then regenerate adapters.
 wip_files: none
@@ -20,8 +20,8 @@ wip_files: none
 - **Phase file:** docs/agents/work/phase-2.md
 - **Phase:** 2 — Add `/review-work` skill and artifact
 - **State:** in_progress
-- **Current task:** T07 — Bun tests for scope detection edge cases
-- **Last commit:** feat(T06): add /review-work skill with scope resolver and artifact schema
+- **Current task:** T08 — Document `/review-work` in README and AGENTS.md
+- **Last commit:** feat(T07): add review-scope helper and edge-case tests
 - **WIP files:** none
 - **Next:** implement T06 in `workflow-src/commands/review-work.md`, then regenerate adapters.
 

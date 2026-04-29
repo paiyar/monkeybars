@@ -27,8 +27,8 @@ marker.
 ## Status
 
 - **State:** in_progress
-- **Current task:** T07 — Bun tests for scope detection edge cases
-- **Last commit:** feat(T06): add /review-work skill with scope resolver and artifact schema
+- **Current task:** T08 — Document `/review-work` in README and AGENTS.md
+- **Last commit:** feat(T07): add review-scope helper and edge-case tests
 - **Preflight:** n/a
 - **Blockers:** none
 - **WIP files:** none
@@ -37,7 +37,7 @@ marker.
 
 - [x] T06 — Create `/review-work` skill body | files: `workflow-src/commands/review-work.md` (new), regenerated `monkeybars/skills/review-work/SKILL.md`, `monkeybars/commands/review-work.md`, Codex plugin copy | verify: `bun run test`, `bun run generate:check`
   - Acceptance: Skill body merges the Pass 1/Pass 2 rubric, verdict vocabulary, and finding classification from `docs/resources/review_template.md` with the skill structure of `docs/resources/review_template_2.md`. Skill body includes scope resolver instructions (read newest `docs/agents/reviews/*.md`, extract `reviewed_through:`, run `git log <sha>..HEAD --oneline`, filter to task-shape commits; no prior review falls back to branch-base or active-phase commits); override-arg handling for `phase-N`, `T0X..T0Y`, `<sha>..<sha>`, `last`; artifact schema (`docs/agents/reviews/YYYY-MM-DD-<short-sha>.md` with `**Scope:**`, `**Verdict:**`, `**reviewed_through:**` anchor lines); dirty-worktree short-circuit ("report, do not review"); merge-commit skip; same-day-same-head overwrite semantics. Skill has no CLI counterpart; must not mutate status/plan/phase and must not commit. Adapters regenerate clean via `bun run generate` and `bun run generate:check` passes.
-- [ ] T07 — Bun tests for scope detection edge cases | files: `test/review-scope.test.ts` (new or folded into existing harness), `test/fixtures/` (new fixtures as needed) | verify: `bun run test`
+- [x] T07 — Bun tests for scope detection edge cases | files: `test/review-scope.test.ts` (new or folded into existing harness), `test/fixtures/` (new fixtures as needed) | verify: `bun run test`
   - Acceptance: Tests cover four scenarios: (a) no prior review file → falls back to branch-base or active-phase range, (b) prior review's `reviewed_through:` equals HEAD → zero commits in scope, (c) prior review N commits behind HEAD → exactly those N commits in scope, (d) range contains a merge commit → merge commit is skipped. If a deterministic helper emerges naturally from T06 it lives at `cli/src/review-scope.ts` and tests target it directly; otherwise tests exercise the scope-resolution logic via a small fixture-driven harness that consumes a fake git log and a fake reviews directory. `bun run test` passes with 4+ new cases.
 - [ ] T08 — Document `/review-work` in README and AGENTS.md | files: `README.md`, `AGENTS.md`, regenerated `monkeybars/` if either file is included in an adapter | verify: `bun run test`, `bun run generate:check`
   - Acceptance: `README.md` adds a short section describing `/review-work`: what it does, when to reach for it, and the one-line sample invocation. `AGENTS.md` adds a matching entry in the workflow-command list so agents discover it through the canonical guide. No other behavior changes. `bun run generate:check` passes (no stale adapters).
@@ -64,5 +64,6 @@ marker.
 
 ## Log
 
+- 2026-04-29: Completed T07; next task T08 — Document `/review-work` in README and AGENTS.md; commit subject `feat(T07): add review-scope helper and edge-case tests`.
 - 2026-04-29: Completed T06; next task T07 — Bun tests for scope detection edge cases; commit subject `feat(T06): add /review-work skill with scope resolver and artifact schema`.
 (Append dated entries as work progresses)
