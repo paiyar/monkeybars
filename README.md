@@ -130,10 +130,15 @@ as slash commands; Codex uses skill mentions like `$start-session`.
 | 5 | `/start-session` | Start of every fresh chat | Reads workflow files, reports the next task |
 | 6 | `/create-phase` | Next phase has no phase file | Generates the next `docs/agents/work/phase-N.md` from `plan.md` |
 | 7 | `/complete-task` | One task is implemented | Runs preflight, updates tracking, commits once |
-| 8 | `/context-boundary` | After a commit, or context is heavy | Recommends continue / handoff / fresh chat |
-| 9 | `/handoff-session` | Stopping with unfinished work | Records WIP, blockers, decisions, next steps |
+| 8 | `/review-work` | Task commits have landed and have not been reviewed yet | Writes a dated review artifact under `docs/agents/reviews/` |
+| 9 | `/context-boundary` | After a commit, or context is heavy | Recommends continue / handoff / fresh chat |
+| 10 | `/handoff-session` | Stopping with unfinished work | Records WIP, blockers, decisions, next steps |
 | — | `/workflow-check` | Tracking state may be inconsistent | Verifies status, phase files, and repo state agree |
 | — | `/fix-bug` | Urgent bug interrupts phase work | Keeps bug separate, preserves the handoff trail |
+
+Run `/review-work` with no args and it auto-scopes to the task commits made
+since the last review. Override with `phase-N`, `T0X..T0Y`, `<sha>..<sha>`, or
+`last` to re-review a specific range.
 
 ## Scenarios
 

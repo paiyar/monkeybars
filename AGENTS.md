@@ -49,6 +49,8 @@ Install is purely additive: it only writes under the agent footprint listed abov
 
 The commands under `workflow-src/commands/` implement a repo-local planning loop that the CLI only has to *verify*, not execute: `docs/agents/plan.md` is the active plan; `docs/agents/work/phase-N.md` files hold reviewable chunks of tasks; `docs/agents/status.md` is the pointer (active phase, current task, state, last commit, WIP files). The invariants enforced by `runCheck` reflect this model — e.g. "current task must be the first unchecked task in the active phase file" and "phase label in status must match the phase file title."
 
+`/review-work` produces a self-contained review artifact under `docs/agents/reviews/YYYY-MM-DD-<sha>.md` for task commits that have landed since the last review. The skill is read-only with respect to workflow state — it does not mutate `status.md`, plan, or phase files, and does not commit. Auto-scope is anchored by the `**reviewed_through:** <sha>` line in the newest prior review; helpers for that resolution live in `cli/src/review-scope.ts`.
+
 ## Coding Style & Naming Conventions
 
 Use Markdown for workflow content and keep instructions direct, imperative, and tool-agnostic unless a command is explicitly platform-specific. Command source files should be lowercase kebab-case, for example `start-session.md`, and must include `name` and `description` frontmatter. TypeScript code uses strict `tsconfig` options and Node/Bun standard APIs. Avoid adding runtime dependencies unless they clearly pay for themselves; `commander` is the only one today.
