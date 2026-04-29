@@ -1,5 +1,8 @@
 # MonkeyBars
 
+> [!CAUTION]
+> This is a work in progress (you probably want to use superpowers or gstack tbh)
+
 ![MonkeyBars banner](assets/monkey_bars_logo.png)
 
 > **Guardrails for vibe monkeys.**
