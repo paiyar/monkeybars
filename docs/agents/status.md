@@ -6,9 +6,9 @@
 plan_scope: Review step, docs/agents migration, and parked-ideas stash
 phase_file: docs/agents/work/phase-2.md
 phase: 2 — Add `/review-work` skill and artifact
-state: in_progress
-current_task: T09 — Dogfood `/review-work` on this repo
-last_commit: docs(T08): document /review-work in README and AGENTS
+state: complete
+current_task: complete
+last_commit: chore(T09): dogfood /review-work and park skill-body gaps
 last_updated: 2026-04-29
 next: implement T06 in `workflow-src/commands/review-work.md`, then regenerate adapters.
 wip_files: none
@@ -19,9 +19,9 @@ wip_files: none
 - **Plan scope:** Review step, docs/agents migration, and parked-ideas stash
 - **Phase file:** docs/agents/work/phase-2.md
 - **Phase:** 2 — Add `/review-work` skill and artifact
-- **State:** in_progress
-- **Current task:** T09 — Dogfood `/review-work` on this repo
-- **Last commit:** docs(T08): document /review-work in README and AGENTS
+- **State:** complete
+- **Current task:** complete
+- **Last commit:** chore(T09): dogfood /review-work and park skill-body gaps
 - **WIP files:** none
 - **Next:** implement T06 in `workflow-src/commands/review-work.md`, then regenerate adapters.
 
@@ -30,6 +30,6 @@ wip_files: none
 | Phase | Title | State |
 |---|---|---|
 | 1 | Move MonkeyBars docs to docs/agents/ | complete |
-| 2 | Add `/review-work` skill and artifact | in_progress |
+| 2 | Add `/review-work` skill and artifact | complete |
 | 3 | Passive review nudge in /start-session and /project-status | not_started |
 | 4 | Formalize docs/agents/todo/ as the parking lot | not_started |
