@@ -64,3 +64,5 @@ Recent history uses short subjects, with Conventional Commit style for features,
 ## Agent-Specific Instructions
 
 Edit canonical workflow files in `workflow-src/` first, then regenerate adapters. Edit CLI, hook, and generator behavior in `cli/src/`. Do not hand-edit generated plugin files under `monkeybars/commands/`, `skills/`, `templates/`, `hooks/`, or `bin/` unless the generator itself is being changed.
+
+Workflow skills (`/start-session`, `/complete-task`, `/create-phase`, etc.) have preconditions in their "When to use" sections. If a skill is invoked on state that doesn't match — for example `/complete-task` when there is no open TXX because the work was planning or design iteration rather than task implementation — refuse the skill, explain the mismatch, and recommend the correct action (usually a plain `docs:` commit). Do not bend workflow state to fit the skill.
