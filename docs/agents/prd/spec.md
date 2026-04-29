@@ -41,9 +41,11 @@ without a review step, and dumps all workflow files into an undifferentiated
 - Every MonkeyBars workflow file lives under `docs/agents/` instead of
   `docs/`. Human docs stay in `docs/` (README, design notes, etc. as
   appropriate).
-- `docs/agents/ideas.md` captures the parked `/feature` + `/todo` design
-  discussion so it is recoverable next time we brainstorm small-work
-  tooling.
+- `docs/agents/todo/` is the single parking surface for deferred work
+  (fully-scoped or half-formed, free-form, no required shape).
+  `brainstorm-plan` consults it when proposing new scope, and a todo
+  incorporated into a new active plan is deleted in the same commit as
+  the new plan.
 
 ## Goals
 
@@ -51,7 +53,10 @@ without a review step, and dumps all workflow files into an undifferentiated
   (never blocks `/complete-task`, never mutates workflow state).
 - Make agent-workflow state visually separate from human-authored docs by
   scoping it under `docs/agents/`.
-- Preserve the `/feature` + `/todo` exploration without shipping it.
+- Formalize `docs/agents/todo/` as the parking lot and park the `/todo`
+  parking-flow discussion itself there. `/feature` is intentionally not
+  parked; it collapses into `brainstorm-plan` as an amend mode if the
+  need materializes.
 
 ## Non-Goals
 
@@ -61,7 +66,8 @@ without a review step, and dumps all workflow files into an undifferentiated
 - No `monkeybars check` warning for unreviewed commits. The nudge is
   chat-native only.
 - No back-compat shim reading `docs/` as a fallback. Cutover is complete.
-- Not shipping `/feature` or `/todo` in this plan.
+- Not shipping a `/todo` command; parking stays a file-naming
+  convention. `/feature` is out of scope entirely.
 
 ## Users And Workflows
 
@@ -89,7 +95,11 @@ without a review step, and dumps all workflow files into an undifferentiated
   code, workflow source, templates, tests, README, and AGENTS.md.
 - Existing `docs/archive/plans/` and `docs/agent-native-workflow-hooks.md`
   migrate into the new tree via `git mv`.
-- `docs/agents/ideas.md` exists with the `/feature` + `/todo` parked entry.
+- `docs/agents/todo/` is documented as the parking lot; `brainstorm-plan`
+  explicitly consults it and deletes incorporated todos in the same
+  commit as the new plan.
+- The `/todo` parking-flow discussion is parked at
+  `docs/agents/todo/todo-and-parking-flow.md`.
 
 ## Acceptance Criteria
 
@@ -104,7 +114,11 @@ without a review step, and dumps all workflow files into an undifferentiated
   when review matches HEAD emits nothing about reviews.
 - `grep -R 'docs/status.md\|docs/plan.md\|docs/work/\|docs/prd/' cli/ workflow-src/ test/ README.md AGENTS.md`
   returns no hits after Phase 1.
-- `docs/agents/ideas.md` exists and is referenced from AGENTS.md.
+- `docs/agents/todo/todo-and-parking-flow.md` exists (free-form) and
+  `AGENTS.md` references `docs/agents/todo/` as the parking lot.
+- `workflow-src/commands/brainstorm-plan.md` explicitly consults
+  `docs/agents/todo/` in its exploration step and documents the
+  delete-on-pickup rule.
 
 ## Open Questions
 

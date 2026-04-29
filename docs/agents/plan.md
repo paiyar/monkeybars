@@ -121,23 +121,66 @@ use the next available global phase number.
 - **Preflight:** `bun run test`, `bun run generate:check`.
 - **Open questions:** none blocking.
 
-## Phase 4 — Park the `/feature` + `/todo` exploration
+## Phase 4 — Formalize `docs/agents/todo/` as the parking lot
 
-- **Goal:** preserve the `/feature` + `/todo` design discussion in a
-  recoverable form so it is findable next time we brainstorm small-
-  work tooling.
-- **User-visible outcome:** `docs/agents/ideas.md` exists with a
-  single entry; AGENTS.md references it.
+- **Goal:** make `docs/agents/todo/` the single parking surface for
+  deferred work (fully-scoped or half-formed), wire `brainstorm-plan`
+  to consult it, drop the separate `ideas.md` concept, and teach
+  `brainstorm-plan` when to update PRDs versus only the plan. Park the
+  `/todo` discussion itself there; drop `/feature` from the parked
+  scope entirely.
+- **User-visible outcome:** `docs/agents/todo/` is documented as the
+  parking lot; `brainstorm-plan` explicitly reviews todos when
+  proposing new plan scope; incorporated todos are deleted in the
+  same commit as the new plan; `brainstorm-plan` documents the rule
+  for when to update PRDs versus leave them alone.
 - **Deliverables:**
-  - `docs/agents/ideas.md` with an h2 entry capturing name, idea,
-    why-we-want-it, why-parked, revisit-when.
-  - AGENTS.md note pointing at `docs/agents/ideas.md` as the parked-
-    ideas file.
-- **Likely files/modules:** `docs/agents/ideas.md`, `AGENTS.md`.
+  - `workflow-src/commands/brainstorm-plan.md` step 1 adds
+    `docs/agents/todo/` to the exploration bullets; step 7 adds two
+    rules: (a) "if a parked todo is incorporated into the new plan,
+    delete the todo file in the same commit as the new plan" — and —
+    (b) "update `docs/agents/prd/spec.md` and
+    `docs/agents/prd/architecture.md` only when the design shifts
+    (component added, removed, renamed, or gains a new
+    responsibility). For pure phase reshuffles or acceptance tweaks,
+    edit `docs/agents/plan.md` only." `brainstorm-plan` remains free
+    to introduce new scope not sourced from any todo.
+  - `docs/agents/prd/spec.md` — remove `ideas.md` references (Target
+    Outcome, Goals, Requirements, Acceptance Criteria); update to
+    describe `docs/agents/todo/` as the parking lot and drop the
+    `/feature` exploration from the parked scope.
+  - `docs/agents/prd/architecture.md` — replace the "Parked ideas
+    file" component with a "Parked todos directory" component
+    describing free-form slug-named files under `docs/agents/todo/`,
+    no required shape, consumed by `brainstorm-plan`. Note
+    `brainstorm-plan` as the component responsible for the
+    PRD-update-only-on-design-shift rule.
+  - `docs/agents/todo/todo-and-parking-flow.md` (new) — free-form
+    parked entry for the `/todo` parking-flow discussion so the
+    reasoning is recoverable. Do not park `/feature`; we concluded it
+    collapses into `brainstorm-plan` as an amend mode if the need
+    ever materializes.
+  - `AGENTS.md` — short pointer to `docs/agents/todo/` as the parking
+    lot, if no similar pointer already exists.
+  - Regenerate adapters.
+- **Likely files/modules:**
+  `workflow-src/commands/brainstorm-plan.md`,
+  `docs/agents/prd/spec.md`, `docs/agents/prd/architecture.md`,
+  `docs/agents/todo/todo-and-parking-flow.md` (new), `AGENTS.md`,
+  regenerated `monkeybars/`.
 - **Dependencies:** Phase 1.
 - **Acceptance:**
-  - File exists at the expected path with the agreed format.
-  - AGENTS.md references it.
-  - `bun run test` and `bun run generate:check` pass unchanged.
+  - `brainstorm-plan` skill explicitly lists `docs/agents/todo/` in
+    its exploration step and documents both the delete-on-pickup rule
+    and the PRD-update-only-on-design-shift rule.
+  - `docs/agents/prd/spec.md` and `architecture.md` contain no
+    `ideas.md` references.
+  - `docs/agents/todo/todo-and-parking-flow.md` exists (free-form, no
+    shape enforced).
+  - `AGENTS.md` references `docs/agents/todo/` as the parking lot.
+  - `bun run test` and `bun run generate:check` pass.
 - **Preflight:** `bun run test`, `bun run generate:check`.
-- **Open questions:** none.
+- **Open questions:** none. `/feature` is intentionally not parked;
+  if the "amend active plan with a new phase from a todo" pattern
+  proves painful in practice, revisit as a mode of `brainstorm-plan`,
+  not a new command.

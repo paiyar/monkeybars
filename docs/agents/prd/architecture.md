@@ -52,8 +52,21 @@ Two additive layers plus a path refactor:
 - **Nudge resolver (skill instructions).** Two skill bodies read newest
   review file and compare `reviewed_through:` to HEAD. Silent when equal
   or when the directory is empty.
-- **Parked ideas file.** `docs/agents/ideas.md`. Plain markdown; no CLI
-  reads it.
+- **Parked todos directory.** `docs/agents/todo/`. Free-form
+  slug-named markdown files, no required shape — from a one-line
+  thought up to a fully-scoped proposal. No CLI reads this directory;
+  `brainstorm-plan` consults it as part of its exploration step and
+  deletes incorporated todos in the same commit as the new active plan.
+  Intentionally a convention, not a command.
+- **`brainstorm-plan` PRD-update discipline.** `brainstorm-plan` is
+  the only command that edits `docs/agents/prd/spec.md` and
+  `docs/agents/prd/architecture.md`, and it edits them only when the
+  design shifts — a component is added, removed, renamed, or gains a
+  new responsibility. Pure phase reshuffles, re-sequencing, or small
+  acceptance-criteria tweaks edit `docs/agents/plan.md` only. This
+  keeps PRDs a reliable input to the next `brainstorm-plan` pass
+  instead of a thing that drifts with every mid-flight scope
+  adjustment.
 
 ## Data Flow
 
