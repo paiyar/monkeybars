@@ -140,6 +140,10 @@ Run `/review-work` with no args and it auto-scopes to the task commits made
 since the last review. Override with `phase-N`, `T0X..T0Y`, `<sha>..<sha>`, or
 `last` to re-review a specific range.
 
+`/start-session` and `/project-status` each print one line —
+`Unreviewed: N commits since YYYY-MM-DD.` — when task commits have landed
+beyond the newest review's `reviewed_through:`, and say nothing otherwise.
+
 ## Scenarios
 
 **Greenfield.** Put existing specs (or a rough idea) under `docs/`, run

@@ -51,6 +51,8 @@ The commands under `workflow-src/commands/` implement a repo-local planning loop
 
 `/review-work` produces a self-contained review artifact under `docs/agents/reviews/YYYY-MM-DD-<sha>.md` for task commits that have landed since the last review. The skill is read-only with respect to workflow state — it does not mutate `status.md`, plan, or phase files, and does not commit. Auto-scope is anchored by the `**reviewed_through:** <sha>` line in the newest prior review; helpers for that resolution live in `cli/src/review-scope.ts`.
 
+`/start-session` and `/project-status` each include a passive nudge step that prints `Unreviewed: N commits since YYYY-MM-DD.` when task commits have landed beyond the newest review's `reviewed_through:`, and say nothing otherwise. The skill instructions mirror the logic in `cli/src/review-nudge.ts` (which is reserved for any future CLI-side surfacing); date comes from the review filename prefix, falling back to `git log -1 --format=%cs <sha>` when the filename does not match `YYYY-MM-DD-<sha>.md`.
+
 ## Coding Style & Naming Conventions
 
 Use Markdown for workflow content and keep instructions direct, imperative, and tool-agnostic unless a command is explicitly platform-specific. Command source files should be lowercase kebab-case, for example `start-session.md`, and must include `name` and `description` frontmatter. TypeScript code uses strict `tsconfig` options and Node/Bun standard APIs. Avoid adding runtime dependencies unless they clearly pay for themselves; `commander` is the only one today.
