@@ -1,15 +1,15 @@
 # Project Status
 
-> Last updated: 2026-04-29
+> Last updated: 2026-04-30
 
 <!-- monkeybars:status
 plan_scope: Review step, docs/agents migration, and parked-ideas stash
 phase_file: docs/agents/work/phase-4.md
 phase: 4 — Formalize `docs/agents/todo/` as the parking lot
 state: in_progress
-current_task: T15 — Add AGENTS.md pointer to `docs/agents/todo/` as the parking lot
-last_commit: feat(T14): wire brainstorm-plan to docs/agents/todo parking lot
-last_updated: 2026-04-29
+current_task: T16 — Dogfood the parking-lot wiring on this repo
+last_commit: docs(T15): add AGENTS.md pointer to docs/agents/todo parking lot
+last_updated: 2026-04-30
 next: implement T15 — add AGENTS.md pointer to `docs/agents/todo/`.
 wip_files: none
 -->
@@ -20,8 +20,8 @@ wip_files: none
 - **Phase file:** docs/agents/work/phase-4.md
 - **Phase:** 4 — Formalize `docs/agents/todo/` as the parking lot
 - **State:** in_progress
-- **Current task:** T15 — Add AGENTS.md pointer to `docs/agents/todo/` as the parking lot
-- **Last commit:** feat(T14): wire brainstorm-plan to docs/agents/todo parking lot
+- **Current task:** T16 — Dogfood the parking-lot wiring on this repo
+- **Last commit:** docs(T15): add AGENTS.md pointer to docs/agents/todo parking lot
 - **WIP files:** none
 - **Next:** implement T15 — add AGENTS.md pointer to `docs/agents/todo/`.
 
