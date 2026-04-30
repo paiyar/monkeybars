@@ -22,9 +22,9 @@ document the PRD-update-only-on-design-shift rule.
 
 ## Status
 
-- **State:** in_progress
-- **Current task:** T16 — Dogfood the parking-lot wiring on this repo
-- **Last commit:** docs(T15): add AGENTS.md pointer to docs/agents/todo parking lot
+- **State:** complete
+- **Current task:** complete
+- **Last commit:** chore(T16): dogfood parking-lot wiring on this repo
 - **Preflight:** n/a
 - **Blockers:** none
 - **WIP files:** none
@@ -49,7 +49,7 @@ relevant task below rather than opening a new task.
   - Acceptance: Step 1 exploration bullets include `docs/agents/todo/` alongside `README.md`, `AGENTS.md`, `CLAUDE.md`, and `docs/`. Step 7 adds two rules: (a) "if a parked todo is incorporated into the new plan, delete the todo file in the same commit as the new plan" and (b) "update `docs/agents/prd/spec.md` and `docs/agents/prd/architecture.md` only when the design shifts (component added, removed, renamed, or gains a new responsibility); for pure phase reshuffles or acceptance tweaks, edit `docs/agents/plan.md` only." `brainstorm-plan` remains free to introduce new scope not sourced from any todo. Adapters regenerate clean via `bun run generate` and `bun run generate:check` passes. No other behavior changes.
 - [x] T15 — Add AGENTS.md pointer to `docs/agents/todo/` as the parking lot | files: `AGENTS.md` | verify: `bun run generate:check`
   - Acceptance: `AGENTS.md` contains a short sentence identifying `docs/agents/todo/` as the parking lot for deferred work. Placement is wherever the existing MonkeyBars workflow guidance lives (agent-specific instructions section or project structure section — pick whichever is closer topically). No other behavior changes. `bun run generate:check` passes (no stale adapters).
-- [ ] T16 — Dogfood the parking-lot wiring on this repo | files: none committed (manual smoke) or a new entry under `docs/agents/todo/` if a rough edge surfaces | verify: manual smoke
+- [x] T16 — Dogfood the parking-lot wiring on this repo | files: none committed (manual smoke) or a new entry under `docs/agents/todo/` if a rough edge surfaces | verify: manual smoke
   - Acceptance: After T14–T15 land, mentally (or literally) walk `brainstorm-plan` through proposing a new scope using at least one existing file under `docs/agents/todo/` (for example `auto-continue-between-deterministic-steps.md` or `review-nudge-non-md-files.md`). Confirm: (a) the skill body clearly directs the reader to read `docs/agents/todo/` in step 1; (b) the delete-on-pickup rule is unambiguous about *when* (same commit as the new plan) and *what* (the todo file); (c) the PRD-update rule is clear about which shifts justify editing `spec.md` / `architecture.md` vs editing `plan.md` only. Rough edges become parked todos under `docs/agents/todo/`, not inline fixes.
 
 ## Coverage
@@ -74,6 +74,7 @@ relevant task below rather than opening a new task.
 
 ## Log
 
+- 2026-04-30: Completed T16; next task complete; commit subject `chore(T16): dogfood parking-lot wiring on this repo`.
 - 2026-04-30: Completed T15; next task T16 — Dogfood the parking-lot wiring on this repo; commit subject `docs(T15): add AGENTS.md pointer to docs/agents/todo parking lot`.
 - 2026-04-29: Completed T14; next task T15 — Add AGENTS.md pointer to `docs/agents/todo/` as the parking lot; commit subject `feat(T14): wire brainstorm-plan to docs/agents/todo parking lot`.
 (Append dated entries as work progresses)
