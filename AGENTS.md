@@ -53,6 +53,8 @@ The commands under `workflow-src/commands/` implement a repo-local planning loop
 
 `/start-session` and `/project-status` each include a passive nudge step that prints `Unreviewed: N commits since YYYY-MM-DD.` when task commits have landed beyond the newest review's `reviewed_through:`, and say nothing otherwise. The skill instructions mirror the logic in `cli/src/review-nudge.ts` (which is reserved for any future CLI-side surfacing); date comes from the review filename prefix, falling back to `git log -1 --format=%cs <sha>` when the filename does not match `YYYY-MM-DD-<sha>.md`.
 
+`docs/agents/todo/` is the single parking lot for deferred work. Files under it are free-form slug-named markdown — anything from a one-line thought to a fully-scoped proposal, no required shape. `brainstorm-plan` reads this directory in its exploration step when proposing new scope, and deletes any incorporated todo in the same commit as the new plan. No CLI reads this directory; it is a file-naming convention, not a command surface.
+
 ## Coding Style & Naming Conventions
 
 Use Markdown for workflow content and keep instructions direct, imperative, and tool-agnostic unless a command is explicitly platform-specific. Command source files should be lowercase kebab-case, for example `start-session.md`, and must include `name` and `description` frontmatter. TypeScript code uses strict `tsconfig` options and Node/Bun standard APIs. Avoid adding runtime dependencies unless they clearly pay for themselves; `commander` is the only one today.
